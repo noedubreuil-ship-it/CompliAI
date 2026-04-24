@@ -846,9 +846,69 @@ async function fetchLiveRSS(): Promise<JournalArticle[]> {
     },
     {
       name: "EDPB Actualités",
-      url: "https://edpb.europa.eu/news/news_en.rss",
+      url: "https://edpb.europa.eu/rss.xml",
       category: "Soft law & lignes directrices" as ArticleCategory,
       regulation: "RGPD (UE 2016/679)",
+    },
+    {
+      name: "CNIL",
+      url: "https://www.cnil.fr/fr/rss.xml",
+      category: "Décision CNIL/DPA" as ArticleCategory,
+      regulation: "RGPD (UE 2016/679)",
+    },
+    {
+      name: "Autoriteit Persoonsgegevens (NL)",
+      url: "https://www.autoriteitpersoonsgegevens.nl/nl/rss.xml",
+      category: "Décision CNIL/DPA" as ArticleCategory,
+      regulation: "RGPD (UE 2016/679)",
+    },
+    {
+      name: "ICO (UK)",
+      url: "https://ico.org.uk/feed/rss",
+      category: "Décision CNIL/DPA" as ArticleCategory,
+      regulation: "UK GDPR",
+    },
+    {
+      name: "ENISA",
+      url: "https://www.enisa.europa.eu/rss.xml",
+      category: "Soft law & lignes directrices" as ArticleCategory,
+      regulation: "NIS2 / Cybersécurité",
+    },
+    {
+      name: "EBA",
+      url: "https://www.eba.europa.eu/rss.xml",
+      category: "Soft law & lignes directrices" as ArticleCategory,
+      regulation: "DORA (UE 2022/2554)",
+    },
+    {
+      name: "AlgorithmWatch",
+      url: "https://algorithmwatch.org/en/feed/",
+      category: "Discours & positions politiques" as ArticleCategory,
+      regulation: "AI Act (UE 2024/1689)",
+    },
+    {
+      name: "ANSSI",
+      url: "https://www.ssi.gouv.fr/feed/",
+      category: "Soft law & lignes directrices" as ArticleCategory,
+      regulation: "NIS2 / Cybersécurité",
+    },
+    {
+      name: "Netzpolitik",
+      url: "https://netzpolitik.org/feed/",
+      category: "Discours & positions politiques" as ArticleCategory,
+      regulation: "Politique numérique EU",
+    },
+    {
+      name: "IAPP",
+      url: "https://iapp.org/feed/news",
+      category: "Soft law & lignes directrices" as ArticleCategory,
+      regulation: "RGPD (UE 2016/679)",
+    },
+    {
+      name: "EMA",
+      url: "https://www.ema.europa.eu/rss/news.xml",
+      category: "Soft law & lignes directrices" as ArticleCategory,
+      regulation: "EHDS (UE 2025/327)",
     },
   ];
 

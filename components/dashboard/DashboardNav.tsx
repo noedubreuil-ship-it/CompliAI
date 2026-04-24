@@ -22,6 +22,10 @@ import {
   Scale,
   Newspaper,
   CalendarDays,
+  Library,
+  Search,
+  Menu,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +50,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard/calendar", icon: CalendarDays, label: "Calendrier réglementaire" },
   { href: "/dashboard/tools", icon: Wrench, label: "Outils juridiques IA", pro: true },
   { href: "/dashboard/benchmark", icon: BarChart3, label: "Benchmark sectoriel", pro: true },
+  { href: "/dashboard/sources", icon: Library, label: "Sources juridiques" },
   { href: "/dashboard/lawyers", icon: Scale, label: "Trouver un avocat" },
   { href: "/dashboard/audit-trail", icon: History, label: "Audit Trail" },
   { href: "/dashboard/settings", icon: Settings, label: "Paramètres", exact: true },
@@ -61,6 +66,7 @@ export default function DashboardNav({ userEmail, userName, tier }: DashboardNav
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
+  const [mobileOpen, setMobileOpen] = React.useState(false);
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -68,10 +74,10 @@ export default function DashboardNav({ userEmail, userName, tier }: DashboardNav
     router.refresh();
   }
 
-  return (
-    <aside className="w-64 flex-shrink-0 bg-slate-900 text-white flex flex-col h-screen">
+  const NavContent = () => (
+    <>
       <div className="px-6 py-5 border-b border-slate-700">
-        <Link href="/dashboard" className="flex items-center gap-2">
+        <Link href="/dashboard" className="flex items-center gap-2" onClick={() => setMobileOpen(false)}>
           <Shield className="h-6 w-6 text-blue-400" />
           <span className="font-bold text-lg">CompliAI</span>
         </Link>
@@ -99,6 +105,7 @@ export default function DashboardNav({ userEmail, userName, tier }: DashboardNav
             <Link
               key={item.href}
               href={isPro ? "/dashboard/upgrade" : item.href}
+              onClick={() => setMobileOpen(false)}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors group",
                 isActive
@@ -129,6 +136,45 @@ export default function DashboardNav({ userEmail, userName, tier }: DashboardNav
           Se déconnecter
         </button>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile top bar */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-slate-900 text-white flex items-center justify-between px-4 py-3 border-b border-slate-700">
+        <Link href="/dashboard" className="flex items-center gap-2">
+          <Shield className="h-5 w-5 text-blue-400" />
+          <span className="font-bold">CompliAI</span>
+        </Link>
+        <button
+          onClick={() => setMobileOpen(!mobileOpen)}
+          className="p-2 rounded-lg hover:bg-slate-800 transition-colors"
+        >
+          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </button>
+      </div>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-30 bg-black/50"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Mobile drawer */}
+      <aside className={cn(
+        "lg:hidden fixed top-0 left-0 z-40 w-72 bg-slate-900 text-white flex flex-col h-screen transition-transform duration-300",
+        mobileOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <NavContent />
+      </aside>
+
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex w-64 flex-shrink-0 bg-slate-900 text-white flex-col h-screen">
+        <NavContent />
+      </aside>
+    </>
   );
 }

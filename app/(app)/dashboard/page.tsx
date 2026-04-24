@@ -14,12 +14,22 @@ import {
 } from "lucide-react";
 import { formatDate, VERDICT_COLORS } from "@/lib/utils";
 import ComplianceScore from "@/components/dashboard/ComplianceScore";
+import ScoreHistory from "@/components/dashboard/ScoreHistory";
+import OnboardingWizard from "@/components/dashboard/OnboardingWizard";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const [{ data: projects }, { data: recentAudits }, { data: openIssues }, { data: unreadAlerts }] =
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name, onboarding_completed")
+    .eq("id", user!.id)
+    .single();
+
+  const needsOnboarding = !profile?.onboarding_completed;
+
+  const [{ data: projects }, { data: recentAudits }, { data: openIssues }, { data: unreadAlerts }, { data: auditHistory }] =
     await Promise.all([
       supabase.from("projects").select("id, name, status").eq("user_id", user!.id).limit(5),
       supabase
@@ -38,6 +48,13 @@ export default async function DashboardPage() {
         .select("id", { count: "exact" })
         .eq("user_id", user!.id)
         .eq("is_read", false),
+      supabase
+        .from("audits")
+        .select("compliance_score, created_at, projects(name)")
+        .eq("user_id", user!.id)
+        .not("compliance_score", "is", null)
+        .order("created_at", { ascending: true })
+        .limit(20),
     ]);
 
   // Calcul du score moyen sur les audits avec un score
@@ -77,8 +94,16 @@ export default async function DashboardPage() {
     },
   ];
 
+  const historyPoints = (auditHistory ?? []).map((a: any) => ({
+    date: a.created_at,
+    score: a.compliance_score,
+    projectName: a.projects?.name ?? "Projet",
+  }));
+
   return (
     <div className="space-y-8">
+      {needsOnboarding && <OnboardingWizard userName={profile?.full_name ?? ""} />}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Tableau de bord</h1>
@@ -252,6 +277,18 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Score History */}
+      {historyPoints.length >= 2 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Évolution du score de conformité</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ScoreHistory audits={historyPoints} />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

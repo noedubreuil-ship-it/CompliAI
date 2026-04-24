@@ -6,6 +6,7 @@ import { buildAuditPrompt } from "@/lib/ai/prompts";
 import { getTierLimits } from "@/lib/stripe/limits";
 import { getCurrentMonthYear } from "@/lib/utils";
 import { logAction } from "@/lib/audit-trail";
+import { rateLimitUser, RATE_LIMITS } from "@/lib/rate-limit";
 import type { ProjectFormData, AuditResult } from "@/lib/types/audit";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -17,6 +18,9 @@ export async function POST(request: Request) {
   if (!user) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
+
+  const limited = await rateLimitUser(user.id, "audit", RATE_LIMITS.audit);
+  if (limited) return limited;
 
   // Check subscription tier + usage limits
   const { data: profile } = await supabase

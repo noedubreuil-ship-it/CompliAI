@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
 import { searchLegalChunks, buildLegalContext } from "@/lib/ai/rag";
 import { LEGAL_SYSTEM_PROMPT } from "@/lib/ai/prompts";
+import { rateLimitUser, RATE_LIMITS } from "@/lib/rate-limit";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -13,6 +14,9 @@ export async function POST(request: Request) {
   if (!user) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
+
+  const limited = await rateLimitUser(user.id, "chat", RATE_LIMITS.chat);
+  if (limited) return limited;
 
   const body = await request.json();
   const { question, session_id } = body as { question: string; session_id?: string };

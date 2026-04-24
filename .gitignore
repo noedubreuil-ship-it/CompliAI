@@ -23,3 +23,6 @@ yarn-error.log*
 
 # TypeScript
 *.tsbuildinfo
+.mcp.json
+lib/pdf/.generate.ts.swp
+scripts/data/
