@@ -37,16 +37,24 @@ export default function GlobalSearch() {
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
+  const [searchError, setSearchError] = useState(false);
+
   const search = useCallback(async (q: string) => {
-    if (q.length < 2) { setResults([]); return; }
+    if (q.length < 2) { setResults([]); setSearchError(false); return; }
     setLoading(true);
+    setSearchError(false);
     try {
       const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+      if (!res.ok) throw new Error();
       const data = await res.json();
       setResults(data.results ?? []);
       setActiveIndex(0);
-    } catch {}
-    setLoading(false);
+    } catch {
+      setSearchError(true);
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -132,6 +140,10 @@ export default function GlobalSearch() {
             {query.length < 2 ? (
               <div className="py-8 text-center text-sm text-muted-foreground">
                 Tapez au moins 2 caractères pour rechercher
+              </div>
+            ) : searchError ? (
+              <div className="py-8 text-center text-sm text-red-500">
+                La recherche a échoué — vérifiez votre connexion
               </div>
             ) : results.length === 0 && !loading ? (
               <div className="py-8 text-center text-sm text-muted-foreground">

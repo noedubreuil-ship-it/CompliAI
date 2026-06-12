@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { formatDate, VERDICT_COLORS } from "@/lib/utils";
 import BlockingIssuesKanban from "@/components/dashboard/BlockingIssuesKanban";
+import { AuditSnapshotCompare } from "@/components/dashboard/AuditSnapshotCompare";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -28,16 +29,22 @@ export default async function ProjectDetailPage({ params }: Props) {
     .from("projects")
     .select("*")
     .eq("id", id)
-    .eq("user_id", user.id)
     .single();
 
   if (!project) notFound();
 
   const { data: audits } = await supabase
     .from("audits")
-    .select("id, verdict, ai_act_classification, created_at")
+    .select("id, verdict, ai_act_classification, compliance_score, created_at")
     .eq("project_id", id)
     .order("created_at", { ascending: false });
+
+  const { data: snapshots } = await supabase
+    .from("audit_snapshots")
+    .select("id, version, compliance_score, verdict, created_at, audit_id")
+    .eq("project_id", id)
+    .order("version", { ascending: false })
+    .limit(12);
 
   const { data: blockingIssues } = await supabase
     .from("blocking_issues")
@@ -111,7 +118,12 @@ export default async function ProjectDetailPage({ params }: Props) {
                     <Clock className="h-4 w-4 text-muted-foreground" />
                     <div>
                       <p className="text-sm font-medium">{formatDate(audit.created_at)}</p>
-                      <p className="text-xs text-muted-foreground">{audit.ai_act_classification}</p>
+                      <p className="text-xs text-muted-foreground flex flex-wrap gap-2">
+                        <span>{audit.ai_act_classification}</span>
+                        {audit.compliance_score != null && (
+                          <span className="font-medium text-slate-700">{audit.compliance_score}%</span>
+                        )}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -128,6 +140,47 @@ export default async function ProjectDetailPage({ params }: Props) {
           )}
         </CardContent>
       </Card>
+
+      {snapshots && snapshots.length >= 2 && (
+        <AuditSnapshotCompare snapshots={snapshots} />
+      )}
+
+      {/* Snapshots versionnés (évolution dans le temps) */}
+      {snapshots && snapshots.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">
+              Historique versionné (snapshots) — {snapshots.length} version{snapshots.length > 1 ? "s" : ""}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {snapshots.map((s) => (
+                <div
+                  key={s.id}
+                  className="flex items-center justify-between p-3 rounded-lg border bg-slate-50/50 text-sm"
+                >
+                  <div>
+                    <span className="font-semibold">v{s.version}</span>
+                    <span className="text-muted-foreground ml-2">{formatDate(s.created_at)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {s.compliance_score != null && (
+                      <span className="text-xs font-medium tabular-nums">{s.compliance_score}%</span>
+                    )}
+                    <span className={`text-xs px-2 py-0.5 rounded-full border ${VERDICT_COLORS[s.verdict as keyof typeof VERDICT_COLORS] ?? ""}`}>
+                      {s.verdict}
+                    </span>
+                    <Link href={`/dashboard/projects/${id}/audit/${s.audit_id}`}>
+                      <Button variant="ghost" size="sm" className="h-7 text-xs">Voir l&apos;audit</Button>
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Blocking Issues Kanban */}
       {canTrack ? (

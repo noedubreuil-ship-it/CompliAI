@@ -15,7 +15,15 @@ export const EU_AUTHORITIES: EUAuthority[] = [
   { id: "edps", name: "EDPS", fullName: "Contrôleur Européen de la Protection des Données", country: "Union Européenne", countryCode: "EU", type: "EU Institution", website: "https://edps.europa.eu", language: "FR/EN" },
   { id: "ai-office", name: "AI Office", fullName: "Bureau de l'IA — Commission Européenne", country: "Union Européenne", countryCode: "EU", type: "EU Institution", website: "https://digital-strategy.ec.europa.eu/en/policies/ai-office", language: "FR/EN" },
   { id: "cjue", name: "CJUE", fullName: "Cour de Justice de l'Union Européenne", country: "Union Européenne", countryCode: "EU", type: "Court", website: "https://curia.europa.eu", language: "FR" },
-  { id: "commission", name: "Commission EU", fullName: "Commission Européenne", country: "Union Européenne", countryCode: "EU", type: "EU Institution", website: "https://ec.europa.eu", language: "FR/EN" },
+  { id: "commission", name: "Commission EU", fullName: "Commission Européenne", country: "Union Européenne", countryCode: "EU", type: "EU Institution", website: "https://commission.europa.eu/index_fr", language: "FR/EN" },
+  { id: "parlement-eu", name: "Parlement EU", fullName: "Parlement Européen", country: "Union Européenne", countryCode: "EU", type: "EU Institution", website: "https://www.europarl.europa.eu/portal/fr", language: "FR/EN" },
+  { id: "european-council", name: "Conseil européen", fullName: "Conseil européen (European Council)", country: "Union Européenne", countryCode: "EU", type: "EU Institution", website: "https://www.consilium.europa.eu/fr/european-council/", language: "FR/EN" },
+  { id: "coe", name: "Conseil de l'Europe", fullName: "Conseil de l'Europe (Council of Europe)", country: "Europe (46 États)", countryCode: "EU", type: "EU Institution", website: "https://www.coe.int", language: "FR/EN" },
+  { id: "eca", name: "Cour des comptes EU", fullName: "Cour des comptes européenne (ECA)", country: "Union Européenne", countryCode: "EU", type: "EU Institution", website: "https://www.eca.europa.eu/fr", language: "FR/EN" },
+  { id: "eesc", name: "CESE", fullName: "Comité économique et social européen", country: "Union Européenne", countryCode: "EU", type: "EU Institution", website: "https://www.eesc.europa.eu/fr", language: "FR/EN" },
+  { id: "cor", name: "CdR", fullName: "Comité européen des régions", country: "Union Européenne", countryCode: "EU", type: "EU Institution", website: "https://www.cor.europa.eu/fr", language: "FR/EN" },
+  { id: "ombudsman-eu", name: "Médiateur EU", fullName: "Médiateur européen", country: "Union Européenne", countryCode: "EU", type: "EU Institution", website: "https://www.ombudsman.europa.eu/fr", language: "FR/EN" },
+  { id: "ecb", name: "BCE", fullName: "Banque Centrale Européenne", country: "Union Européenne", countryCode: "EU", type: "Regulatory Body", website: "https://www.ecb.europa.eu", language: "FR/EN" },
 
   // ─── France ────────────────────────────────────────────────────────────────
   { id: "cnil", name: "CNIL", fullName: "Commission Nationale de l'Informatique et des Libertés", country: "France", countryCode: "FR", type: "DPA", website: "https://www.cnil.fr", language: "FR" },
@@ -130,6 +138,20 @@ export const SOURCE_TO_AUTHORITY: Record<string, string> = {
   "IMY — Suède": "imy",
   "UODO — Pologne": "uodo",
   "EDPS": "edps",
+  "Conseil européen": "european-council",
+  "Conseil de l'Europe": "coe",
+  "Conseil de l'Europe (CoE)": "coe",
+  "Parlement Européen": "parlement-eu",
+  "Cour des comptes européenne": "eca",
+  "Cour des comptes EU": "eca",
+  "ECA": "eca",
+  "CESE": "eesc",
+  "Comité économique et social européen (CESE)": "eesc",
+  "CdR": "cor",
+  "Comité européen des régions": "cor",
+  "Médiateur européen": "ombudsman-eu",
+  "BCE": "ecb",
+  "Banque Centrale Européenne (BCE)": "ecb",
 };
 
 export function getAuthorityById(id: string): EUAuthority | undefined {

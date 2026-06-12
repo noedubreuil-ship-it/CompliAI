@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
 
     const buffer = await generateArt11PDF(data, systemName ?? "Système IA");
 
-    return new NextResponse(buffer, {
+    return new NextResponse(new Uint8Array(buffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",

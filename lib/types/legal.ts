@@ -15,6 +15,16 @@ export interface LegalCitation {
   article_title: string;
   excerpt: string;
   eurlex_url: string;
+  source?:
+    | "rag"
+    | "eurlex"
+    | "calendar"
+    | "national"
+    | "eu_case_law"
+    | "national_case_law"
+    | "intl_standards"
+    | "uk_regulator"
+    | "official_portal";
 }
 
 export interface ChatMessage {

@@ -20,7 +20,7 @@ if (typeof setInterval !== "undefined") {
   }, 5 * 60 * 1000);
 }
 
-interface RateLimitOptions {
+export interface RateLimitOptions {
   /** Max requests per window */
   limit: number;
   /** Window size in seconds */
@@ -68,7 +68,8 @@ export async function rateLimitUser(
   options: RateLimitOptions
 ): Promise<Response | null> {
   const key = `${route}:${userId}`;
-  const result = rateLimit(key, options);
+  const { rateLimitDistributed } = await import("@/lib/rate-limit-distributed");
+  const result = await rateLimitDistributed(key, options);
 
   if (!result.success) {
     return new Response(

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, Shield, ArrowRight } from "lucide-react";
+import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 
 const PLANS = [
   {
@@ -163,6 +164,43 @@ export default function PricingPage() {
           ))}
         </div>
 
+        <div className="mt-14">
+          <h2 className="text-2xl font-bold text-center mb-2">Starter vs Pro — comparatif</h2>
+          <p className="text-center text-muted-foreground text-sm mb-8 max-w-xl mx-auto">
+            Les deux plans payants les plus demandés par les équipes Legal & DPO.
+          </p>
+          <div className="overflow-x-auto border rounded-xl shadow-sm">
+            <table className="w-full text-sm min-w-[640px]">
+              <thead className="bg-slate-50 border-b">
+                <tr>
+                  <th className="text-left p-4 font-semibold">Fonctionnalité</th>
+                  <th className="text-left p-4 font-semibold w-[28%]">Starter (49€/mois)</th>
+                  <th className="text-left p-4 font-semibold w-[28%] border-l-2 border-slate-900">Pro (199€/mois)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {[
+                  ["Audits / mois", "3", "Illimités"],
+                  ["Chat juridique IA", "Illimité", "Illimité"],
+                  ["Rapport PDF investor-ready", "—", "✓"],
+                  ["Veille réglementaire automatisée", "—", "✓"],
+                  ["Registre IA & export CSV", "✓", "✓"],
+                  ["Suivi issues bloquantes", "✓", "✓"],
+                  ["Projets", "Illimité (selon quotas)", "Illimités"],
+                  ["Webhooks / API (bêta)", "✓", "✓"],
+                  ["Support", "Email", "Prioritaire"],
+                ].map(([feat, st, pr]) => (
+                  <tr key={String(feat)}>
+                    <td className="p-4 text-muted-foreground">{feat}</td>
+                    <td className="p-4">{st}</td>
+                    <td className="p-4 border-l bg-slate-50/50">{pr}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         <div className="mt-12 text-center space-y-3">
           <p className="text-sm text-muted-foreground">
             Tous les plans incluent la TVA. Facturation mensuelle. Résiliation à tout moment.
@@ -174,6 +212,7 @@ export default function PricingPage() {
           </p>
         </div>
       </div>
+      <MarketingFooter />
     </div>
   );
 }

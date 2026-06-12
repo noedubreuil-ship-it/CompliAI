@@ -1,23 +1,7 @@
-export type SourceCategory =
-  | "Institutions EU officielles"
-  | "Suivi AI Act"
-  | "Autorités de protection des données"
-  | "Juridictions & droit"
-  | "Cabinets & académique"
-  | "Régulateurs sectoriels"
-  | "Cybersécurité & numérique";
+import type { LegalSource, SourceCategory } from "./legal-source-types";
+import { EU_MEMBER_NATIONAL_SOURCES } from "./eu-national-sources";
 
-export interface LegalSource {
-  id: string;
-  name: string;
-  category: SourceCategory;
-  description: string;
-  url: string;
-  rssUrl?: string;
-  country?: string;
-  type: "officiel" | "tracker" | "académique" | "cabinet" | "régulateur" | "juridiction";
-  tags: string[];
-}
+export type { LegalSource, SourceCategory } from "./legal-source-types";
 
 export const LEGAL_SOURCES: LegalSource[] = [
   // ── Institutions EU officielles ─────────────────────────────────────────────
@@ -35,21 +19,21 @@ export const LEGAL_SOURCES: LegalSource[] = [
     id: "european-parliament",
     name: "Parlement Européen",
     category: "Institutions EU officielles",
-    description: "Actualité législative du Parlement européen : votes, rapports de commission, positions en trilogue.",
-    url: "https://www.europarl.europa.eu/news/fr",
+    description: "Actualité législative du Parlement européen : votes en plénière, rapports de commission, positions en trilogue et études thématiques sur l'IA, le numérique et les droits fondamentaux.",
+    url: "https://www.europarl.europa.eu/portal/fr",
     rssUrl: "https://www.europarl.europa.eu/rss/doc/press-releases-presse/fr.xml",
     type: "officiel",
-    tags: ["Parlement EU", "Législation", "Votes", "Trilogue"],
+    tags: ["Parlement EU", "Législation", "Votes", "Trilogue", "Plénière"],
   },
   {
     id: "european-commission",
     name: "Commission Européenne",
     category: "Institutions EU officielles",
-    description: "Communiqués de presse, propositions législatives, consultations publiques et rapports de la Commission.",
-    url: "https://ec.europa.eu/commission/presscorner",
+    description: "Communiqués de presse, propositions législatives, consultations publiques, rapports et agendas de la Commission Européenne — institution initiatrice de toute législation EU.",
+    url: "https://commission.europa.eu/index_fr",
     rssUrl: "https://ec.europa.eu/commission/presscorner/api/rss",
     type: "officiel",
-    tags: ["Commission EU", "Propositions", "Consultations", "Régulation"],
+    tags: ["Commission EU", "Propositions", "Consultations", "Régulation", "Agenda"],
   },
   {
     id: "council-eu",
@@ -89,6 +73,115 @@ export const LEGAL_SOURCES: LegalSource[] = [
     rssUrl: "https://www.enisa.europa.eu/rss.xml",
     type: "officiel",
     tags: ["ENISA", "NIS2", "CRA", "Cybersécurité"],
+  },
+  {
+    id: "edps",
+    name: "EDPS — Contrôleur européen de la protection des données",
+    category: "Institutions EU officielles",
+    description: "Autorité indépendante de contrôle des institutions et organes de l'UE eux-mêmes. Publie des avis sur les propositions législatives, des lignes directrices pour les institutions EU utilisant l'IA, et supervise le traitement des données par les organes de l'UE.",
+    url: "https://www.edps.europa.eu/_fr",
+    rssUrl: "https://www.edps.europa.eu/rss.xml",
+    type: "officiel",
+    tags: ["EDPS", "RGPD", "Institutions EU", "Avis législatifs", "IA générative"],
+  },
+  {
+    id: "eca",
+    name: "Cour des comptes européenne",
+    category: "Institutions EU officielles",
+    description: "Auditeur externe de l'UE. Publie des rapports spéciaux et avis sur l'utilisation des fonds EU, notamment sur l'efficacité des politiques IA, numériques et de cybersécurité. Ses recommandations font jurisprudence en matière de bonne gouvernance publique.",
+    url: "https://www.eca.europa.eu/fr",
+    rssUrl: "https://www.eca.europa.eu/en/rss/PublicationRssFeed.xml",
+    type: "officiel",
+    tags: ["Cour des comptes", "Audit EU", "Bonne gouvernance", "Fonds EU", "Rapports spéciaux"],
+  },
+  {
+    id: "eesc",
+    name: "Comité économique et social européen (CESE)",
+    category: "Institutions EU officielles",
+    description: "Organe consultatif représentant la société civile (employeurs, syndicats, organisations diverses). Émet des avis sur les projets législatifs EU, notamment sur l'AI Act, le RGPD, le travail algorithmique et les droits numériques des travailleurs.",
+    url: "https://www.eesc.europa.eu/fr",
+    rssUrl: "https://www.eesc.europa.eu/en/rss.xml",
+    type: "officiel",
+    tags: ["CESE", "Société civile", "Avis consultatifs", "Travail algorithmique", "Droits sociaux"],
+  },
+  {
+    id: "cor",
+    name: "Comité européen des régions (CdR)",
+    category: "Institutions EU officielles",
+    description: "Organe consultatif représentant les collectivités locales et régionales de l'UE. Émet des avis sur la mise en œuvre territoriale des règlements numériques (AI Act, RGPD, DSA), la fracture numérique et l'IA dans les services publics locaux.",
+    url: "https://www.cor.europa.eu/fr",
+    rssUrl: "https://www.cor.europa.eu/fr/rss.xml",
+    type: "officiel",
+    tags: ["CdR", "Régions", "Collectivités locales", "Services publics", "IA territoriale"],
+  },
+  {
+    id: "ombudsman-eu",
+    name: "Médiateur européen",
+    category: "Institutions EU officielles",
+    description: "Enquête sur les cas de mauvaise administration des institutions de l'UE. Mène des enquêtes stratégiques sur la transparence algorithmique, les systèmes IA utilisés par la Commission et l'utilisation éthique de l'IA dans les décisions administratives européennes.",
+    url: "https://www.ombudsman.europa.eu/fr",
+    rssUrl: "https://www.ombudsman.europa.eu/rss.xml",
+    type: "officiel",
+    tags: ["Médiateur EU", "Transparence", "Mauvaise administration", "IA décisions", "Enquêtes"],
+  },
+  {
+    id: "ecb",
+    name: "Banque Centrale Européenne (BCE)",
+    category: "Régulateurs sectoriels",
+    description: "Banque centrale de la zone euro. Publie des rapports et positions sur l'IA dans la finance, les crypto-actifs (MiCA), la résilience numérique des banques (DORA) et la stabilité financière face aux risques technologiques.",
+    url: "https://www.ecb.europa.eu/ecb/all-about-us/html/index.fr.html",
+    rssUrl: "https://www.ecb.europa.eu/press/pr/rss/ecb.xml",
+    type: "régulateur",
+    tags: ["BCE", "Finance", "MiCA", "DORA", "Cryptomonnaies", "Stabilité financière"],
+  },
+  {
+    id: "european-council",
+    name: "Conseil européen",
+    category: "Institutions EU officielles",
+    description: "Institution de l'UE réunissant les chefs d'État et de gouvernement. Fixe les priorités stratégiques de l'UE, notamment sur la gouvernance de l'IA, l'autonomie numérique européenne et les grandes orientations réglementaires.",
+    url: "https://www.consilium.europa.eu/fr/european-council/",
+    rssUrl: "https://www.consilium.europa.eu/rss/european-council-meetings.xml",
+    type: "officiel",
+    tags: ["Conseil européen", "Priorités UE", "Gouvernance IA", "Stratégie EU", "Chefs d'État"],
+  },
+
+  // ── Normes & standards internationaux ────────────────────────────────────────
+  {
+    id: "iso-42001",
+    name: "ISO 42001 — Management des systèmes IA",
+    category: "Cabinets & académique",
+    description: "Norme internationale de système de management de l'IA (AIMS), publiée en décembre 2023. Alignée sur l'AI Act, elle fournit un cadre de gouvernance IA : politique IA, évaluation des risques, gestion du cycle de vie, audits internes. La conformité ISO 42001 peut faciliter la démonstration de conformité à l'AI Act.",
+    url: "https://www.iso.org/standard/81230.html",
+    type: "académique",
+    tags: ["ISO 42001", "AIMS", "Gouvernance IA", "Certification", "AI Act aligné"],
+  },
+  {
+    id: "iso-27001",
+    name: "ISO 27001 / 27701 — Sécurité & Confidentialité",
+    category: "Cabinets & académique",
+    description: "ISO 27001 : norme de système de management de la sécurité de l'information (SMSI). ISO 27701 : extension RGPD pour la gestion de la confidentialité (Privacy Information Management System). Certifications de référence pour démontrer la conformité sécuritaire aux régulateurs EU.",
+    url: "https://www.iso.org/isoiec-27001-information-security.html",
+    type: "académique",
+    tags: ["ISO 27001", "ISO 27701", "SMSI", "Cybersécurité", "RGPD", "Certification"],
+  },
+  {
+    id: "nist-ai-rmf",
+    name: "NIST AI Risk Management Framework",
+    category: "Cabinets & académique",
+    description: "Cadre américain de gestion des risques IA du NIST (janvier 2023). Très utilisé par les entreprises actives aux USA et en EU. Complémentaire à l'AI Act : couvre GOVERN, MAP, MEASURE, MANAGE. Le NIST AI RMF 1.0 et son profil générative AI sont référencés dans les audits internationaux.",
+    url: "https://www.nist.gov/artificial-intelligence/ai-risk-management-framework",
+    type: "officiel",
+    tags: ["NIST", "AI RMF", "Gouvernance IA", "USA", "Risque IA", "International"],
+  },
+  {
+    id: "oecd-ai",
+    name: "OCDE — AI Policy Observatory",
+    category: "Cabinets & académique",
+    description:
+      "Portail officiel oecd.ai : principes sur l'IA, indicateurs par pays, Observatoire des politiques IA et suivi des engagements internationaux.",
+    url: "https://oecd.ai",
+    type: "officiel",
+    tags: ["OCDE", "Principes IA", "42 pays", "Gouvernance internationale", "IA éthique"],
   },
 
   // ── Suivi AI Act ─────────────────────────────────────────────────────────────
@@ -207,6 +300,49 @@ export const LEGAL_SOURCES: LegalSource[] = [
   },
 
   // ── Juridictions & droit ─────────────────────────────────────────────────────
+  {
+    id: "tribunal-ue",
+    name: "Tribunal de l'Union européenne (TUE)",
+    category: "Juridictions & droit",
+    description:
+      "Juridiction de première instance de la CJUE. Compétent pour les recours directs contre les actes des institutions EU, la concurrence (DMA, aides d'État algorithmiques), le droit numérique et la protection des données par les institutions. Ses arrêts peuvent être portés en appel devant la CJUE et sont fréquemment cités dans les litiges liés à l'IA Act et aux plateformes numériques.",
+    url: "https://curia.europa.eu/jcms/jcms/Jo2_7033/fr/",
+    rssUrl: "https://curia.europa.eu/rss.xml",
+    country: "EU",
+    type: "juridiction",
+    tags: ["Tribunal UE", "TUE", "Première instance", "Concurrence", "DMA", "RGPD institutionnel", "Contrôle légalité"],
+  },
+  {
+    id: "dg-comp",
+    name: "DG COMP — Concurrence (Commission EU)",
+    category: "Juridictions & droit",
+    description: "Direction Générale de la Concurrence de la Commission. Applique le droit antitrust EU aux marchés numériques, enquête sur les abus de position dominante algorithmique, les concentrations Big Tech et l'application du DMA. Décisions directement opposables.",
+    url: "https://competition-policy.ec.europa.eu/index_fr",
+    rssUrl: "https://competition-policy.ec.europa.eu/rss.xml",
+    type: "régulateur",
+    tags: ["Antitrust", "DMA", "Concurrence", "Abus de position dominante", "Big Tech"],
+  },
+  {
+    id: "autorite-concurrence-fr",
+    name: "Autorité de la concurrence — France",
+    category: "Juridictions & droit",
+    description: "Autorité française de concurrence. Publie des avis sur les marchés numériques, l'IA générative, les algorithmes de tarification dynamique et les concentrations tech. Ses décisions et avis sont des références pour les entreprises actives en France.",
+    url: "https://www.autoritedelaconcurrence.fr/fr/liste-des-communiques-de-presse",
+    rssUrl: "https://www.autoritedelaconcurrence.fr/fr/rss.xml",
+    country: "FR",
+    type: "régulateur",
+    tags: ["Concurrence", "Antitrust", "France", "IA générative", "Tarification algorithmique"],
+  },
+  {
+    id: "coe",
+    name: "Conseil de l'Europe",
+    category: "Juridictions & droit",
+    description: "Organisation intergouvernementale de 46 États (dont non-UE). Garant de la Convention européenne des droits de l'homme (CEDH), de la Convention 108+ sur la protection des données et premier traité international sur l'IA (CETS 225, août 2024). Distincte des institutions de l'UE.",
+    url: "https://www.coe.int/fr/web/portal",
+    rssUrl: "https://www.coe.int/fr/web/portal/rss",
+    type: "officiel",
+    tags: ["Conseil de l'Europe", "CETS 225", "IA Treaty", "Convention 108+", "Droits fondamentaux", "CEDH", "46 États"],
+  },
   {
     id: "cjue",
     name: "Cour de Justice de l'UE (CJUE)",
@@ -369,6 +505,29 @@ export const LEGAL_SOURCES: LegalSource[] = [
     type: "tracker",
     tags: ["Netzpolitik", "Politique numérique", "Surveillance", "IA", "RGPD"],
   },
+  // ── DPA scandinaves ──────────────────────────────────────────────────────────
+  {
+    id: "datatilsynet-no",
+    name: "Datatilsynet — Norvège",
+    description: "Autorité norvégienne de protection des données. Bien que la Norvège ne soit pas dans l'UE, elle applique le RGPD via l'EEE. Publie des décisions sur la biométrie, la surveillance et les transferts de données vers les USA.",
+    url: "https://www.datatilsynet.no/en/",
+    rssUrl: "https://www.datatilsynet.no/en/news/",
+    country: "NO",
+    type: "dpa",
+    category: "Autorités de protection des données" as const,
+    tags: ["Datatilsynet", "RGPD", "Norvège", "EEE", "Biométrie"],
+  },
+  {
+    id: "datatilsynet-dk",
+    name: "Datatilsynet — Danemark",
+    description: "Autorité danoise de protection des données. Active sur les décisions concernant les réseaux sociaux, les cookies et les systèmes IA dans l'administration publique.",
+    url: "https://www.datatilsynet.dk/english",
+    country: "DK",
+    type: "dpa",
+    category: "Autorités de protection des données" as const,
+    tags: ["Datatilsynet", "RGPD", "Danemark", "Cookies", "IA publique"],
+  },
+  ...EU_MEMBER_NATIONAL_SOURCES,
 ];
 
 export function getSourcesByCategory(): Record<SourceCategory, LegalSource[]> {
@@ -381,6 +540,12 @@ export function getSourcesByCategory(): Record<SourceCategory, LegalSource[]> {
 
 export function getSourcesWithRSS(): LegalSource[] {
   return LEGAL_SOURCES.filter((s) => !!s.rssUrl);
+}
+
+/** Autorités et guides nationaux (DPA, marché IA, télécom) pour un code pays ISO 3166-1 alpha-2 (ex. FR, DE, EU). */
+export function getSourcesByCountry(iso: string): LegalSource[] {
+  const code = iso.trim().toUpperCase();
+  return LEGAL_SOURCES.filter((s) => s.country === code);
 }
 
 export const CATEGORY_ORDER: SourceCategory[] = [

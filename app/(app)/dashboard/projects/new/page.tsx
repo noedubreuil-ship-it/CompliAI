@@ -4,7 +4,12 @@ export const metadata = {
   title: "Nouvel audit de conformité — CompliAI",
 };
 
-export default function NewProjectPage() {
+export default async function NewProjectPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ org?: string }>;
+}) {
+  const { org } = await searchParams;
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
@@ -13,7 +18,7 @@ export default function NewProjectPage() {
           Décrivez votre projet IA pour obtenir un verdict de conformité AI Act, RGPD et DSA.
         </p>
       </div>
-      <ProjectScannerForm />
+      <ProjectScannerForm organizationId={org ?? undefined} />
     </div>
   );
 }

@@ -1,10 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, Loader2, Shield } from "lucide-react";
+import { Check, Loader2, Shield, AlertCircle, X, Zap } from "lucide-react";
+
+const ENTERPRISE_PRICE_ID = process.env.NEXT_PUBLIC_STRIPE_ENTERPRISE_PRICE_ID ?? "";
 
 const PLANS = [
   {
@@ -14,11 +18,11 @@ const PLANS = [
     plan: "starter",
     description: "Pour les startups en phase d'amorçage",
     features: [
+      "4 500 crédits IA / mois (Sonnet)",
+      "~25 questions consultant + 6 outils / mois",
       "3 audits de conformité par mois",
-      "Chat RAG illimité",
-      "Registre des systèmes IA",
-      "Suivi des issues bloquantes",
-      "Export CSV du registre",
+      "Registre des systèmes IA + export CSV",
+      "Scanner, DPIA, checklist, classifier…",
       "Support par email",
     ],
     highlight: false,
@@ -30,24 +34,56 @@ const PLANS = [
     plan: "pro",
     description: "Pour les scale-ups et PME tech",
     features: [
-      "Audits illimités",
-      "Rapport PDF investor-ready",
+      "18 000 crédits IA / mois (Sonnet + Opus premium)",
+      "~80 questions + 20 outils + veille",
+      "Audits avancés (Opus) + rapport investor-ready",
       "Veille réglementaire automatisée",
-      "Alertes email en temps réel",
-      "Export du registre IA (CSV + PDF)",
+      "Tous les outils Pro (comparateur, jurisprudence…)",
       "Support prioritaire",
     ],
     highlight: true,
   },
+  ...(ENTERPRISE_PRICE_ID
+    ? [
+        {
+          name: "Enterprise",
+          price: "799",
+          priceId: ENTERPRISE_PRICE_ID,
+          plan: "enterprise",
+          description: "Pour cabinets, DPO et équipes multi-projets",
+          features: [
+            "60 000+ crédits IA / mois",
+            "Tous les outils Pro + sièges équipe",
+            "Opus sur audits et rapports premium",
+            "Support dédié et SLA",
+            "Facturation annuelle possible",
+            "Onboarding personnalisé",
+          ],
+          highlight: false,
+        },
+      ]
+    : []),
 ];
 
 export default function UpgradePage() {
   const [loading, setLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [currentTier, setCurrentTier] = useState<string | null>(null);
   const router = useRouter();
+  const supabase = createClient();
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase.from("profiles").select("subscription_tier").eq("id", user.id).single()
+        .then(({ data }) => setCurrentTier(data?.subscription_tier ?? "free"));
+    });
+  }, []);
 
   async function handleCheckout(priceId: string, plan: string) {
+    setError(null);
     if (!priceId) {
-      alert("Configuration Stripe manquante. Définissez les variables NEXT_PUBLIC_STRIPE_*_PRICE_ID.");
+      setError("Configuration Stripe manquante. Contactez le support.");
       return;
     }
 
@@ -58,11 +94,11 @@ export default function UpgradePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ priceId, plan }),
       });
-      const { url, error } = await res.json();
-      if (error) throw new Error(error);
+      const { url, error: apiError } = await res.json();
+      if (apiError) throw new Error(apiError);
       router.push(url);
     } catch (err) {
-      alert("Erreur lors de la création de la session de paiement");
+      setError("Impossible de créer la session de paiement. Réessayez ou contactez le support.");
       setLoading(null);
     }
   }
@@ -74,17 +110,40 @@ export default function UpgradePage() {
         <p className="text-muted-foreground mt-2">
           Conformité réglementaire AI Act & RGPD pour votre entreprise
         </p>
+        {currentTier && (
+          <p className="mt-2 text-sm">
+            Plan actuel :{" "}
+            <span className="font-semibold capitalize text-slate-900">
+              {currentTier === "free" ? "Gratuit" : currentTier}
+            </span>
+          </p>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      {error && (
+        <div className="flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
+          <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+          <span className="flex-1">{error}</span>
+          <button onClick={() => setError(null)} className="shrink-0 hover:text-red-900">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      <div className={`grid grid-cols-1 gap-6 ${PLANS.length >= 3 ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2"}`}>
         {PLANS.map((plan) => (
           <Card
             key={plan.name}
-            className={plan.highlight ? "border-2 border-slate-900 relative" : ""}
+            className={`${plan.highlight ? "border-2 border-slate-900" : ""} relative`}
           >
             {plan.highlight && (
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-3 py-1 rounded-full font-medium">
                 Recommandé
+              </div>
+            )}
+            {currentTier === plan.plan && (
+              <div className="absolute -top-3 right-4 bg-green-600 text-white text-xs px-3 py-1 rounded-full font-medium">
+                Plan actuel
               </div>
             )}
             <CardHeader>
@@ -104,24 +163,48 @@ export default function UpgradePage() {
                   </li>
                 ))}
               </ul>
-              <Button
-                className="w-full"
-                variant={plan.highlight ? "default" : "outline"}
-                onClick={() => handleCheckout(plan.priceId, plan.plan)}
-                disabled={loading !== null}
-              >
-                {loading === plan.plan ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" /> Redirection…</>
-                ) : (
-                  <>
-                    <Shield className="h-4 w-4" />
-                    Choisir {plan.name}
-                  </>
-                )}
-              </Button>
+              {currentTier === plan.plan ? (
+                <Button className="w-full" variant="outline" disabled>
+                  <Shield className="h-4 w-4" />
+                  Plan actuel
+                </Button>
+              ) : (
+                <Button
+                  className="w-full"
+                  variant={plan.highlight ? "default" : "outline"}
+                  onClick={() => handleCheckout(plan.priceId, plan.plan)}
+                  disabled={loading === plan.plan}
+                >
+                  {loading === plan.plan ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> Redirection…</>
+                  ) : (
+                    <>
+                      <Shield className="h-4 w-4" />
+                      {currentTier === "free" ? `Passer à ${plan.name}` : `Changer pour ${plan.name}`}
+                    </>
+                  )}
+                </Button>
+              )}
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Packs de crédits supplémentaires */}
+      <div className="rounded-xl border bg-amber-50 border-amber-200 p-5 flex flex-col sm:flex-row items-center gap-4">
+        <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+          <Zap className="h-5 w-5 text-amber-600" />
+        </div>
+        <div className="flex-1 text-center sm:text-left">
+          <p className="font-semibold text-gray-900 text-sm">Déjà abonné ? Achetez des crédits supplémentaires</p>
+          <p className="text-xs text-gray-500 mt-0.5">Packs à usage unique, ajoutés immédiatement à votre solde.</p>
+        </div>
+        <Link
+          href="/dashboard/credits"
+          className="shrink-0 bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+        >
+          Voir les packs →
+        </Link>
       </div>
 
       <div className="text-center text-xs text-muted-foreground space-y-1">

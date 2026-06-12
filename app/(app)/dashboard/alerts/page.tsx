@@ -4,8 +4,113 @@ import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Bell, ExternalLink, AlertTriangle, CheckCircle2, Lock, Loader2, RefreshCw, Sparkles } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Bell, ExternalLink, AlertTriangle, CheckCircle2, Lock, Loader2, RefreshCw, Sparkles, Mail, Settings, ChevronDown, ChevronUp } from "lucide-react";
+
+const ALL_REGULATIONS = [
+  "AI Act (UE 2024/1689)", "RGPD (UE 2016/679)", "DSA (UE 2022/2065)", "DMA (UE 2022/1925)",
+  "NIS2 (UE 2022/2555)", "DORA (UE 2022/2554)", "Data Act (UE 2023/2854)", "MiCA (UE 2023/1114)",
+  "CETS 225 — Conseil de l'Europe",
+];
+
+const DIGEST_OPTIONS = [
+  { value: "daily", label: "Quotidien (8h)" },
+  { value: "weekly", label: "Hebdomadaire (lundi)" },
+  { value: "never", label: "Désactivé" },
+];
+
+function AlertSubscriptionPanel() {
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [selectedRegs, setSelectedRegs] = useState<string[]>(["AI Act (UE 2024/1689)", "RGPD (UE 2016/679)"]);
+  const [frequency, setFrequency] = useState("weekly");
+  const [saved, setSaved] = useState(false);
+
+  function toggleReg(r: string) {
+    setSelectedRegs(s => s.includes(r) ? s.filter(x => x !== r) : [...s, r]);
+  }
+
+  function save() {
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+  }
+
+  return (
+    <Card className="border-slate-200">
+      <button className="w-full" onClick={() => setOpen(o => !o)}>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-blue-600" />
+              <CardTitle className="text-sm">Abonnements & notifications email</CardTitle>
+            </div>
+            <div className="flex items-center gap-2">
+              {savedRegsLabel(selectedRegs, frequency)}
+              {open ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+            </div>
+          </div>
+        </CardHeader>
+      </button>
+
+      {open && (
+        <CardContent className="pt-0 space-y-4 border-t">
+          <div className="pt-4">
+            <label className="text-sm font-medium text-slate-700 block mb-1">Adresse email</label>
+            <input value={email} onChange={e => setEmail(e.target.value)} type="email"
+              placeholder="vous@entreprise.fr"
+              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-slate-700 block mb-2">Règlements à surveiller</label>
+            <div className="flex flex-wrap gap-2">
+              {ALL_REGULATIONS.map(r => (
+                <button key={r} onClick={() => toggleReg(r)}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                    selectedRegs.includes(r)
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
+                  }`}>
+                  {r}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-slate-700 block mb-2">Fréquence du digest</label>
+            <div className="flex gap-2">
+              {DIGEST_OPTIONS.map(opt => (
+                <button key={opt.value} onClick={() => setFrequency(opt.value)}
+                  className={`text-sm px-4 py-2 rounded-lg border transition-colors ${
+                    frequency === opt.value ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-600 hover:bg-slate-50"
+                  }`}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 pt-2">
+            <Button onClick={save} disabled={!email || selectedRegs.length === 0} size="sm" className="bg-blue-600 hover:bg-blue-700">
+              {saved ? <><CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Sauvegardé</> : <>
+                <Settings className="h-3.5 w-3.5 mr-1" /> Sauvegarder les préférences
+              </>}
+            </Button>
+            <p className="text-xs text-slate-400">
+              Vous recevrez un résumé des nouvelles alertes sur {selectedRegs.length} règlement{selectedRegs.length > 1 ? "s" : ""}.
+            </p>
+          </div>
+        </CardContent>
+      )}
+    </Card>
+  );
+}
+
+function savedRegsLabel(regs: string[], freq: string) {
+  if (freq === "never") return <span className="text-xs text-slate-400">Notifications désactivées</span>;
+  return <span className="text-xs text-slate-500">{regs.length} règlement{regs.length > 1 ? "s" : ""} · {freq === "daily" ? "quotidien" : "hebdo"}</span>;
+}
 
 const SEVERITY_COLOR = (s: string) => {
   if (s === "critical") return "border-red-200 bg-red-50";
@@ -133,6 +238,8 @@ export default function AlertsPage() {
         </div>
       </div>
       {seedMsg && <p className="text-sm text-center text-slate-600">{seedMsg}</p>}
+
+      <AlertSubscriptionPanel />
 
       {alerts.length > 0 ? (
         <div className="space-y-4">

@@ -16,9 +16,11 @@ import {
   Euro,
   BookOpen,
   Gavel,
+  BadgeCheck,
 } from "lucide-react";
 import { VERDICT_COLORS, RISK_LEVEL_COLORS, SEVERITY_COLORS } from "@/lib/utils";
 import type { RoadmapPhase } from "@/lib/types/audit";
+import { ShareAuditButton } from "@/components/audit/ShareAuditButton";
 
 interface AuditResultProps {
   audit: {
@@ -73,6 +75,18 @@ export default function AuditResult({ audit, projectId, canDownloadPdf }: AuditR
     URL.revokeObjectURL(url);
   }
 
+  async function downloadCertificate() {
+    const res = await fetch(`/api/generate/certificate?auditId=${audit.id}`);
+    if (!res.ok) return alert("Attestation indisponible pour cet audit");
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `compliai-attestation-${audit.id.slice(0, 8)}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -87,19 +101,25 @@ export default function AuditResult({ audit, projectId, canDownloadPdf }: AuditR
             <p className="text-sm text-muted-foreground">{audit.projects?.name}</p>
           </div>
         </div>
-        {canDownloadPdf ? (
-          <Button onClick={downloadPdf} variant="outline" size="sm">
-            <Download className="h-4 w-4" />
-            Télécharger PDF
+        <div className="flex items-center gap-2 flex-wrap">
+          <ShareAuditButton auditId={audit.id} />
+          <Button onClick={downloadCertificate} variant="outline" size="sm" title="Attestation de conformité (1 page)">
+            <BadgeCheck className="h-4 w-4" />
+            Attestation
           </Button>
-        ) : (
-          <Link href="/dashboard/upgrade">
-            <Button variant="outline" size="sm">
+          {canDownloadPdf ?
+            <Button onClick={downloadPdf} variant="outline" size="sm">
               <Download className="h-4 w-4" />
+              Télécharger PDF
+            </Button>
+          : <Link href="/dashboard/upgrade">
+              <Button variant="outline" size="sm">
+                <Download className="h-4 w-4" />
               PDF (Pro)
             </Button>
           </Link>
-        )}
+          }
+        </div>
       </div>
 
       {/* Verdict Hero */}

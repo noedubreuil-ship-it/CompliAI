@@ -10,6 +10,38 @@ function getSupabaseAdmin() {
   );
 }
 
+/**
+ * Score a chunk against the query by counting keyword matches.
+ * Combined with vector similarity, this gives a better overall ranking.
+ */
+function keywordScore(query: string, chunk: LegalChunk): number {
+  const words = query
+    .toLowerCase()
+    .replace(/[^a-zéèêëàâùûüôîïç\s]/gi, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 3);
+
+  if (words.length === 0) return 0;
+
+  const target = `${chunk.regulation ?? ""} ${chunk.article_title ?? ""} ${chunk.content}`.toLowerCase();
+  const matches = words.filter((w) => target.includes(w)).length;
+  return matches / words.length;
+}
+
+/**
+ * Re-rank chunks by combining vector similarity score with keyword overlap.
+ * Chunks with matching keywords are pushed to the top.
+ */
+function rerankChunks(query: string, chunks: LegalChunk[]): LegalChunk[] {
+  return chunks
+    .map((chunk) => ({
+      chunk,
+      score: (chunk.similarity ?? 0) * 0.7 + keywordScore(query, chunk) * 0.3,
+    }))
+    .sort((a, b) => b.score - a.score)
+    .map(({ chunk }) => chunk);
+}
+
 export async function searchLegalChunks(
   query: string,
   matchCount = 6,
@@ -29,7 +61,8 @@ export async function searchLegalChunks(
     return [];
   }
 
-  return (data as LegalChunk[]) ?? [];
+  const chunks = (data as LegalChunk[]) ?? [];
+  return rerankChunks(query, chunks);
 }
 
 export function buildLegalContext(chunks: LegalChunk[]): string {

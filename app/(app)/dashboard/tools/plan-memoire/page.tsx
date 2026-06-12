@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { GraduationCap, Loader2, Download, RotateCcw, ChevronDown, ChevronRight, BookOpen, Lightbulb } from "lucide-react";
+import { GraduationCap, Loader2, Download, RotateCcw, ChevronDown, ChevronRight, BookOpen, Lightbulb, FileDown } from "lucide-react";
+import { downloadToolExportPdf } from "@/lib/utils/tool-export-pdf";
 import { cn } from "@/lib/utils";
 
 const EXEMPLES = [
@@ -47,6 +48,7 @@ export default function PlanMemoirePage() {
   const [sujet, setSujet] = useState("");
   const [niveau, setNiveau] = useState("Master 2");
   const [loading, setLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const [result, setResult] = useState<PlanData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,10 +56,10 @@ export default function PlanMemoirePage() {
     if (!sujet.trim()) return;
     setLoading(true); setError(null); setResult(null);
     try {
-      const res = await fetch("/api/legal-tools", {
+      const res = await fetch("/api/generate/plan-memoire", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tool: "plan-memoire", sujet, niveau }),
+        body: JSON.stringify({ sujet, niveau }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -66,41 +68,55 @@ export default function PlanMemoirePage() {
     setLoading(false);
   }
 
+  function buildExportSections() {
+    if (!result) return { title: "Plan de mémoire", sections: [] as { heading: string; body: string }[] };
+    return {
+      title: result.titre_propose,
+      sections: [
+        { heading: "Problématique", body: result.problematique },
+        { heading: "Amorce d'introduction", body: result.introduction_amorce },
+        {
+          heading: "Plan",
+          body: result.plan
+            .map((p) => `${p.partie}\n${p.sous_parties.map((sp) =>
+              `  ${sp.titre}\n${sp.sections.map((s) => `    ${s.titre}\n${s.idees.map((i) => `      • ${i}`).join("\n")}`).join("\n")}`,
+            ).join("\n")}`)
+            .join("\n\n"),
+        },
+        {
+          heading: "Bibliographie",
+          body: result.bibliographie.map((b) => `${b.type}\n${b.references.map((r) => `  • ${r}`).join("\n")}`).join("\n\n"),
+        },
+        { heading: "Conseils du directeur", body: result.conseils_directeur },
+      ],
+    };
+  }
+
   function downloadPlan() {
     if (!result) return;
-    const lines: string[] = [
-      result.titre_propose,
-      "=".repeat(result.titre_propose.length),
-      "",
-      "PROBLÉMATIQUE",
-      result.problematique,
-      "",
-      "AMORCE D'INTRODUCTION",
-      result.introduction_amorce,
-      "",
-      "PLAN",
-      "",
-      ...result.plan.flatMap(p => [
-        p.partie,
-        ...p.sous_parties.flatMap(sp => [
-          `  ${sp.titre}`,
-          ...sp.sections.flatMap(s => [
-            `    ${s.titre}`,
-            ...s.idees.map(i => `      - ${i}`),
-          ]),
-        ]),
-        "",
-      ]),
-      "BIBLIOGRAPHIE",
-      ...result.bibliographie.flatMap(b => [`\n${b.type}`, ...b.references.map(r => `  - ${r}`)]),
-      "",
-      "CONSEILS DU DIRECTEUR",
-      result.conseils_directeur,
-    ];
+    const { title, sections } = buildExportSections();
+    const lines = [title, "=".repeat(title.length), "", ...sections.flatMap((s) => [s.heading.toUpperCase(), s.body, ""])];
     const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = "plan-memoire.txt"; a.click();
     URL.revokeObjectURL(url);
+  }
+
+  async function downloadPdf() {
+    if (!result) return;
+    const { title, sections } = buildExportSections();
+    setPdfLoading(true);
+    try {
+      await downloadToolExportPdf({
+        title,
+        subtitle: `Niveau : ${niveau}`,
+        sections,
+        filename: "plan-memoire",
+      });
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Erreur export PDF");
+    }
+    setPdfLoading(false);
   }
 
   if (!result) {
@@ -167,7 +183,11 @@ export default function PlanMemoirePage() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-slate-900 leading-tight">{result.titre_propose}</h1>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={downloadPlan}><Download className="h-4 w-4" />Télécharger</Button>
+          <Button variant="outline" size="sm" onClick={() => void downloadPdf()} disabled={pdfLoading}>
+            {pdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+            PDF
+          </Button>
+          <Button variant="outline" size="sm" onClick={downloadPlan}><Download className="h-4 w-4" />TXT</Button>
           <Button variant="outline" size="sm" onClick={() => { setResult(null); setSujet(""); }}><RotateCcw className="h-4 w-4" />Nouveau</Button>
         </div>
       </div>

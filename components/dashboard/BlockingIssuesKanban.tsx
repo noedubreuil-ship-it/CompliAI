@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, CheckCircle2, Clock, Circle } from "lucide-react";
 import { SEVERITY_COLORS } from "@/lib/utils";
+import { useToast } from "@/components/ui/toast-provider";
 
 type IssueStatus = "open" | "in_progress" | "resolved";
 
@@ -33,21 +34,36 @@ const COLUMNS: { id: IssueStatus; label: string; icon: React.ElementType; color:
 export default function BlockingIssuesKanban({ projectId, initialIssues }: Props) {
   const [issues, setIssues] = useState<BlockingIssue[]>(initialIssues);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [errorId, setErrorId] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const STATUS_LABELS: Record<IssueStatus, string> = {
+    open: "À traiter",
+    in_progress: "En cours",
+    resolved: "Résolu",
+  };
 
   async function moveIssue(issueId: string, newStatus: IssueStatus) {
+    const previousIssues = issues;
     setUpdating(issueId);
+    setErrorId(null);
     setIssues((prev) =>
       prev.map((i) => (i.id === issueId ? { ...i, status: newStatus } : i))
     );
 
     try {
-      await fetch(`/api/projects/${projectId}/issues/${issueId}`, {
+      const res = await fetch(`/api/projects/${projectId}/issues/${issueId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
-    } catch (err) {
-      console.error("Failed to update issue status:", err);
+      if (!res.ok) throw new Error("Erreur serveur");
+      toast(`Issue déplacée vers "${STATUS_LABELS[newStatus]}"`, "success");
+    } catch {
+      setIssues(previousIssues);
+      setErrorId(issueId);
+      toast("Échec de la mise à jour — modification annulée", "error");
+      setTimeout(() => setErrorId(null), 3000);
     } finally {
       setUpdating(null);
     }
@@ -81,8 +97,11 @@ export default function BlockingIssuesKanban({ projectId, initialIssues }: Props
                   {colIssues.map((issue) => (
                     <div
                       key={issue.id}
-                      className={`p-3 rounded-lg border text-xs space-y-2 ${SEVERITY_COLORS[issue.severity as keyof typeof SEVERITY_COLORS]} ${updating === issue.id ? "opacity-50" : ""}`}
+                      className={`p-3 rounded-lg border text-xs space-y-2 ${SEVERITY_COLORS[issue.severity as keyof typeof SEVERITY_COLORS]} ${updating === issue.id ? "opacity-50" : ""} ${errorId === issue.id ? "border-red-400 ring-1 ring-red-300" : ""}`}
                     >
+                      {errorId === issue.id && (
+                        <p className="text-red-600 font-medium">Échec — modification annulée</p>
+                      )}
                       <p className="font-semibold leading-snug">{issue.title}</p>
                       {issue.regulation && (
                         <p className="opacity-70">

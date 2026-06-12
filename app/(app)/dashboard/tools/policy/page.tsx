@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Users, Loader2, Download } from "lucide-react";
@@ -11,8 +12,13 @@ const EMPLOYEE_COUNTS = ["1-10", "11-50", "51-200", "201-1000", "1000+"];
 
 export default function PolicyPage() {
   const [form, setForm] = useState({
-    company_name: "", sector: "Tech / SaaS",
-    ai_tools_used: "", employee_count: "11-50",
+    company_name: "",
+    sector: "Tech / SaaS",
+    ai_tools_used: "",
+    employee_count: "11-50",
+    country: "France",
+    cse_status: "non précisé",
+    additional_context: "",
   });
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -90,11 +96,38 @@ export default function PolicyPage() {
                   {EMPLOYEE_COUNTS.map(c => <option key={c}>{c}</option>)}
                 </select>
               </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700 block mb-1">Pays (déploiement principal)</label>
+                <select value={form.country} onChange={e => setForm(f => ({ ...f, country: e.target.value }))}
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                  <option value="France">France</option>
+                  <option value="Allemagne">Allemagne</option>
+                  <option value="Belgique">Belgique</option>
+                  <option value="Autre État membre UE">Autre État membre UE</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700 block mb-1">Représentation du personnel / CSE</label>
+                <select value={form.cse_status} onChange={e => setForm(f => ({ ...f, cse_status: e.target.value }))}
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                  <option value="non précisé">Non précisé</option>
+                  <option value="Oui (CSE ou équivalent)">Oui (CSE ou équivalent)</option>
+                  <option value="Non — pas de CSE / sous seuils">Non — pas de CSE / sous seuils</option>
+                  <option value="En cours de mise en place">En cours de mise en place</option>
+                </select>
+              </div>
             </div>
             <div>
               <label className="text-sm font-medium text-slate-700 block mb-1">Outils IA utilisés par les employés *</label>
               <textarea value={form.ai_tools_used} onChange={e => setForm(f => ({ ...f, ai_tools_used: e.target.value }))}
                 placeholder="ChatGPT, Claude, Copilot, Midjourney, Cursor, Gemini, outils IA internes..." rows={3}
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none" />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700 block mb-1">Précisions (optionnel)</label>
+              <textarea value={form.additional_context} onChange={e => setForm(f => ({ ...f, additional_context: e.target.value }))}
+                placeholder="Sensibilité des données, usages autorisés/interdits, formation prévue, outils en liste noire…"
+                rows={2}
                 className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none" />
             </div>
             {error && <p className="text-sm text-red-600">{error}</p>}
@@ -108,7 +141,14 @@ export default function PolicyPage() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-bold">{result.title}</h2>
-              <p className="text-sm text-muted-foreground">Version {result.version} · Conforme Art. 4 AI Act + RGPD</p>
+              <p className="text-sm text-muted-foreground">
+                Version {result.version}
+                {result.effective_date ? ` · Effet prévu / indiqué : ${result.effective_date}` : ""}
+                {result.estimated_incomplete_count != null && result.estimated_incomplete_count > 0 ?
+                  ` · environ ${result.estimated_incomplete_count} repères [À COMPLÉTER]`
+                : ""}
+                {" "}· Art. 4 AI Act · RGPD
+              </p>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => setResult(null)}>Nouvelle politique</Button>
@@ -118,9 +158,16 @@ export default function PolicyPage() {
             </div>
           </div>
 
+          {result.header_meta_note && (
+            <Card className="border-slate-200 bg-slate-50">
+              <CardHeader className="py-3"><CardTitle className="text-sm">En-tête et périmètre</CardTitle></CardHeader>
+              <CardContent className="pt-0 text-sm text-slate-700 whitespace-pre-wrap">{result.header_meta_note}</CardContent>
+            </Card>
+          )}
+
           {result.key_rules?.length > 0 && (
             <Card className="border-green-200 bg-green-50">
-              <CardHeader><CardTitle className="text-sm text-green-800">5 règles clés à retenir</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-sm text-green-800">Règles clés à retenir</CardTitle></CardHeader>
               <CardContent>
                 <ol className="space-y-1">
                   {result.key_rules.map((rule: string, i: number) => (
@@ -139,10 +186,23 @@ export default function PolicyPage() {
                 <CardTitle className="text-sm">{section.id}. {section.title}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{section.content}</p>
+                <div className="text-sm text-slate-800 prose prose-sm max-w-none
+                  prose-headings:font-semibold prose-p:my-2 prose-ul:my-2 prose-li:my-0.5
+                  prose-strong:text-slate-900 prose-table:text-xs prose-th:bg-slate-100 prose-th:p-2 prose-td:p-2">
+                  <ReactMarkdown>{section.content}</ReactMarkdown>
+                </div>
               </CardContent>
             </Card>
           ))}
+
+          {result.professional_footer && (
+            <Card>
+              <CardHeader className="py-3"><CardTitle className="text-xs text-muted-foreground">Mention juridique (pied de document)</CardTitle></CardHeader>
+              <CardContent className="pt-0 prose prose-sm max-w-none text-slate-600">
+                <ReactMarkdown>{result.professional_footer}</ReactMarkdown>
+              </CardContent>
+            </Card>
+          )}
 
           <div className="bg-slate-50 border rounded-lg p-4 text-xs text-slate-500">
             Ce document constitue une information juridique générale. Faites valider par un DPO ou un avocat spécialisé avant diffusion aux employés.

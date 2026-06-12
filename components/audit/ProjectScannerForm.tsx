@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,8 @@ import { Select } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ChevronRight, ChevronLeft, Loader2, Shield } from "lucide-react";
 import type { ProjectFormData } from "@/lib/types/audit";
+import { useAIToast } from "@/components/ui/toast-provider";
+import { parseJsonWithAiErrors } from "@/lib/ai/client-ai-errors";
 
 const SECTORS = [
   "Santé & MedTech",
@@ -59,12 +61,26 @@ const DEFAULT_FORM: ProjectFormData = {
   training_data_source: "",
 };
 
-export default function ProjectScannerForm() {
+export default function ProjectScannerForm({
+  organizationId,
+}: {
+  organizationId?: string;
+}) {
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState<ProjectFormData>(DEFAULT_FORM);
+  const [form, setForm] = useState<ProjectFormData>(() => ({
+    ...DEFAULT_FORM,
+    organization_id: organizationId ?? undefined,
+  }));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const aiToast = useAIToast();
+
+  useEffect(() => {
+    if (organizationId) {
+      setForm((prev) => ({ ...prev, organization_id: organizationId }));
+    }
+  }, [organizationId]);
 
   function update(field: keyof ProjectFormData, value: unknown) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -95,11 +111,21 @@ export default function ProjectScannerForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Erreur lors de l'audit");
+      const parsed = await parseJsonWithAiErrors<{
+        project_id?: string;
+        audit_id?: string;
+        error?: string;
+      }>(res, aiToast);
+      if (!parsed.ok) return;
+      const data = parsed.data;
+      if (!data.project_id || !data.audit_id) {
+        aiToast.aiError(data.error ?? "Réponse audit incomplète");
+        return;
+      }
       router.push(`/dashboard/projects/${data.project_id}/audit/${data.audit_id}`);
-    } catch (err: unknown) {
+      } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Une erreur est survenue");
+    } finally {
       setLoading(false);
     }
   }
@@ -130,6 +156,14 @@ export default function ProjectScannerForm() {
           </div>
         ))}
       </div>
+
+      {organizationId && (
+        <Card className="border-blue-200 bg-blue-50/40">
+          <CardContent className="py-3 text-xs text-blue-900">
+            Ce projet sera rattaché à votre <strong>organisation</strong> : visible et auditable par l&apos;équipe.
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

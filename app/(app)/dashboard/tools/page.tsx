@@ -1,244 +1,126 @@
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  FileText, Shield, Users, FileSearch2, TrendingUp, ArrowRight, Sparkles,
-  BookOpen, HelpCircle, GraduationCap, BookMarked, Swords,
-  Briefcase, Globe2, FilePen, Gavel, ClipboardCheck, Scale,
-} from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import { ArrowRight, Lock, Sparkles } from "lucide-react";
+import { LEGAL_TOOL_SECTIONS, type NavItem } from "@/lib/navigation/app-nav";
+import { ToolPageShell } from "@/components/tools/ToolPageShell";
 
-const COMPLIANCE_TOOLS = [
-  {
-    href: "/dashboard/tools/art11",
-    icon: FileText,
-    title: "Documentation Art. 11",
-    description: "Documentation technique obligatoire pour systèmes IA à haut risque (Annexe IV). Export PDF.",
-    badge: "Obligatoire haut risque",
-    badgeColor: "bg-red-50 text-red-700",
-    color: "bg-blue-50 text-blue-600",
-  },
-  {
-    href: "/dashboard/tools/fria",
-    icon: Shield,
-    title: "FRIA Art. 27",
-    description: "Évaluation d'Impact sur les Droits Fondamentaux. Obligatoire entités publiques.",
-    badge: "Obligatoire entités publiques",
-    badgeColor: "bg-orange-50 text-orange-700",
-    color: "bg-purple-50 text-purple-600",
-  },
-  {
-    href: "/dashboard/tools/policy",
-    icon: Users,
-    title: "Politique IA Employés",
-    description: "Politique d'usage de l'IA adaptée à votre entreprise. Obligation Art. 4 littératie IA.",
-    badge: "Art. 4 AI Act",
-    badgeColor: "bg-blue-50 text-blue-700",
-    color: "bg-green-50 text-green-600",
-  },
-  {
-    href: "/dashboard/tools/contracts",
-    icon: FileSearch2,
-    title: "Analyse de contrats tiers",
-    description: "Collez votre contrat OpenAI, AWS, Google... Claude analyse la conformité AI Act & RGPD.",
-    badge: "Art. 25 RGPD + Art. 28 AI Act",
-    badgeColor: "bg-slate-100 text-slate-700",
-    color: "bg-amber-50 text-amber-600",
-  },
-  {
-    href: "/dashboard/tools/investor-report",
-    icon: TrendingUp,
-    title: "Rapport Investisseurs",
-    description: "Due diligence IA en 1 page. Score de conformité, risques, plan d'action.",
-    badge: "Feature Pro",
-    badgeColor: "bg-blue-50 text-blue-700",
-    color: "bg-indigo-50 text-indigo-600",
-  },
+const ICON_COLORS = [
+  "bg-cyan-50 text-cyan-700",
+  "bg-blue-50 text-blue-600",
+  "bg-indigo-50 text-indigo-600",
+  "bg-violet-50 text-violet-600",
+  "bg-amber-50 text-amber-600",
+  "bg-teal-50 text-teal-600",
+  "bg-emerald-50 text-emerald-600",
+  "bg-orange-50 text-orange-600",
+  "bg-slate-100 text-slate-700",
 ];
 
-const STUDENT_TOOLS = [
-  {
-    href: "/dashboard/tools/resume-arret",
-    icon: BookOpen,
-    title: "Résumé d'arrêts & commentaires guidés",
-    description: "Collez un arrêt CJUE, CEDH ou décision DPA → fiche d'arrêt complète + plan de commentaire détaillé.",
-    badge: "Nouveau",
-    badgeColor: "bg-blue-100 text-blue-700",
-    color: "bg-blue-50 text-blue-600",
-  },
-  {
-    href: "/dashboard/tools/quiz",
-    icon: HelpCircle,
-    title: "Quiz de droit de l'IA interactif",
-    description: "QCM générés par Claude sur l'AI Act, RGPD, DSA... Correction immédiate avec citation du texte.",
-    badge: "Fort",
-    badgeColor: "bg-yellow-100 text-yellow-700",
-    color: "bg-yellow-50 text-yellow-600",
-  },
-  {
-    href: "/dashboard/tools/plan-memoire",
-    icon: GraduationCap,
-    title: "Générateur de plans de mémoires",
-    description: "Proposez un sujet → plan en 2 parties / 4 sous-parties, problématique, bibliographie indicative.",
-    badge: "Moyen",
-    badgeColor: "bg-indigo-100 text-indigo-700",
-    color: "bg-indigo-50 text-indigo-600",
-  },
-  {
-    href: "/dashboard/tools/explication-article",
-    icon: BookMarked,
-    title: "Explication d'articles de loi",
-    description: "Sélectionnez un article AI Act, RGPD ou DSA → expliqué à 3 niveaux : clair, cas pratique, doctrine.",
-    badge: "Fort",
-    badgeColor: "bg-green-100 text-green-700",
-    color: "bg-green-50 text-green-600",
-  },
-  {
-    href: "/dashboard/tools/simulateur",
-    icon: Swords,
-    title: "Simulateur de cas pratique",
-    description: "Jeu de rôle réglementaire — défendez votre position face au régulateur, DPO ou avocat adverse. Score final.",
-    badge: "Très différenciant",
-    badgeColor: "bg-red-100 text-red-700",
-    color: "bg-red-50 text-red-600",
-  },
-];
+const BADGE_STYLES: Record<string, string> = {
+  Pro: "bg-slate-100 text-slate-700",
+  "Bêta — pas un audit": "bg-cyan-50 text-cyan-800",
+  Bêta: "bg-cyan-50 text-cyan-800",
+};
 
-const PRO_TOOLS = [
-  {
-    href: "/dashboard/tools/memoire-conformite",
-    icon: Briefcase,
-    title: "Mémoire de conformité IA",
-    description: "Décrivez la situation client → mémoire juridique structuré (qualification, risques, plan d'action). Format cabinet.",
-    badge: "Nouveau",
-    badgeColor: "bg-slate-100 text-slate-700",
-    color: "bg-slate-100 text-slate-700",
-  },
-  {
-    href: "/dashboard/tools/comparateur",
-    icon: Globe2,
-    title: "Comparateur de législations",
-    description: "Comparez la transposition d'une directive (AI Act, RGPD...) entre deux États membres. Tableau côte-à-côte.",
-    badge: "Fort",
-    badgeColor: "bg-cyan-100 text-cyan-700",
-    color: "bg-cyan-50 text-cyan-600",
-  },
-  {
-    href: "/dashboard/tools/clauses-contrat",
-    icon: FilePen,
-    title: "Générateur de clauses contractuelles IA",
-    description: "Clauses prêtes à l'emploi : responsabilité IA, DPA Art. 28, transparence algorithmique, portabilité.",
-    badge: "Fort",
-    badgeColor: "bg-violet-100 text-violet-700",
-    color: "bg-violet-50 text-violet-600",
-  },
-  {
-    href: "/dashboard/tools/analyse-decision",
-    icon: Gavel,
-    title: "Analyse de décisions d'autorités",
-    description: "Collez une sanction CNIL, DPC, EDPB → analyse structurée : faits, raisonnement, montant, implications.",
-    badge: "Fort",
-    badgeColor: "bg-orange-100 text-orange-700",
-    color: "bg-orange-50 text-orange-600",
-  },
-  {
-    href: "/dashboard/tools/audit-qr",
-    icon: ClipboardCheck,
-    title: "Q&R pour audits réglementaires",
-    description: "Décrivez votre système IA → 20 questions que poserait un auditeur ANC, avec criticité et préparation.",
-    badge: "Moyen",
-    badgeColor: "bg-teal-100 text-teal-700",
-    color: "bg-teal-50 text-teal-600",
-  },
-  {
-    href: "/dashboard/tools/recherche-jurisprudentielle",
-    icon: Scale,
-    title: "Recherche jurisprudentielle IA",
-    description: "Recherche CJUE + CEDH + DPA par thème ou article. Résumés structurés avec ECLI et implications pratiques.",
-    badge: "Moyen",
-    badgeColor: "bg-indigo-100 text-indigo-700",
-    color: "bg-indigo-50 text-indigo-600",
-  },
-];
+function badgeClass(badge?: string) {
+  if (!badge) return "bg-slate-100 text-slate-600";
+  return BADGE_STYLES[badge] ?? "bg-blue-50 text-blue-700";
+}
 
-function ToolSection({ title, subtitle, emoji, tools }: { title: string; subtitle: string; emoji: string; tools: typeof COMPLIANCE_TOOLS }) {
+function ToolCard({ tool, isPro, colorClass }: { tool: NavItem; isPro: boolean; colorClass: string }) {
+  const locked = tool.requiresPro && !isPro;
+  const href = locked ? "/dashboard/upgrade" : tool.href;
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <span className="text-2xl">{emoji}</span>
-        <div>
-          <h2 className="text-lg font-bold text-slate-900">{title}</h2>
-          <p className="text-sm text-muted-foreground">{subtitle}</p>
-        </div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {tools.map((tool) => (
-          <Link key={tool.href} href={tool.href}>
-            <Card className="h-full hover:border-slate-400 transition-all hover:shadow-md cursor-pointer group">
-              <CardContent className="pt-5 pb-5 h-full flex flex-col">
-                <div className="flex items-start gap-4 flex-1">
-                  <div className={`p-2.5 rounded-xl flex-shrink-0 ${tool.color}`}>
-                    <tool.icon className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <h3 className="font-semibold text-sm">{tool.title}</h3>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${tool.badgeColor}`}>
-                        {tool.badge}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{tool.description}</p>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-1" />
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
-    </div>
+    <Link href={href}>
+      <Card
+        className={`h-full transition-all cursor-pointer group ${locked ? "opacity-70 hover:opacity-90" : "hover:border-neutral-300 hover:shadow-md"}`}
+      >
+        <CardContent className="pt-5 pb-5 h-full flex flex-col">
+          <div className="flex items-start gap-4 flex-1">
+            <div
+              className={`p-2.5 rounded-xl flex-shrink-0 ${locked ? "bg-neutral-100 text-neutral-400" : colorClass}`}
+            >
+              {locked ? <Lock className="h-5 w-5" /> : <tool.icon className="h-5 w-5" />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <h3 className={`font-semibold text-sm ${locked ? "text-neutral-400" : "text-neutral-900"}`}>
+                  {tool.label}
+                </h3>
+                {locked ? (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-amber-50 text-amber-800 border border-amber-200">
+                    Pro requis
+                  </span>
+                ) : tool.badge ? (
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${badgeClass(tool.badge)}`}>
+                    {tool.badge}
+                  </span>
+                ) : null}
+              </div>
+              <p className={`text-xs leading-relaxed ${locked ? "text-neutral-400" : "text-muted-foreground"}`}>
+                {tool.description}
+              </p>
+            </div>
+            <ArrowRight
+              className={`h-4 w-4 flex-shrink-0 mt-1 transition-opacity ${locked ? "text-amber-500 opacity-60 group-hover:opacity-100" : "text-muted-foreground opacity-0 group-hover:opacity-100"}`}
+            />
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
 
 export const metadata = { title: "Outils juridiques IA — CompliAI" };
 
-export default function ToolsPage() {
+export default async function ToolsPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("subscription_tier")
+    .eq("id", user!.id)
+    .single();
+  const isPro = profile?.subscription_tier === "pro" || profile?.subscription_tier === "enterprise";
+
+  const toolCount = LEGAL_TOOL_SECTIONS.reduce((n, s) => n + s.items.length, 0);
+
   return (
-    <div className="space-y-10">
-      <div>
-        <h1 className="text-2xl font-bold">Outils juridiques IA</h1>
-        <p className="text-muted-foreground mt-1">
-          {COMPLIANCE_TOOLS.length + STUDENT_TOOLS.length + PRO_TOOLS.length} outils pour la conformité, la formation et la pratique du droit européen de l&apos;IA.
-        </p>
-      </div>
+    <ToolPageShell
+      title="Outils juridiques IA"
+      breadcrumb="Catalogue"
+      maxWidth="max-w-5xl"
+      description={`${toolCount} outils pour la conformité, la jurisprudence, la formation et la pratique du droit européen de l'IA.`}
+    >
+      <div className="space-y-10">
+        {LEGAL_TOOL_SECTIONS.map((section) => (
+          <div key={section.id} className="space-y-4">
+            <div>
+              <h2 className="text-lg font-bold text-neutral-900">{section.label}</h2>
+              {section.catalogSubtitle && (
+                <p className="text-sm text-muted-foreground">{section.catalogSubtitle}</p>
+              )}
+            </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {section.items.map((tool, i) => (
+                <ToolCard key={tool.href} tool={tool} isPro={isPro} colorClass={ICON_COLORS[i % ICON_COLORS.length]} />
+              ))}
+            </div>
+          </div>
+        ))}
 
-      <ToolSection
-        emoji="🏢"
-        title="Conformité entreprise"
-        subtitle="Documents obligatoires et analyses de conformité AI Act & RGPD"
-        tools={COMPLIANCE_TOOLS}
-      />
-
-      <ToolSection
-        emoji="🎓"
-        title="Étudiants en droit"
-        subtitle="Outils pédagogiques et de formation au droit de l'IA"
-        tools={STUDENT_TOOLS}
-      />
-
-      <ToolSection
-        emoji="⚖️"
-        title="Professionnels du droit"
-        subtitle="Avocats, juristes, DPO — outils de pratique avancée"
-        tools={PRO_TOOLS}
-      />
-
-      <div className="bg-slate-50 border rounded-xl p-4 flex items-start gap-3">
-        <Sparkles className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
-        <div className="text-sm text-slate-600">
-          <strong className="text-slate-900">Tous les outils sont basés sur les textes officiels</strong> —
-          {" "}AI Act UE 2024/1689, RGPD UE 2016/679, DSA UE 2022/2065, jurisprudence CJUE/CEDH.
-          Ils constituent des informations juridiques générales, non des conseils personnalisés. Faites valider par un avocat.
+        <div className="flex items-start gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+          <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-blue-500" />
+          <div className="text-sm text-neutral-600">
+            <strong className="text-neutral-900">Textes officiels indexés</strong> — AI Act, RGPD, DSA, jurisprudence
+            CJUE/CEDH. Information juridique générale, non un conseil personnalisé.
+          </div>
         </div>
       </div>
-    </div>
+    </ToolPageShell>
   );
 }

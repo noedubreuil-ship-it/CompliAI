@@ -106,7 +106,7 @@ export async function buildUserProfile(userId: string, db: SupabaseClient): Prom
   const sectors = [...new Set([
     ...(projects ?? []).map((p: any) => p.sector).filter(Boolean),
     ...(aiSystems ?? []).map((s: any) => s.risk_category).filter(Boolean),
-    profile?.data?.sector,
+    profile?.sector,
   ].filter(Boolean))] as string[];
 
   // Risk levels

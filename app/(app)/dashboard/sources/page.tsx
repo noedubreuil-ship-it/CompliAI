@@ -12,6 +12,7 @@ import {
   type LegalSource,
 } from "@/lib/data/legal-sources";
 import { cn } from "@/lib/utils";
+import { SupplementaryCorpusIngestButton } from "@/components/dashboard/SupplementaryCorpusIngestButton";
 
 const CATEGORY_ICONS: Record<SourceCategory, React.ElementType> = {
   "Institutions EU officielles": Shield,
@@ -40,6 +41,7 @@ const TYPE_BADGE: Record<LegalSource["type"], string> = {
   cabinet: "bg-amber-100 text-amber-800",
   régulateur: "bg-red-100 text-red-800",
   juridiction: "bg-orange-100 text-orange-800",
+  dpa: "bg-rose-100 text-rose-800",
 };
 
 function SourceCard({ source }: { source: LegalSource }) {
@@ -221,6 +223,8 @@ export default function SourcesPage() {
           })}
         </div>
       )}
+
+      <SupplementaryCorpusIngestButton />
 
       <p className="text-xs text-slate-400 text-center pt-4">
         Ces sources alimentent le Consultant Juridique IA, la Veille réglementaire et le Journal juridique EU.

@@ -124,5 +124,5 @@ function Art11PDF({ data, systemName }: { data: Art11Data; systemName: string })
 
 export async function generateArt11PDF(data: Art11Data, systemName: string): Promise<Buffer> {
   const el = React.createElement(Art11PDF, { data, systemName });
-  return (await renderToBuffer(el)) as Buffer;
+  return (await renderToBuffer(el as any)) as Buffer;
 }

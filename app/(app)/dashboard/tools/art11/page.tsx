@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, FileText, Loader2, Download, CheckCircle2, XCircle, Clock, BookOpen } from "lucide-react";
@@ -173,6 +174,35 @@ export default function Art11Page() {
             </div>
           </div>
 
+          {result.provider_role_note && (
+            <Card>
+              <CardHeader><CardTitle className="text-sm">Qualification fournisseur / déployeur</CardTitle></CardHeader>
+              <CardContent><p className="text-sm text-slate-700">{result.provider_role_note}</p></CardContent>
+            </Card>
+          )}
+
+          {result.legal_application_note && (
+            <Card>
+              <CardHeader><CardTitle className="text-sm">Application temporelle (rappel)</CardTitle></CardHeader>
+              <CardContent><p className="text-sm text-slate-600">{result.legal_application_note}</p></CardContent>
+            </Card>
+          )}
+
+          {(result.estimated_incomplete_placeholder_count > 0 || result.critical_warnings_count > 0) && (
+            <div className="flex flex-wrap gap-2 text-xs">
+              {result.estimated_incomplete_placeholder_count > 0 && (
+                <span className="px-2 py-1 rounded-full bg-amber-50 text-amber-900 border border-amber-200">
+                  [À COMPLÉTER] estimés : {result.estimated_incomplete_placeholder_count}
+                </span>
+              )}
+              {result.critical_warnings_count > 0 && (
+                <span className="px-2 py-1 rounded-full bg-orange-50 text-orange-900 border border-orange-200">
+                  Avertissements ⚠️ : {result.critical_warnings_count}
+                </span>
+              )}
+            </div>
+          )}
+
           {result.sections?.map((section: any) => (
             <Card key={section.id}>
               <CardHeader className="pb-2">
@@ -181,7 +211,14 @@ export default function Art11Page() {
                   <span className="text-xs text-blue-600 font-normal">{section.article_ref}</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent><p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{section.content}</p></CardContent>
+              <CardContent>
+                <div className="text-sm text-slate-800 prose prose-sm max-w-none
+                  prose-headings:font-semibold prose-headings:text-slate-900 prose-headings:mt-3 prose-headings:mb-1
+                  prose-p:my-2 prose-strong:text-slate-900 prose-table:text-xs
+                  prose-th:bg-slate-100 prose-th:p-2 prose-td:p-2 prose-li:my-0.5">
+                  <ReactMarkdown>{section.content}</ReactMarkdown>
+                </div>
+              </CardContent>
             </Card>
           ))}
 
@@ -214,6 +251,17 @@ export default function Art11Page() {
                     </li>
                   ))}
                 </ol>
+              </CardContent>
+            </Card>
+          )}
+
+          {result.professional_disclaimer && (
+            <Card>
+              <CardHeader><CardTitle className="text-sm">Avertissement</CardTitle></CardHeader>
+              <CardContent>
+                <div className="text-xs text-slate-600 leading-relaxed prose prose-sm max-w-none">
+                  <ReactMarkdown>{result.professional_disclaimer}</ReactMarkdown>
+                </div>
               </CardContent>
             </Card>
           )}

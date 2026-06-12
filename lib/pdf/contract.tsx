@@ -48,25 +48,105 @@ const s = StyleSheet.create({
   listItem: { flexDirection: "row", gap: 6, marginBottom: 5 },
   bullet: { fontSize: 9, color: C.red, width: 10 },
   listText: { flex: 1, fontSize: 9, color: C.dark, lineHeight: 1.5 },
+  gridHint: { fontSize: 7, color: C.mid, marginBottom: 6 },
+  gapBlock: { marginBottom: 10, padding: 8, borderRadius: 4, borderWidth: 1, borderColor: C.red, backgroundColor: C.redBg },
+  gapTitle: { fontSize: 10, fontFamily: "Helvetica-Bold", color: C.red, marginBottom: 4 },
+  gapBody: { fontSize: 8, color: C.dark, lineHeight: 1.45, marginBottom: 3 },
+  clauseLine: { fontSize: 7, color: C.dark, lineHeight: 1.35, marginBottom: 2 },
   disclaimer: { position: "absolute", bottom: 30, left: 50, right: 50, fontSize: 7, color: C.mid, lineHeight: 1.4, borderTopWidth: 1, borderTopColor: C.light, paddingTop: 8 },
   pageNumber: { position: "absolute", bottom: 18, right: 50, fontSize: 8, color: C.mid },
 });
 
-interface ContractData {
+interface ClauseGridRow {
+  id: string;
+  title?: string;
+  status?: string;
+  location?: string;
+  evaluation?: string;
+}
+
+interface CriticalGap {
+  title?: string;
+  legal_basis?: string;
+  finding?: string;
+  risk?: string;
+  clause_to_negotiate?: string;
+}
+
+interface ModeratePoint {
+  title?: string;
+  legal_basis?: string;
+  finding?: string;
+  recommendation?: string;
+}
+
+interface SanctionRef {
+  foundation?: string;
+  max_sanction?: string;
+  probability_H_M_L?: string;
+}
+
+export interface ContractData {
   provider: string;
   risk_score: number;
   overall_assessment: string;
-  findings: Array<{ category: string; type: string; title: string; description: string; regulation_ref: string; severity: string }>;
+  findings: Array<{
+    category: string;
+    type: string;
+    title: string;
+    description: string;
+    regulation_ref: string;
+    severity: string;
+  }>;
   missing_clauses: string[];
   recommended_amendments: string[];
   gdpr_compliant: boolean;
   ai_act_compliant: boolean;
+  /** Analyse contrat tiers CompliAI (Art. 28 + AI Act) — champs optionnels */
+  score_rgpd_art28?: number;
+  score_ai_act?: number;
+  risk_level_global?: string;
+  gdpr_art28_clauses?: ClauseGridRow[];
+  ai_act_deployer_clauses?: ClauseGridRow[];
+  critical_gaps?: CriticalGap[];
+  moderate_attention_points?: ModeratePoint[];
+  action_plan?: { immediate?: string[]; short_term_30_90_days?: string[]; at_next_renewal?: string[] };
+  sanctions_reference?: SanctionRef[];
+  professional_disclaimer?: string;
+  sector_notes?: string;
+}
+
+function gridStatusFr(status: string | undefined): string {
+  const z = (status || "").toLowerCase();
+  if (z === "present") return "Prés.";
+  if (z === "partial") return "Part.";
+  if (z === "absent") return "Abs.";
+  if (z === "na" || z === "n/a") return "n/a";
+  return status || "—";
 }
 
 function ContractPDF({ data }: { data: ContractData }) {
   const now = new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
-  const scoreColor = data.risk_score >= 70 ? C.green : data.risk_score >= 40 ? C.amber : C.red;
-  const scoreBg = data.risk_score >= 70 ? C.greenBg : data.risk_score >= 40 ? C.amberBg : C.redBg;
+  const scoreNum =
+    typeof data.risk_score === "number" && Number.isFinite(data.risk_score) ? data.risk_score : 0;
+  const scoreColor = scoreNum >= 70 ? C.green : scoreNum >= 40 ? C.amber : C.red;
+  const scoreBg = scoreNum >= 70 ? C.greenBg : scoreNum >= 40 ? C.amberBg : C.redBg;
+  const g28 =
+    typeof data.score_rgpd_art28 === "number" && Number.isFinite(data.score_rgpd_art28) ?
+      Math.round(data.score_rgpd_art28)
+    : null;
+  const sa =
+    typeof data.score_ai_act === "number" && Number.isFinite(data.score_ai_act) ? Math.round(data.score_ai_act)
+    : null;
+  const rgpdDetailColor = g28 === null ? C.mid : g28 >= 72 ? C.green : C.red;
+  const aiDetailColor = sa === null ? C.mid : sa >= 72 ? C.green : C.red;
+
+  const hasPlanPage =
+    (data.missing_clauses?.length ?? 0) > 0 ||
+    (data.recommended_amendments?.length ?? 0) > 0 ||
+    (data.action_plan?.immediate?.length ?? 0) > 0 ||
+    (data.action_plan?.short_term_30_90_days?.length ?? 0) > 0 ||
+    (data.action_plan?.at_next_renewal?.length ?? 0) > 0;
 
   return (
     <Document title={`Analyse contrat — ${data.provider}`} author="CompliAI">
@@ -81,30 +161,75 @@ function ContractPDF({ data }: { data: ContractData }) {
 
         <View style={s.titleBox}>
           <Text style={s.titleText}>Analyse de conformité — {data.provider}</Text>
-          <Text style={s.titleSub}>AI Act UE 2024/1689 · RGPD UE 2016/679 · Analyse par IA (Claude)</Text>
+          <Text style={s.titleSub}>Art. 28 RGPD (sous-traitance) · AI Act UE 2024/1689 (déployeur / chaîne) · analyse IA</Text>
         </View>
 
         <View style={s.scoreRow}>
           <View style={[s.scoreCard, { backgroundColor: scoreBg, borderColor: scoreColor }]}>
-            <Text style={s.scoreLabel}>Score de conformité</Text>
-            <Text style={[s.scoreValue, { color: scoreColor }]}>{data.risk_score}/100</Text>
+            <Text style={s.scoreLabel}>Score global</Text>
+            <Text style={[s.scoreValue, { color: scoreColor }]}>{scoreNum}/100</Text>
           </View>
-          <View style={[s.scoreCard, { backgroundColor: data.gdpr_compliant ? C.greenBg : C.redBg, borderColor: data.gdpr_compliant ? C.green : C.red }]}>
-            <Text style={s.scoreLabel}>RGPD</Text>
-            <Text style={[s.scoreValue, { color: data.gdpr_compliant ? C.green : C.red }]}>{data.gdpr_compliant ? "Conforme" : "Non-conforme"}</Text>
+          <View style={[s.scoreCard, { backgroundColor: C.pale, borderColor: rgpdDetailColor }]}>
+            <Text style={s.scoreLabel}>RGPD Art. 28</Text>
+            <Text style={[s.scoreValue, { fontSize: 14, color: rgpdDetailColor }]}>
+              {g28 !== null ? `${g28}/100` : "—"}
+            </Text>
+            <Text style={{ fontSize: 7, color: C.mid, marginTop: 2 }}>
+              {data.gdpr_compliant ? "Indicateur favorable" : "Écarts probables"}
+            </Text>
           </View>
-          <View style={[s.scoreCard, { backgroundColor: data.ai_act_compliant ? C.greenBg : C.redBg, borderColor: data.ai_act_compliant ? C.green : C.red }]}>
-            <Text style={s.scoreLabel}>AI Act</Text>
-            <Text style={[s.scoreValue, { color: data.ai_act_compliant ? C.green : C.red }]}>{data.ai_act_compliant ? "Conforme" : "Non-conforme"}</Text>
+          <View style={[s.scoreCard, { backgroundColor: C.pale, borderColor: aiDetailColor }]}>
+            <Text style={s.scoreLabel}>AI Act (déployeur)</Text>
+            <Text style={[s.scoreValue, { fontSize: 14, color: aiDetailColor }]}>
+              {sa !== null ? `${sa}/100` : "—"}
+            </Text>
+            <Text style={{ fontSize: 7, color: C.mid, marginTop: 2 }}>
+              {data.ai_act_compliant ? "Indicateur favorable" : "Écarts probables"}
+            </Text>
           </View>
         </View>
+
+        {data.risk_level_global ?
+          <Text style={s.gridHint}>Niveau de risque (rapport) : {data.risk_level_global}</Text>
+        : null}
 
         <View style={s.summaryBox}>
           <Text style={s.summaryText}>{data.overall_assessment}</Text>
         </View>
 
+        {data.sector_notes ?
+          <View style={[s.summaryBox, { marginBottom: 10 }]}>
+            <Text style={[s.sectionTitle, { marginBottom: 6, borderBottomWidth: 0 }]}>Secteur / DORA / NIS2</Text>
+            <Text style={s.summaryText}>{data.sector_notes}</Text>
+          </View>
+        : null}
+
+        {data.gdpr_art28_clauses && data.gdpr_art28_clauses.length > 0 ?
+          <View style={{ marginBottom: 12 }}>
+            <Text style={s.sectionTitle}>Synthèse grille Art. 28 RGPD</Text>
+            {data.gdpr_art28_clauses.map((row, i) => (
+              <Text key={i} style={s.clauseLine}>
+                {row.id}. {gridStatusFr(row.status)} — {(row.title || "").slice(0, 88)}
+                {row.location ? ` · ${row.location.slice(0, 40)}` : ""}
+              </Text>
+            ))}
+          </View>
+        : null}
+
+        {data.ai_act_deployer_clauses && data.ai_act_deployer_clauses.length > 0 ?
+          <View style={{ marginBottom: 12 }}>
+            <Text style={s.sectionTitle}>Synthèse grille AI Act (déployeur)</Text>
+            {data.ai_act_deployer_clauses.map((row, i) => (
+              <Text key={i} style={s.clauseLine}>
+                {(row.id || "").toString()}. {gridStatusFr(row.status)} — {(row.title || "").slice(0, 88)}
+                {row.location ? ` · ${row.location.slice(0, 40)}` : ""}
+              </Text>
+            ))}
+          </View>
+        : null}
+
         <Text style={s.sectionTitle}>Points d&apos;analyse ({data.findings?.length ?? 0})</Text>
-        {data.findings?.map((f, i) => (
+        {data.findings?.slice(0, 8).map((f, i) => (
           <View key={i} style={[s.finding, { backgroundColor: SEVERITY_BG[f.severity] ?? C.pale, borderColor: SEVERITY_COLOR[f.severity] ?? C.light }]}>
             <View style={s.findingHeader}>
               <Text style={s.findingTitle}>{f.title}</Text>
@@ -124,50 +249,147 @@ function ContractPDF({ data }: { data: ContractData }) {
         ))}
 
         <Text style={s.disclaimer}>
-          Analyse générée par CompliAI. Ne constitue pas un avis juridique. Faites valider par un avocat avant signature. Fournisseur : {data.provider} — {now}
+          {data.professional_disclaimer ? `${data.professional_disclaimer}\n\n` : ""}
+          Analyse générée par CompliAI. Ne constitue pas un avis juridique. Faites valider par un avocat ou un DPO avant engagement contractuel.
+          Fournisseur : {data.provider} — {now}
         </Text>
         <Text style={s.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
       </Page>
 
-      {(data.missing_clauses?.length > 0 || data.recommended_amendments?.length > 0) && (
-        <Page size="A4" style={s.page}>
-          <View style={s.header}>
-            <Text style={s.logo}>CompliAI</Text>
-            <Text style={s.docType}>CLAUSES MANQUANTES & AMENDEMENTS — {data.provider.toUpperCase()}</Text>
-          </View>
-
-          {data.missing_clauses?.length > 0 && (
-            <View style={{ marginBottom: 20 }}>
-              <Text style={s.sectionTitle}>Clauses obligatoires manquantes</Text>
-              {data.missing_clauses.map((clause, i) => (
-                <View key={i} style={s.listItem}>
-                  <Text style={s.bullet}>✗</Text>
-                  <Text style={s.listText}>{clause}</Text>
-                </View>
-              ))}
+      {(data.critical_gaps ?? []).length > 0 ?
+        (
+          <Page size="A4" style={s.page}>
+            <View style={s.header}>
+              <Text style={s.logo}>CompliAI</Text>
+              <Text style={s.docType}>LACUNES CRITIQUES — {data.provider.toUpperCase()}</Text>
             </View>
-          )}
+            {data.critical_gaps!.map((g, i) => (
+              <View key={i} style={s.gapBlock} wrap={false}>
+                <Text style={s.gapTitle}>{g.title || `Lacune prioritaire ${i + 1}`}</Text>
+                {g.legal_basis ? <Text style={s.gapBody}>Fondement : {g.legal_basis}</Text> : null}
+                {g.finding ? <Text style={s.gapBody}>Constat : {g.finding}</Text> : null}
+                {g.risk ? <Text style={s.gapBody}>Risque : {g.risk}</Text> : null}
+                {g.clause_to_negotiate ?
+                  <Text style={s.gapBody}>Clause type / négociation : {g.clause_to_negotiate}</Text>
+                : null}
+              </View>
+            ))}
+            <Text style={s.disclaimer}>CompliAI · {data.provider} — {now}</Text>
+            <Text style={s.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+          </Page>
+        )
+      : null}
 
-          {data.recommended_amendments?.length > 0 && (
-            <View>
-              <Text style={s.sectionTitle}>Amendements recommandés</Text>
-              {data.recommended_amendments.map((amend, i) => (
-                <View key={i} style={s.listItem}>
-                  <Text style={[s.bullet, { color: C.blue }]}>→</Text>
-                  <Text style={s.listText}>{amend}</Text>
-                </View>
-              ))}
+      {(data.sanctions_reference ?? []).length > 0 ?
+        (
+          <Page size="A4" style={s.page}>
+            <View style={s.header}>
+              <Text style={s.logo}>CompliAI</Text>
+              <Text style={s.docType}>SANCTIONS — PLAFONDS THÉORIQUES MAXIMAUX</Text>
             </View>
-          )}
+            <Text style={s.gridHint}>
+              Rappel de plafonds légaux théoriques ; aucun lien automatique avec les faits analysés ou la probabilité d&apos;un contrôle.
+            </Text>
+            {data.sanctions_reference!.map((r, i) => (
+              <View key={i} style={[s.summaryBox, { marginBottom: 8 }]}>
+                <Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold", marginBottom: 4 }}>{r.foundation}</Text>
+                <Text style={s.summaryText}>{r.max_sanction}</Text>
+                <Text style={s.gridHint}>Fourchette probabilité (qualitative rapport) : {r.probability_H_M_L || "—"}</Text>
+              </View>
+            ))}
+            <Text style={s.disclaimer}>CompliAI — {now}</Text>
+            <Text style={s.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+          </Page>
+        )
+      : null}
 
-          <Text style={s.disclaimer}>CompliAI — Analyse contrat · {data.provider} — {now}</Text>
-          <Text style={s.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
-        </Page>
-      )}
+      {hasPlanPage ?
+        (
+          <Page size="A4" style={s.page}>
+            <View style={s.header}>
+              <Text style={s.logo}>CompliAI</Text>
+              <Text style={s.docType}>PLAN CLAUSES & ACTIONS — {data.provider.toUpperCase()}</Text>
+            </View>
+
+            {data.action_plan?.immediate && data.action_plan.immediate.length > 0 ?
+              (
+                <View style={{ marginBottom: 14 }}>
+                  <Text style={s.sectionTitle}>Immédiat</Text>
+                  {data.action_plan.immediate.map((line, i) => (
+                    <View key={i} style={s.listItem}>
+                      <Text style={[s.bullet, { color: C.red }]}>!</Text>
+                      <Text style={s.listText}>{line}</Text>
+                    </View>
+                  ))}
+                </View>
+              )
+            : null}
+
+            {data.action_plan?.short_term_30_90_days && data.action_plan.short_term_30_90_days.length > 0 ?
+              (
+                <View style={{ marginBottom: 14 }}>
+                  <Text style={s.sectionTitle}>Court terme (30–90 jours)</Text>
+                  {data.action_plan.short_term_30_90_days.map((line, i) => (
+                    <View key={i} style={s.listItem}>
+                      <Text style={[s.bullet, { color: C.blue }]}>•</Text>
+                      <Text style={s.listText}>{line}</Text>
+                    </View>
+                  ))}
+                </View>
+              )
+            : null}
+
+            {data.action_plan?.at_next_renewal && data.action_plan.at_next_renewal.length > 0 ?
+              (
+                <View style={{ marginBottom: 14 }}>
+                  <Text style={s.sectionTitle}>Prochain renouvellement</Text>
+                  {data.action_plan.at_next_renewal.map((line, i) => (
+                    <View key={i} style={s.listItem}>
+                      <Text style={[s.bullet, { color: C.amber }]}>↻</Text>
+                      <Text style={s.listText}>{line}</Text>
+                    </View>
+                  ))}
+                </View>
+              )
+            : null}
+
+            {data.missing_clauses?.length ?
+              (
+                <View style={{ marginBottom: 16 }}>
+                  <Text style={s.sectionTitle}>Clauses manquantes (synthèse)</Text>
+                  {data.missing_clauses!.map((clause, i) => (
+                    <View key={i} style={s.listItem}>
+                      <Text style={s.bullet}>✗</Text>
+                      <Text style={s.listText}>{clause}</Text>
+                    </View>
+                  ))}
+                </View>
+              )
+            : null}
+
+            {data.recommended_amendments?.length ?
+              (
+                <View>
+                  <Text style={s.sectionTitle}>Amendements recommandés</Text>
+                  {data.recommended_amendments!.map((amend, i) => (
+                    <View key={i} style={s.listItem}>
+                      <Text style={[s.bullet, { color: C.blue }]}>→</Text>
+                      <Text style={s.listText}>{amend}</Text>
+                    </View>
+                  ))}
+                </View>
+              )
+            : null}
+
+            <Text style={s.disclaimer}>CompliAI — Analyse contrat · {data.provider} — {now}</Text>
+            <Text style={s.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+          </Page>
+        )
+      : null}
     </Document>
   );
 }
 
 export async function generateContractPDF(data: ContractData): Promise<Buffer> {
-  return (await renderToBuffer(React.createElement(ContractPDF, { data }))) as Buffer;
+  return (await renderToBuffer(React.createElement(ContractPDF, { data }) as any)) as Buffer;
 }

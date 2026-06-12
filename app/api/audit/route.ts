@@ -8,8 +8,23 @@ import { getCurrentMonthYear } from "@/lib/utils";
 import { logAction } from "@/lib/audit-trail";
 import { rateLimitUser, RATE_LIMITS } from "@/lib/rate-limit";
 import type { ProjectFormData, AuditResult } from "@/lib/types/audit";
+import { deliverUserWebhooks } from "@/lib/webhooks";
+import { sendSlackNotification } from "@/lib/slack";
+import { TOOL_CONFIGS } from "@/lib/ai/config";
+import { logAIInteraction } from "@/lib/ai/monitoring";
+import { aiUnavailable } from "@/lib/ai/http-errors";
+import { getCreditBalance, preflightCheck } from "@/lib/credits";
+import type { PlanName } from "@/lib/pricing";
+import { preflightToResponse } from "@/lib/ai/http-errors";
+import { resolveModelApiId } from "@/lib/ai/model-routing";
+import { billAiCall } from "@/lib/ai/bill-ai-call";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+// L'audit attend une sortie JSON stricte : on conserve un system prompt
+// JSON-only dédié plutôt que d'injecter le MASTER_SYSTEM_PROMPT qui
+// contraindrait le modèle à produire la clôture juridique.
+const AUDIT_SYSTEM_PROMPT = `Tu agis comme un juriste senior parisien spécialisé en droit européen du numérique (AI Act, RGPD, NIS2, DSA, DMA, Data Act). Tu produis ici un rapport d'audit structuré au format JSON, exclusivement. Tu n'inventes aucun numéro d'article, aucune sanction et aucune jurisprudence. Tu démarres ta réponse par "{" et tu la termines par "}". Aucun texte avant ni après le JSON.`;
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -21,6 +36,14 @@ export async function POST(request: Request) {
 
   const limited = await rateLimitUser(user.id, "audit", RATE_LIMITS.audit);
   if (limited) return limited;
+
+  const credits = await getCreditBalance(user.id);
+  const creditPlan: PlanName = credits?.plan ?? "free";
+  const preflight = await preflightCheck(user.id, creditPlan);
+  if (preflight) {
+    const blocked = preflightToResponse(preflight);
+    if (blocked) return blocked;
+  }
 
   // Check subscription tier + usage limits
   const { data: profile } = await supabase
@@ -55,11 +78,27 @@ export async function POST(request: Request) {
     }
   }
 
-  const body = (await request.json()) as ProjectFormData;
+  const body = (await request.json()) as ProjectFormData & {
+    organization_id?: string | null;
+  };
 
   // Validate input
   if (!body.name || !body.description || !body.sector) {
     return NextResponse.json({ error: "Données manquantes" }, { status: 400 });
+  }
+
+  // Si projet d'équipe : vérifier l'adhésion à l'organisation
+  let orgId: string | null = body.organization_id ?? null;
+  if (orgId) {
+    const { data: memb } = await admin
+      .from("organization_members")
+      .select("role")
+      .eq("organization_id", orgId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (!memb) {
+      return NextResponse.json({ error: "Organisation invalide ou accès refusé" }, { status: 403 });
+    }
   }
 
   // Create project
@@ -67,6 +106,7 @@ export async function POST(request: Request) {
     .from("projects")
     .insert({
       user_id: user.id,
+      organization_id: orgId,
       name: body.name,
       description: body.description,
       sector: body.sector,
@@ -90,11 +130,16 @@ export async function POST(request: Request) {
   // Call Claude for audit
   const prompt = buildAuditPrompt(body);
   let auditResult: AuditResult;
+  const auditStartedAt = Date.now();
+  const auditTemperature = TOOL_CONFIGS.doc_memoire.temperature;
+  const auditModel = resolveModelApiId({ plan: creditPlan, tool: "audit" });
 
   try {
     const message = await anthropic.messages.create({
-      model: "claude-opus-4-5",
+      model: auditModel,
       max_tokens: 4096,
+      temperature: auditTemperature,
+      system: AUDIT_SYSTEM_PROMPT,
       messages: [{ role: "user", content: prompt }],
     });
 
@@ -102,12 +147,32 @@ export async function POST(request: Request) {
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error("Réponse Claude invalide");
     auditResult = JSON.parse(jsonMatch[0]) as AuditResult;
+
+    await billAiCall({
+      userId: user.id,
+      plan: creditPlan,
+      apiModel: auditModel,
+      endpoint: "audit",
+      inputTokens: message.usage?.input_tokens ?? 0,
+      outputTokens: message.usage?.output_tokens ?? 0,
+      tool: "audit",
+    });
+
+    void logAIInteraction(supabase, {
+      userId: user.id,
+      tool: "audit",
+      userInput: prompt,
+      outputLength: rawText.length,
+      latencyMs: Date.now() - auditStartedAt,
+      temperature: auditTemperature,
+      model: auditModel,
+    });
   } catch (err) {
     // Clean up the created project on LLM failure
     await supabase.from("projects").delete().eq("id", project.id);
     const message = err instanceof Error ? err.message : String(err);
     console.error("Claude audit error:", message);
-    return NextResponse.json({ error: `Erreur lors de l'analyse IA: ${message}` }, { status: 500 });
+    return aiUnavailable(message);
   }
 
   // Save audit to DB
@@ -132,22 +197,69 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Erreur sauvegarde audit" }, { status: 500 });
   }
 
-  // Save blocking issues
+  // Snapshot versionné pour historique comparatif (évolution conformité dans le temps)
+  const { data: lastSnap } = await supabase
+    .from("audit_snapshots")
+    .select("version")
+    .eq("project_id", project.id)
+    .order("version", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const { error: snapErr } = await supabase.from("audit_snapshots").insert({
+    project_id: project.id,
+    audit_id: audit.id,
+    user_id: user.id,
+    version: (lastSnap?.version ?? 0) + 1,
+    compliance_score: auditResult.compliance_score ?? null,
+    verdict: auditResult.verdict,
+    ai_act_classification: auditResult.ai_act_classification ?? null,
+    risk_level: auditResult.risk_level ?? null,
+    snapshot: auditResult as unknown as Record<string, unknown>,
+  });
+  if (snapErr) {
+    console.warn("audit_snapshots insert skipped:", snapErr.message);
+  }
+
+  // Save blocking issues (+ webhooks sur issues critiques ou haute sévérité)
+  let criticalIssuesPayload: Record<string, unknown>[] = [];
+
   if (auditResult.blocking_issues?.length > 0) {
-    await supabase.from("blocking_issues").insert(
-      auditResult.blocking_issues.map((issue) => ({
-        audit_id: audit.id,
+    const inserted = auditResult.blocking_issues.map((issue) => ({
+      audit_id: audit.id,
+      project_id: project.id,
+      user_id: user.id,
+      title: issue.title,
+      description: issue.description,
+      regulation: issue.regulation,
+      article: issue.article,
+      severity: issue.severity,
+      phase: issue.phase,
+      status: "open",
+    }));
+    await supabase.from("blocking_issues").insert(inserted);
+
+    criticalIssuesPayload = auditResult.blocking_issues
+      .filter((i) => i.severity === "critical" || i.severity === "high")
+      .map((i) => ({
+        title: i.title,
+        severity: i.severity,
+        regulation: i.regulation,
+        phase: i.phase,
+        project_name: body.name,
         project_id: project.id,
-        user_id: user.id,
-        title: issue.title,
-        description: issue.description,
-        regulation: issue.regulation,
-        article: issue.article,
-        severity: issue.severity,
-        phase: issue.phase,
-        status: "open",
-      }))
-    );
+        audit_id: audit.id,
+      }));
+  }
+
+  if (criticalIssuesPayload.length > 0) {
+    void deliverUserWebhooks({
+      userId: user.id,
+      event: "blocking_issue.created",
+      payload: {
+        issues: criticalIssuesPayload,
+      },
+    });
   }
 
   // Increment usage counter (non-blocking)
@@ -176,6 +288,19 @@ export async function POST(request: Request) {
     entity_name: body.name,
     metadata: { verdict: auditResult.verdict, risk_level: auditResult.risk_level, compliance_score: auditResult.compliance_score },
   });
+
+  const { data: slackProfile } = await admin
+    .from("profiles")
+    .select("slack_webhook_url")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (slackProfile?.slack_webhook_url) {
+    void sendSlackNotification(slackProfile.slack_webhook_url, {
+      title: "Nouvel audit",
+      text: `*${body.name}* — ${auditResult.verdict} · score ${auditResult.compliance_score ?? "—"}% · ${auditResult.ai_act_classification ?? ""}`,
+      color: auditResult.verdict === "Conforme" ? "#16a34a" : "#dc2626",
+    });
+  }
 
   return NextResponse.json({
     project_id: project.id,

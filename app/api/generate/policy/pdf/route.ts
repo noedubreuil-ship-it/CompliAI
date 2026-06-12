@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
     const { data, companyName } = await req.json();
     if (!data) return NextResponse.json({ error: "Données manquantes" }, { status: 400 });
     const buffer = await generatePolicyPDF(data, companyName ?? "Entreprise");
-    return new NextResponse(buffer, {
+    return new NextResponse(new Uint8Array(buffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",

@@ -14,6 +14,7 @@ export type Country =
   | "Allemagne"
   | "Pays-Bas"
   | "Espagne"
+  | "Portugal"
   | "Italie"
   | "Suisse"
   | "Luxembourg"

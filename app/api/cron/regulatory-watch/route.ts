@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import Anthropic from "@anthropic-ai/sdk";
+import { AI_CONFIG } from "@/lib/ai/config";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -97,8 +98,9 @@ async function analyzeImpactOnProject(
 ): Promise<{ impacted: boolean; reason: string }> {
   try {
     const msg = await anthropic.messages.create({
-      model: "claude-opus-4-5",
+      model: AI_CONFIG.model,
       max_tokens: 256,
+      temperature: 0.05,
       messages: [{
         role: "user",
         content: `Est-ce que cette alerte réglementaire concerne ce projet IA ? Réponds UNIQUEMENT en JSON : {"impacted": true/false, "reason": "1 phrase d'explication"}

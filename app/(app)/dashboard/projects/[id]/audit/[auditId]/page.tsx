@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import AuditResult from "@/components/audit/AuditResult";
+import { PostAuditChatCta } from "@/components/dashboard/ProductOnboardingStepper";
 
 interface Props {
   params: Promise<{ id: string; auditId: string }>;
@@ -12,6 +13,12 @@ export default async function AuditResultPage({ params }: Props) {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) redirect("/auth/login");
+
+  // Validate UUID format before querying
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!UUID_RE.test(auditId)) {
+    redirect(`/dashboard/projects/${id}`);
+  }
 
   const { data: audit } = await supabase
     .from("audits")
@@ -40,7 +47,9 @@ export default async function AuditResultPage({ params }: Props) {
   };
 
   return (
-    <AuditResult
+    <>
+      <PostAuditChatCta projectName={audit.projects?.name ?? undefined} />
+      <AuditResult
       audit={auditData}
       projectId={id}
       canDownloadPdf={
@@ -48,5 +57,6 @@ export default async function AuditResultPage({ params }: Props) {
         profile?.subscription_tier === "enterprise"
       }
     />
+    </>
   );
 }

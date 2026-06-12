@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { rateLimitUser, RATE_LIMITS } from "@/lib/rate-limit";
+import { searchDocumentsSemantic } from "@/lib/documents-semantic";
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
@@ -77,14 +78,33 @@ export async function GET(req: NextRequest) {
       href: `/dashboard/register`,
     });
   }
+  const seenDocIds = new Set<string>();
   for (const d of docs.data ?? []) {
+    seenDocIds.add(d.id);
     results.push({
       type: "document",
       id: d.id,
       title: d.title,
       subtitle: d.doc_type.replace(/_/g, " "),
-      href: `/dashboard/tools`,
+      href: `/dashboard/documents`,
     });
+  }
+
+  try {
+    const semantic = await searchDocumentsSemantic(user.id, q, 5);
+    for (const d of semantic) {
+      if (seenDocIds.has(d.id)) continue;
+      seenDocIds.add(d.id);
+      results.push({
+        type: "document",
+        id: d.id,
+        title: d.title,
+        subtitle: `${d.doc_type.replace(/_/g, " ")} · pertinence ${Math.round(d.similarity * 100)}%`,
+        href: `/dashboard/documents`,
+      });
+    }
+  } catch {
+    /* OPENAI_KEY absent ou migration 018 non appliquée */
   }
 
   return NextResponse.json({ results });

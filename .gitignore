@@ -26,3 +26,5 @@ yarn-error.log*
 .mcp.json
 lib/pdf/.generate.ts.swp
 scripts/data/
+.vercel
+.claude/

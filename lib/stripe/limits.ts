@@ -73,8 +73,4 @@ export function getTierLimits(tier: SubscriptionTier): TierLimits {
   return TIER_LIMITS[tier] ?? TIER_LIMITS.free;
 }
 
-export function mapPriceIdToTier(priceId: string): SubscriptionTier {
-  if (priceId === process.env.STRIPE_STARTER_PRICE_ID) return "starter";
-  if (priceId === process.env.STRIPE_PRO_PRICE_ID) return "pro";
-  return "free";
-}
+export { mapPriceIdToTier } from "@/lib/stripe/plan-mapping";

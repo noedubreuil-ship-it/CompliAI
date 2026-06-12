@@ -360,6 +360,6 @@ function AuditPDF({ data }: { data: PDFData }) {
 
 export async function generateAuditPDF(data: PDFData): Promise<Buffer> {
   const element = React.createElement(AuditPDF, { data });
-  const buffer = await renderToBuffer(element);
+  const buffer = await renderToBuffer(element as any);
   return buffer as Buffer;
 }

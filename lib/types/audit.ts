@@ -49,6 +49,8 @@ export interface AuditResult {
 }
 
 export interface ProjectFormData {
+  /** Projet rattaché à une organisation (équipe) — optionnel */
+  organization_id?: string | null;
   name: string;
   description: string;
   sector: string;

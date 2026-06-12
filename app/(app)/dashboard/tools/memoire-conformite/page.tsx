@@ -4,8 +4,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, Loader2, Download, RotateCcw, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Briefcase, Loader2, Download, RotateCcw, AlertTriangle, CheckCircle2, FileDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { downloadToolExportPdf } from "@/lib/utils/tool-export-pdf";
 
 interface MemoireData {
   titre: string; date: string; synthese_executive: string;
@@ -34,6 +35,7 @@ export default function MemoireConformitePage() {
   const [situation, setSituation] = useState("");
   const [contexte, setContexte] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const [result, setResult] = useState<MemoireData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,16 +43,49 @@ export default function MemoireConformitePage() {
     if (!situation.trim()) return;
     setLoading(true); setError(null); setResult(null);
     try {
-      const res = await fetch("/api/legal-tools", {
+      const res = await fetch("/api/generate/memoire-conformite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tool: "memoire-conformite", situation, contexte }),
+        body: JSON.stringify({ situation, contexte }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setResult(data.result);
     } catch (e: unknown) { setError(e instanceof Error ? e.message : "Erreur"); }
     setLoading(false);
+  }
+
+  async function downloadPdf() {
+    if (!result) return;
+    setPdfLoading(true);
+    try {
+      await downloadToolExportPdf({
+        title: result.titre,
+        subtitle: `Généré le ${result.date}`,
+        sections: [
+          { heading: "Synthèse exécutive", body: result.synthese_executive },
+          ...result.sections.map((s) => ({
+            heading: s.titre,
+            body: `${s.contenu}\n\nRéférences : ${s.refs.join(", ")}`,
+          })),
+          {
+            heading: "Tableau des risques",
+            body: result.tableau_risques
+              .map((r) => `• ${r.risque} | ${r.probabilite} | ${r.impact} | ${r.ref}`)
+              .join("\n"),
+          },
+          {
+            heading: "Plan d'action",
+            body: result.plan_action.map((a) => `[${a.priorite}] ${a.action} — ${a.delai} (${a.ref})`).join("\n"),
+          },
+          { heading: "Disclaimer", body: result.disclaimer },
+        ],
+        filename: "memoire-conformite",
+      });
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Erreur export PDF");
+    }
+    setPdfLoading(false);
   }
 
   function download() {
@@ -119,7 +154,11 @@ export default function MemoireConformitePage() {
           <p className="text-xs text-muted-foreground">Généré le {result.date}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={download}><Download className="h-4 w-4" />Télécharger</Button>
+          <Button variant="outline" size="sm" onClick={() => void downloadPdf()} disabled={pdfLoading}>
+            {pdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+            PDF
+          </Button>
+          <Button variant="outline" size="sm" onClick={download}><Download className="h-4 w-4" />TXT</Button>
           <Button variant="outline" size="sm" onClick={() => { setResult(null); setSituation(""); setContexte(""); }}><RotateCcw className="h-4 w-4" />Nouveau</Button>
         </div>
       </div>

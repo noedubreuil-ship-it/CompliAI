@@ -3,6 +3,30 @@
     {
       "path": "/api/cron/regulatory-watch",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/low-credits",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/deadline-reminders",
+      "schedule": "30 8 * * *"
+    },
+    {
+      "path": "/api/cron/deadline-alerts",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/national-corpus-agents",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/case-law-seeds",
+      "schedule": "15 4 * * *"
+    },
+    {
+      "path": "/api/cron/supplementary-corpus",
+      "schedule": "30 4 * * 0"
     }
   ]
 }

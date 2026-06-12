@@ -15,6 +15,7 @@ import {
   type CalendarEvent,
 } from "@/lib/data/eu-calendar";
 import { EU_AUTHORITIES, getCountryFlag } from "@/lib/data/eu-authorities";
+import { CalendarRemindersBanner } from "@/components/dashboard/CalendarRemindersBanner";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -248,6 +249,8 @@ export default function CalendarPage() {
           </button>
         </div>
       </div>
+
+      <CalendarRemindersBanner />
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

@@ -116,6 +116,7 @@ export default function JournalPage() {
   const [selectedAuthority, setSelectedAuthority] = useState<string>("");
   const [selectedTag, setSelectedTag] = useState("");
   const [onlyRelevant, setOnlyRelevant] = useState(false);
+  const [onlyNew, setOnlyNew] = useState(false);
   const [showAuthorityDropdown, setShowAuthorityDropdown] = useState(false);
 
   // Group authorities by type for the dropdown
@@ -148,11 +149,13 @@ export default function JournalPage() {
       if (selectedAuthority && a.authorityId !== selectedAuthority) return false;
       if (selectedTag && !a.tags.includes(selectedTag)) return false;
       if (onlyRelevant && (a.relevanceScore ?? 0) < 0.6) return false;
+      if (onlyNew && !a.isNew) return false;
       return true;
     });
-  }, [articles, selectedCategory, selectedAuthority, selectedTag, onlyRelevant]);
+  }, [articles, selectedCategory, selectedAuthority, selectedTag, onlyRelevant, onlyNew]);
 
-  const hasFilters = selectedCategory || selectedAuthority || selectedTag || onlyRelevant;
+  const hasFilters = selectedCategory || selectedAuthority || selectedTag || onlyRelevant || onlyNew;
+  const newCount = articles.filter(a => a.isNew).length;
 
   const selectedAuthorityObj = selectedAuthority ? EU_AUTHORITIES.find(a => a.id === selectedAuthority) : null;
 
@@ -213,9 +216,15 @@ export default function JournalPage() {
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setSelectedCategory("")}
-            className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${!selectedCategory ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"}`}>
+            className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${!selectedCategory && !onlyNew ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"}`}>
             Toutes ({articles.length})
           </button>
+          {newCount > 0 && (
+            <button onClick={() => { setOnlyNew(!onlyNew); setSelectedCategory(""); }}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-colors flex items-center gap-1.5 font-medium ${onlyNew ? "bg-blue-600 text-white border-blue-600" : "bg-blue-50 text-blue-700 border-blue-200 hover:border-blue-400"}`}>
+              ✦ Nouveautés ({newCount})
+            </button>
+          )}
           {ALL_CATEGORIES.map(cat => {
             const count = articles.filter(a => a.category === cat).length;
             if (count === 0) return null;

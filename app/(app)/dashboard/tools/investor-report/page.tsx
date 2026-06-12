@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, TrendingUp, Loader2, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
+import { ArrowLeft, TrendingUp, Loader2, AlertTriangle, CheckCircle2, XCircle, FileDown } from "lucide-react";
 import Link from "next/link";
 import ComplianceScore from "@/components/dashboard/ComplianceScore";
+import { downloadToolExportPdf } from "@/lib/utils/tool-export-pdf";
 
 const SEVERITY_COLORS: Record<string, string> = {
   critical: "border-red-200 bg-red-50 text-red-800",
@@ -30,6 +31,7 @@ export default function InvestorReportPage() {
   const [audits, setAudits] = useState<any[]>([]);
   const [selectedAudit, setSelectedAudit] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState("");
 
@@ -50,6 +52,40 @@ export default function InvestorReportPage() {
       setResult(data.content);
     } catch (e: any) { setError(e.message); }
     finally { setLoading(false); }
+  }
+
+  async function downloadPdf() {
+    if (!result) return;
+    setPdfLoading(true);
+    try {
+      await downloadToolExportPdf({
+        title: result.title ?? "Rapport investisseurs",
+        subtitle: `Score ${result.compliance_snapshot?.score ?? "—"}/100 · ${result.compliance_snapshot?.verdict ?? ""}`,
+        sections: [
+          { heading: "Synthèse exécutive", body: result.executive_summary ?? "" },
+          ...(result.recommendation ? [{
+            heading: "Recommandation",
+            body: [
+              RECO_LABELS[result.recommendation] ?? result.recommendation,
+              ...(result.conditions ?? []).map((c: string) => `• ${c}`),
+            ].join("\n"),
+          }] : []),
+          ...(result.key_risks?.length ? [{
+            heading: "Risques clés",
+            body: result.key_risks.map((r: { risk: string; impact: string; mitigation: string; severity: string }) =>
+              `[${r.severity}] ${r.risk}\nImpact : ${r.impact}\nMitigation : ${r.mitigation}`,
+            ).join("\n\n"),
+          }] : []),
+          ...(result.regulatory_roadmap ? [{ heading: "Plan de conformité", body: result.regulatory_roadmap }] : []),
+          ...(result.cost_impact ? [{ heading: "Impact financier", body: result.cost_impact }] : []),
+          ...(result.competitive_advantage ? [{ heading: "Avantage compétitif", body: result.competitive_advantage }] : []),
+        ],
+        filename: "rapport-investisseurs",
+      });
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Erreur export PDF");
+    }
+    setPdfLoading(false);
   }
 
   return (
@@ -102,9 +138,15 @@ export default function InvestorReportPage() {
         </Card>
       ) : (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
             <h2 className="text-lg font-bold">{result.title}</h2>
-            <Button variant="outline" size="sm" onClick={() => setResult(null)}>Nouveau rapport</Button>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => void downloadPdf()} disabled={pdfLoading}>
+                {pdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+                PDF
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setResult(null)}>Nouveau rapport</Button>
+            </div>
           </div>
 
           <Card>

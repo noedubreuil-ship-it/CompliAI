@@ -1,59 +1,114 @@
 "use client";
 
-interface ComplianceScoreProps {
-  score: number;
-  size?: "sm" | "md" | "lg";
-  showLabel?: boolean;
-}
+import { useEffect, useState } from "react";
 
-const SCORE_COLOR = (score: number) => {
-  if (score >= 80) return { stroke: "#16a34a", text: "text-green-600", label: "Bon niveau" };
-  if (score >= 60) return { stroke: "#d97706", text: "text-amber-600", label: "À améliorer" };
-  if (score >= 40) return { stroke: "#ea580c", text: "text-orange-600", label: "Insuffisant" };
-  return { stroke: "#dc2626", text: "text-red-600", label: "Critique" };
+const SCORE_CONFIG = (score: number) => {
+  if (score >= 80) return { stroke: "#16a34a", bg: "bg-green-50", text: "text-green-700", border: "border-green-200", label: "Bon niveau", badge: "✓ Conforme" };
+  if (score >= 60) return { stroke: "#d97706", bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200", label: "À améliorer", badge: "⚠ Partiel" };
+  if (score >= 40) return { stroke: "#ea580c", bg: "bg-orange-50", text: "text-orange-700", border: "border-orange-200", label: "Insuffisant", badge: "! Attention" };
+  return { stroke: "#dc2626", bg: "bg-red-50", text: "text-red-700", border: "border-red-200", label: "Critique", badge: "✕ Critique" };
 };
 
-export default function ComplianceScore({ score, size = "md", showLabel = true }: ComplianceScoreProps) {
-  const clampedScore = Math.max(0, Math.min(100, score));
-  const { stroke, text, label } = SCORE_COLOR(clampedScore);
+interface ComplianceScoreProps {
+  score: number | null;
+  size?: "sm" | "md" | "lg";
+  showLabel?: boolean;
+  animate?: boolean;
+}
 
-  const dimensions = size === "sm" ? 56 : size === "lg" ? 120 : 80;
-  const radius = (dimensions - 8) / 2;
+export default function ComplianceScore({
+  score,
+  size = "md",
+  showLabel = true,
+  animate = true,
+}: ComplianceScoreProps) {
+  const hasScore = score != null;
+  const clampedScore = hasScore ? Math.max(0, Math.min(100, score)) : 0;
+  const config = SCORE_CONFIG(clampedScore);
+
+  const dimensions = size === "sm" ? 56 : size === "lg" ? 128 : 88;
+  const strokeWidth = size === "sm" ? 5 : size === "lg" ? 8 : 6;
+  const radius = (dimensions - strokeWidth * 2) / 2;
   const circumference = 2 * Math.PI * radius;
-  const dashOffset = circumference - (clampedScore / 100) * circumference;
-  const fontSize = size === "sm" ? "text-xs" : size === "lg" ? "text-2xl" : "text-base";
+
+  const [displayed, setDisplayed] = useState(animate ? 0 : clampedScore);
+
+  useEffect(() => {
+    if (!animate || !hasScore) return;
+    const duration = 900;
+    const start = performance.now();
+    const raf = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplayed(Math.round(eased * clampedScore));
+      if (progress < 1) requestAnimationFrame(raf);
+    };
+    requestAnimationFrame(raf);
+  }, [clampedScore, animate, hasScore]);
+
+  const dashOffset = hasScore
+    ? circumference - (displayed / 100) * circumference
+    : circumference;
+
+  const fontSize = size === "sm" ? "text-xs" : size === "lg" ? "text-3xl" : "text-lg";
 
   return (
-    <div className="flex flex-col items-center gap-1">
+    <div className="flex flex-col items-center gap-2">
       <div className="relative" style={{ width: dimensions, height: dimensions }}>
-        <svg width={dimensions} height={dimensions} className="-rotate-90">
+        <svg
+          width={dimensions}
+          height={dimensions}
+          className="-rotate-90"
+          role="img"
+          aria-label={hasScore ? `Score de conformité : ${clampedScore}/100` : "Score non disponible"}
+        >
+          {/* Track */}
           <circle
             cx={dimensions / 2}
             cy={dimensions / 2}
             r={radius}
             fill="none"
             stroke="#e2e8f0"
-            strokeWidth={6}
+            strokeWidth={strokeWidth}
           />
-          <circle
-            cx={dimensions / 2}
-            cy={dimensions / 2}
-            r={radius}
-            fill="none"
-            stroke={stroke}
-            strokeWidth={6}
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={dashOffset}
-            style={{ transition: "stroke-dashoffset 0.8s ease" }}
-          />
+          {/* Fill */}
+          {hasScore && (
+            <circle
+              cx={dimensions / 2}
+              cy={dimensions / 2}
+              r={radius}
+              fill="none"
+              stroke={config.stroke}
+              strokeWidth={strokeWidth}
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={dashOffset}
+              style={{ transition: animate ? "none" : "stroke-dashoffset 0.8s ease" }}
+            />
+          )}
         </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className={`font-bold ${fontSize} ${text}`}>{clampedScore}</span>
+
+        {/* Center value */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          {hasScore ? (
+            <span className={`font-bold leading-none font-serif ${fontSize}`} style={{ color: config.stroke }}>
+              {displayed}
+            </span>
+          ) : (
+            <span className={`font-bold ${fontSize} text-slate-300`}>—</span>
+          )}
+          {size === "lg" && hasScore && (
+            <span className="text-xs text-slate-400 mt-0.5 font-sans">/ 100</span>
+          )}
         </div>
       </div>
+
       {showLabel && (
-        <span className={`text-xs font-medium ${text}`}>{label}</span>
+        <div className="flex flex-col items-center gap-1">
+          <span className={`text-xs font-semibold ${hasScore ? config.text : "text-slate-400"} font-sans`}>
+            {hasScore ? config.label : "Aucun audit"}
+          </span>
+        </div>
       )}
     </div>
   );

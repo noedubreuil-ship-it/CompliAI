@@ -253,16 +253,17 @@ async function ingestFile(filePath: string) {
       version_date: meta.version_date,
     }));
 
-    const { error, count } = await supabase
+    const { error, data: insertedRows } = await supabase
       .from("legal_chunks")
       .upsert(rows, { onConflict: "chunk_hash", ignoreDuplicates: true })
-      .select("id", { count: "exact" });
+      .select("id");
 
     if (error) {
       console.error(`  ❌ Supabase error: ${error.message}`);
     } else {
-      upserted += count ?? 0;
-      skipped += batch.length - (count ?? 0);
+      const n = insertedRows?.length ?? 0;
+      upserted += n;
+      skipped += batch.length - n;
     }
 
     await new Promise((r) => setTimeout(r, 50));

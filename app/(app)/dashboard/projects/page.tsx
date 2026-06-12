@@ -14,7 +14,6 @@ export default async function ProjectsPage() {
   const { data: projects } = await supabase
     .from("projects")
     .select("id, name, sector, status, created_at, audits(id, verdict, created_at)")
-    .eq("user_id", user!.id)
     .order("created_at", { ascending: false });
 
   return (

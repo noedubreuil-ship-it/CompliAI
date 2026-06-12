@@ -100,13 +100,16 @@ Cron quotidien → scan EUR-Lex → analyse d'impact par projet → alertes emai
 
 ## Plans tarifaires
 
+Chaque appel IA consomme des **crédits** selon le modèle et les tokens (Haiku / Sonnet / Opus). Les allocations mensuelles sont recalibrées pour une marge brute cible ~70–80 %.
 
-| Plan       | Prix      | Audits   | PDF | Veille |
-| ---------- | --------- | -------- | --- | ------ |
-| Gratuit    | 0€        | 1/mois   | Non | Non    |
-| Starter    | 49€/mois  | 3/mois   | Non | Non    |
-| Pro        | 199€/mois | Illimité | Oui | Oui    |
-| Enterprise | Sur devis | Illimité | Oui | Oui    |
+| Plan       | Prix       | Crédits/mois | Modèle IA              | Audits   | PDF | Veille |
+| ---------- | ---------- | ------------ | ---------------------- | -------- | --- | ------ |
+| Gratuit    | 0€         | 400          | Haiku                  | 1/mois   | Non | Non    |
+| Starter    | 49€/mois   | 4 500        | Sonnet                 | 3/mois   | Non | Non    |
+| Pro        | 199€/mois  | 18 000       | Sonnet (+ Opus premium)| Illimité | Oui | Oui    |
+| Enterprise | ≥799€/mois | 60 000+      | Contrat                | Illimité | Oui | Oui    |
+
+**Packs crédits** (hors abonnement) : 1 000 cr @ 12€ · 5 000 cr @ 45€ · 15 000 cr @ 110€ · 50 000 cr @ 320€.
 
 
 ## Avertissement légal

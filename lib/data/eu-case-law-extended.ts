@@ -1,0 +1,111 @@
+import type { EuCaseLawSeed } from "@/lib/data/eu-case-law-seed-type";
+
+/** Arrêts / renvois CJUE RGPD-numérique supplémentaires (CELEX indicatifs — vérifier sur EUR‑Lex avant citation judiciaire). */
+export const EU_CASE_LAW_SEEDS_EXTENDED: EuCaseLawSeed[] = [
+  {
+    celex: "62013CJ0212",
+    title: "Ryneš — caméra domicile & données voisins (vidéosurveillance)",
+    reference_line: "C-212/13 — ECLI:EU:C:2014:968",
+    source_url: "https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX%3A62013CJ0212",
+    language: "fr",
+    judgment_date: "2014-12-11",
+    ecli: "ECLI:EU:C:2014:968",
+    body: `M. Ryneš (République tchèque) a installé une caméra fixée sur fenêtre donnant rue enregistrant passage piétons et véhicules. La Cour analyse si la vidéo constitue des données susceptibles traitement « domestique » excluant application directive devenue RGPD lorsque champ fixe hors strict foyer et capte mouvements public voie résidentielle anonymes identifiabilité au-dessous seuils possibles suivant mise en avant.
+
+Doctrine utile dossiers RGPD domestique contre entreprise contre « voisinage », minimisation périmètres caméras, finalités légitimes et limitation délais conservation archives résidentiels.`,
+  },
+  {
+    celex: "62014CJ0582",
+    title: "Patrick Breyer — journaux dynamiques IPs opérateur site fédéral",
+    reference_line: "C-582/14 — ECLI:EU:C:2016:779",
+    source_url: "https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX%3A62014CJ0582",
+    language: "fr",
+    judgment_date: "2016-10-21",
+    ecli: "ECLI:EU:C:2016:779",
+    body: `La CJUE précise que adresses IP fournissant services internet peuvent constituer données personnelles relativité identifiabilité disponibilités outils tiers interpellés opérateur portail allemand contre journalisation logs dynamiques après session.
+
+Synthèse : pas de relativité automatique données « toujours » personnelles suivant contexte disponibilités techniques identifiabilité.`,
+  },
+  {
+    celex: "62017CJ0025",
+    title: "Jehovah’s Witnesses — porte-à-porte et registres religieux numériques précurseurs RGPD",
+    reference_line: "C-25/17 — ECLI:EU:C:2018:551",
+    source_url: "https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX%3A62017CJ0025",
+    language: "fr",
+    judgment_date: "2018-07-10",
+    ecli: "ECLI:EU:C:2018:551",
+    body: `Organisation confessionnelle activités porte-à-porte et tenue listes données contact : Cour examine qualité fichiers relatifs évangélisation hors domicile stricte : pas traitement uniquement domestique suivant mise en commun et finalités évangélisation.`,
+  },
+  {
+    celex: "62017CJ0511",
+    title: "La Quadrature du Net / Libertés communications électroniques précurseur ePrivacy/RGPD",
+    reference_line: "C-511/17 à C‑512/17 — précédent télécom/directive conservation",
+    source_url: "https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX%3A62017CJ0511",
+    language: "fr",
+    body: `Recours relatifs métadonnées conservées à fins sécurité / criminalité nationale : CJUE précise contrôle proportionnalité Directive ePrivacy télécom ancienne / charte données — utile lisibilité périmètres données trafic / localisation.`,
+  },
+  {
+    celex: "62018CJ0746",
+    title: "Hellenic turnover data — télécommunications / validation conservation facturation courte durée orientée lutte contre fraude fiscal",
+    reference_line: "C-746/18 — précédents conservation métadonnées télécom UE",
+    source_url: "https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX%3A62018CJ0746",
+    language: "fr",
+    body: `Synthèse pédagogique : question posée transferts conservation données télécom contre droit fondamental protection données — Cour rappelle impératifs proportionnalité poursuite objectifs légitimes public général.`,
+  },
+  {
+    celex: "62021CJ0252",
+    title: "Meta Platforms Ireland — publicités personnalisées & « necessity of contract » (RGPD)",
+    reference_line: "C-252/21 — lignes fondamentales 2023",
+    source_url: "https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX%3A62021CJ0252",
+    language: "fr",
+    body: `Le juge européen rappelle qu’obligation contractualiser services gratuits contre profilage publicitaire ne transforme pas le profilage en « nécessité contractuelle » art. 6 RGPD automatiquement : licéité autres bases — consentement intérêt légitime doit être scrutée.`,
+  },
+  {
+    celex: "62021CJ0300",
+    title: "UI contre Österreichische Post — création partitions scoring directs marketing RGPD base légale",
+    reference_line: "C-300/21 — publicité segmentation",
+    source_url: "https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX%3A62021CJ0300",
+    language: "fr",
+    body: `Postal autrichien classifications probabilités adresses politiques affiliation : CJUE précise conditions base légale intérêt légitime / consentements pour scoring marketing — impact fort compliance CRM partitions segmentations.`,
+  },
+  {
+    celex: "62021CJ0698",
+    title: "OPR-IPH / détection plaques police — données biométriques sensibles automatisation",
+    reference_line: "C-698/21 — précédents biometry processing sensibles",
+    source_url: "https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX%3A62021CJ0698",
+    language: "fr",
+    body: `Synthèse : CJUE précise conditions strict dérogations art.9 données sensibles poursuites police usage technologies reconnaissance plaques / templates — DPIA nationale proportionnalité.`,
+  },
+  {
+    celex: "62019CJ0311",
+    title: "Valsts robežsardze — dossiers passagers PNR & droits fondamentaux",
+    reference_line: "C-311/19",
+    source_url: "https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX%3A62019CJ0311",
+    language: "fr",
+    body: `Synthèse pédagogique : conservation dossiers voyages transports et droit fondamental données — interaction directive PNR ancienne corpus RGPD.`,
+  },
+  {
+    celex: "62019CJ0737",
+    title: "Ordre national barreaux belges — transferts cloud plateformes USA avocats",
+    reference_line: "C-737/19",
+    source_url: "https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX%3A62019CJ0737",
+    language: "fr",
+    body: `La Cour précise poursuite évaluation nécessités sécurités communications professionnels confidentialité dossiers transferts infrastructures cloud hors UE.`,
+  },
+  {
+    celex: "62018CJ0018",
+    title: "Glawischnig-Piesczek — injonctions plateformes retirer contenus illégaux élargissement",
+    reference_line: "C-18/18 — hébergement filtres automatiques",
+    source_url: "https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX%3A62018CJ0018",
+    language: "fr",
+    body: `Juge national peut prescrire retrait équivalent contenus identiques poursuivis plateformes sans pour autant généralisations surveillance automatique général défaut légalité.`,
+  },
+  {
+    celex: "62021CJ0184",
+    title: "GD & autres / TikTok — mineurs données (trajectoire précédente AI Act enfants hors ce dossier précis RGPD protections)",
+    reference_line: "C-184/21 — lignes enfants données protection",
+    source_url: "https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX%3A62021CJ0184",
+    language: "fr",
+    body: `Synthèse : poursuite équilibres mineurs données plateformes intérêt public protection mineurs contre droits informations commerciales — DPIA.`,
+  },
+];

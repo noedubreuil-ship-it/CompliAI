@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
     const { data, systemName } = await req.json();
     if (!data) return NextResponse.json({ error: "Données manquantes" }, { status: 400 });
     const buffer = await generateFRIAPDF(data, systemName ?? "Système IA");
-    return new NextResponse(buffer, {
+    return new NextResponse(new Uint8Array(buffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",

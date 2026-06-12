@@ -51,6 +51,7 @@ export default function OnboardingWizard({ userName }: Props) {
   const [companySize, setCompanySize] = useState("");
   const [orgName, setOrgName] = useState("");
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
@@ -65,14 +66,24 @@ export default function OnboardingWizard({ userName }: Props) {
 
   async function finish() {
     setSaving(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await supabase.from("profiles").update({
+    setSaveError(null);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Session expirée");
+
+      const updatePayload: Record<string, unknown> = {
         sector,
         company_size: companySize,
-        full_name: orgName ? undefined : undefined,
         onboarding_completed: true,
-      }).eq("id", user.id);
+      };
+      if (orgName.trim()) updatePayload.full_name = orgName.trim();
+
+      const { error } = await supabase
+        .from("profiles")
+        .update(updatePayload)
+        .eq("id", user.id);
+
+      if (error) throw error;
 
       await fetch("/api/notifications", {
         method: "POST",
@@ -84,9 +95,13 @@ export default function OnboardingWizard({ userName }: Props) {
           link: "/dashboard/projects/new",
         }),
       }).catch(() => {});
+
+      router.refresh();
+    } catch (err) {
+      setSaveError("Une erreur est survenue. Veuillez réessayer.");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
-    router.refresh();
   }
 
   return (
@@ -254,10 +269,15 @@ export default function OnboardingWizard({ userName }: Props) {
                 <ChevronRight className="h-4 w-4" />
               </Button>
             ) : (
-              <Button onClick={finish} disabled={saving}>
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                Accéder au tableau de bord
-              </Button>
+              <div className="flex flex-col items-end gap-2">
+                {saveError && (
+                  <p className="text-xs text-red-500">{saveError}</p>
+                )}
+                <Button onClick={finish} disabled={saving}>
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                  Accéder au tableau de bord
+                </Button>
+              </div>
             )}
           </div>
 

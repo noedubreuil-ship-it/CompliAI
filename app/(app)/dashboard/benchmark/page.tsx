@@ -30,9 +30,15 @@ export default async function BenchmarkPage() {
     : null;
 
   // Get user's sectors from projects
-  const userSectors = [...new Set(
-    userAudits?.map(a => (a.projects as { sector: string } | null)?.sector).filter(Boolean) ?? []
-  )];
+  const sectorList =
+    userAudits
+      ?.map((a) => {
+        const p = a.projects as unknown;
+        if (Array.isArray(p)) return p[0]?.sector ?? "";
+        return (p as { sector?: string } | null)?.sector ?? "";
+      })
+      .filter((s): s is string => typeof s === "string" && s.length > 0) ?? [];
+  const userSectors = Array.from(new Set(sectorList));
 
   return (
     <div className="space-y-6">

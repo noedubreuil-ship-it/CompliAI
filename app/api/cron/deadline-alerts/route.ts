@@ -64,6 +64,17 @@ export async function GET(request: Request) {
           issues: issues ?? [],
         }),
       });
+
+      await admin.from("notifications").insert({
+        user_id: profile.id,
+        title: `AI Act — J-${daysUntilDeadline}`,
+        body:
+          issueCount > 0 ?
+            `${issueCount} issue(s) bloquante(s) ouverte(s) avant la deadline du 2 août 2026.`
+          : `Plus que ${daysUntilDeadline} jours avant la deadline AI Act (2 août 2026).`,
+        type: daysUntilDeadline <= 14 ? "warning" : "info",
+        link: "/dashboard/calendar",
+      });
     })
   );
 
@@ -75,8 +86,16 @@ function buildEmailHtml(data: {
   userName: string;
   daysLeft: number;
   issueCount: number;
-  issues: Array<{ title: string; projects?: { name: string } | null }>;
+  issues: Array<{
+    title: string;
+    projects?: { name?: string } | { name?: string }[] | null | undefined;
+  }>;
 }): string {
+  function projectLabel(p: { name?: string } | { name?: string }[] | null | undefined) {
+    if (!p) return "";
+    if (Array.isArray(p)) return p[0]?.name ?? "";
+    return p.name ?? "";
+  }
   const urgencyColor = data.daysLeft <= 30 ? "#dc2626" : data.daysLeft <= 60 ? "#ea580c" : "#d97706";
 
   return `<!DOCTYPE html>
@@ -100,7 +119,7 @@ function buildEmailHtml(data: {
         ${data.issues.map(issue => `
           <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 8px;">
             <p style="font-weight: 500; color: #0f172a; margin: 0; font-size: 14px;">${issue.title}</p>
-            ${issue.projects ? `<p style="color: #64748b; margin: 2px 0 0; font-size: 12px;">${(issue.projects as { name: string }).name}</p>` : ""}
+            ${projectLabel(issue.projects) ? `<p style="color: #64748b; margin: 2px 0 0; font-size: 12px;">${projectLabel(issue.projects)}</p>` : ""}
           </div>
         `).join("")}
       </div>

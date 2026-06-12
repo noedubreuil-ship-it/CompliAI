@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardCheck, Loader2, RotateCcw, Download, ChevronDown, ChevronRight } from "lucide-react";
+import { ClipboardCheck, Loader2, RotateCcw, Download, ChevronDown, ChevronRight, FileDown } from "lucide-react";
+import { downloadToolExportPdf } from "@/lib/utils/tool-export-pdf";
 import { cn } from "@/lib/utils";
 
 const SECTEURS = ["Santé", "Finance & Banque", "RH & Recrutement", "Éducation", "Transport", "Sécurité", "Justice", "Administration publique", "Industrie", "Autre"];
@@ -70,6 +71,7 @@ export default function AuditQRPage() {
   const [systemDescription, setSystemDescription] = useState("");
   const [secteur, setSecteur] = useState("Santé");
   const [loading, setLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const [result, setResult] = useState<AuditData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filterCrit, setFilterCrit] = useState<string>("Toutes");
@@ -78,10 +80,10 @@ export default function AuditQRPage() {
     if (!systemDescription.trim()) return;
     setLoading(true); setError(null); setResult(null);
     try {
-      const res = await fetch("/api/legal-tools", {
+      const res = await fetch("/api/generate/audit-qr", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tool: "audit-qr", systemDescription, secteur }),
+        body: JSON.stringify({ systemDescription, secteur }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -90,20 +92,43 @@ export default function AuditQRPage() {
     setLoading(false);
   }
 
+  function buildExportSections() {
+    if (!result) return { title: "Audit QR", sections: [] as { heading: string; body: string }[] };
+    return {
+      title: `Questions d'audit — ${result.systeme_audite}`,
+      sections: [
+        { heading: "Contexte", body: result.contexte_audit },
+        {
+          heading: "Questions d'audit",
+          body: result.questions
+            .map((q) => `Q${q.numero} [${q.criticite}] — ${q.categorie}\n${q.question}\nArticle : ${q.article_vise} | Réponse attendue : ${q.type_reponse}`)
+            .join("\n\n"),
+        },
+        { heading: "Conseils de préparation", body: result.preparation_conseils },
+      ],
+    };
+  }
+
   function download() {
     if (!result) return;
-    const lines = [
-      `AUDIT RÉGLEMENTAIRE IA — ${result.systeme_audite}`,
-      "=".repeat(60), "",
-      "CONTEXTE", result.contexte_audit, "",
-      "QUESTIONS D'AUDIT",
-      ...result.questions.map(q => `\nQ${q.numero} [${q.criticite}] — ${q.categorie}\n${q.question}\nArticle : ${q.article_vise} | Réponse attendue : ${q.type_reponse}`),
-      "", "CONSEILS DE PRÉPARATION", result.preparation_conseils,
-    ];
+    const { title, sections } = buildExportSections();
+    const lines = [title, "=".repeat(60), "", ...sections.flatMap((s) => [s.heading.toUpperCase(), s.body, ""])];
     const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = "audit-qr-ia.txt"; a.click();
     URL.revokeObjectURL(url);
+  }
+
+  async function downloadPdf() {
+    if (!result) return;
+    const { title, sections } = buildExportSections();
+    setPdfLoading(true);
+    try {
+      await downloadToolExportPdf({ title, sections, filename: "audit-qr-ia" });
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Erreur export PDF");
+    }
+    setPdfLoading(false);
   }
 
   if (!result) {
@@ -162,7 +187,11 @@ export default function AuditQRPage() {
           <p className="text-xs text-muted-foreground mt-0.5">{result.systeme_audite}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={download}><Download className="h-4 w-4" />Export</Button>
+          <Button variant="outline" size="sm" onClick={() => void downloadPdf()} disabled={pdfLoading}>
+            {pdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+            PDF
+          </Button>
+          <Button variant="outline" size="sm" onClick={download}><Download className="h-4 w-4" />TXT</Button>
           <Button variant="outline" size="sm" onClick={() => setResult(null)}><RotateCcw className="h-4 w-4" />Nouveau</Button>
         </div>
       </div>

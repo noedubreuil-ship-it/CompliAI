@@ -4,293 +4,381 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Swords, Loader2, Send, RotateCcw, Trophy, Star } from "lucide-react";
+import { Swords, Loader2, Send, RotateCcw, Trophy, FileDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { downloadToolExportPdf } from "@/lib/utils/tool-export-pdf";
 
-const SCENARIOS = [
-  { id: "healthtech", label: "HealthTech — Diagnostic IA", desc: "Startup utilisant un LLM pour diagnostiquer des maladies rares à partir de symptômes" },
-  { id: "rh-scoring", label: "RH — Scoring de candidats", desc: "Système de scoring algorithmique pour trier 10 000 CVs et recommander 50 finalistes" },
-  { id: "deepfake", label: "Deepfake détecté", desc: "Réseau social ayant laissé circuler un deepfake politique généré par IA pendant 48h" },
-  { id: "voiture", label: "Véhicule autonome", desc: "Constructeur auto déployant un système IA de conduite semi-autonome dans des villes françaises" },
-  { id: "credit", label: "Scoring crédit bancaire", desc: "Banque utilisant un modèle IA pour décider automatiquement l'octroi ou le refus de crédit" },
-  { id: "custom", label: "Scénario personnalisé", desc: "" },
+type Niveau = "L2_L3" | "M1" | "M2_Bar";
+type Theme = "rgpd" | "ai_act" | "dsa_dma" | "droits_fondamentaux" | "transferts" | "biometrie" | "random";
+type Format = "court" | "standard" | "intensif";
+
+const NIVEAUX: { id: Niveau; label: string; desc: string }[] = [
+  { id: "L2_L3", label: "L2 / L3", desc: "Articles fondamentaux RGPD + Charte EU" },
+  { id: "M1", label: "M1", desc: "Jurisprudence + AI Act + DSA" },
+  { id: "M2_Bar", label: "M2 / Bar", desc: "Cumul de normes · nuances" },
 ];
 
-const ROLES = [
-  { id: "regulateur", label: "Régulateur (ANC AI Act)", emoji: "🏛️", desc: "Autorité nationale compétente mandatée pour auditer votre système" },
-  { id: "dpo", label: "DPO / CNIL", emoji: "🔒", desc: "Délégué à la protection des données vous questionnant sur votre DPIA" },
-  { id: "avocat", label: "Avocat adverse", emoji: "⚖️", desc: "Avocat représentant une personne lésée par votre système IA" },
+const THEMES: { id: Theme; label: string }[] = [
+  { id: "rgpd", label: "RGPD" },
+  { id: "ai_act", label: "AI Act" },
+  { id: "dsa_dma", label: "DSA / DMA" },
+  { id: "droits_fondamentaux", label: "Droits fondamentaux" },
+  { id: "transferts", label: "Transferts internationaux" },
+  { id: "biometrie", label: "Biométrie / IA au travail" },
+  { id: "random", label: "Aléatoire (recommandé)" },
 ];
 
-interface SimulateurState {
-  role: string;
-  introduction: string;
-  premiere_question: string;
-  article_vise: string;
-  indice_pedagogique: string;
-  scenario_resume: string;
+const FORMATS: { id: Format; label: string; desc: string }[] = [
+  { id: "court", label: "Court", desc: "1 problème de droit" },
+  { id: "standard", label: "Standard", desc: "2 problèmes distincts" },
+  { id: "intensif", label: "Intensif", desc: "3 problèmes + interférences" },
+];
+
+function scoreBadge(score: number) {
+  if (score >= 85) return { label: "Expert", className: "bg-emerald-100 text-emerald-900" };
+  if (score >= 70) return { label: "Solide", className: "bg-green-100 text-green-800" };
+  if (score >= 55) return { label: "Correct", className: "bg-amber-100 text-amber-900" };
+  if (score >= 40) return { label: "À retravailler", className: "bg-orange-100 text-orange-900" };
+  return { label: "Lacunes importantes", className: "bg-red-100 text-red-900" };
 }
 
-interface EchangeState {
-  question: string; article_vise: string;
-  reponse?: string;
-  evaluation?: {
-    score: number; sur: number;
-    points_forts: string[]; points_manquants: string[];
-    article_attendu: string; correction: string;
-  };
-  reaction_role?: string;
-  prochaine_question?: string | null;
-  est_termine?: boolean;
-  score_final?: { total: number; sur: number; niveau: string; bilan: string } | null;
+function ProseBlock({ content, className }: { content: string; className?: string }) {
+  return (
+    <div
+      className={cn(
+        "prose prose-sm prose-slate max-w-none whitespace-pre-wrap text-sm leading-relaxed",
+        className,
+      )}
+    >
+      {content}
+    </div>
+  );
 }
+
+type ApiResult = {
+  markdown: string;
+  scenario_id: string | null;
+  score: number | null;
+};
 
 export default function SimulateurPage() {
-  const [scenario, setScenario] = useState(SCENARIOS[0].id);
-  const [customScenario, setCustomScenario] = useState("");
-  const [roleIA, setRoleIA] = useState(ROLES[0].id);
+  const [niveau, setNiveau] = useState<Niveau>("L2_L3");
+  const [theme, setTheme] = useState<Theme>("random");
+  const [format, setFormat] = useState<Format>("standard");
   const [loading, setLoading] = useState(false);
-  const [state, setState] = useState<SimulateurState | null>(null);
-  const [echanges, setEchanges] = useState<EchangeState[]>([]);
-  const [currentAnswer, setCurrentAnswer] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [finished, setFinished] = useState(false);
 
-  const scenarioCfg = SCENARIOS.find(s => s.id === scenario)!;
-  const roleCfg = ROLES.find(r => r.id === roleIA)!;
-  const scenarioText = scenario === "custom" ? customScenario : scenarioCfg.desc;
+  const [caseMarkdown, setCaseMarkdown] = useState<string | null>(null);
+  const [scenarioId, setScenarioId] = useState<string | null>(null);
+  const [playedIds, setPlayedIds] = useState<string[]>([]);
+  const [studentAnswer, setStudentAnswer] = useState("");
+  const [evaluationMarkdown, setEvaluationMarkdown] = useState<string | null>(null);
+  const [lastScore, setLastScore] = useState<number | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
-  async function startSimulation() {
-    if (!scenarioText) return;
-    setLoading(true); setError(null); setState(null); setEchanges([]); setFinished(false);
+  async function downloadPdf() {
+    if (!caseMarkdown) return;
+    setPdfLoading(true);
     try {
-      const res = await fetch("/api/legal-tools", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tool: "simulateur-init", scenario: scenarioText, roleIA: roleCfg.label }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setState(data.result);
-      setEchanges([{ question: data.result.premiere_question, article_vise: data.result.article_vise }]);
-    } catch (e: unknown) { setError(e instanceof Error ? e.message : "Erreur"); }
-    setLoading(false);
-  }
-
-  async function sendAnswer() {
-    if (!currentAnswer.trim() || !state) return;
-    const lastEchange = echanges[echanges.length - 1];
-    const historique = echanges.map((e, i) => `Q${i + 1}: ${e.question}\nRéponse: ${e.reponse || "(en attente)"}`).join("\n\n");
-
-    setLoading(true);
-    try {
-      const res = await fetch("/api/legal-tools", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tool: "simulateur-reponse",
-          scenario: scenarioText,
-          roleIA: roleCfg.label,
-          historique,
-          reponseEtudiant: currentAnswer,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-
-      const result = data.result;
-      const updatedEchange: EchangeState = {
-        ...lastEchange,
-        reponse: currentAnswer,
-        evaluation: result.evaluation,
-        reaction_role: result.suite.reaction_role,
-        prochaine_question: result.suite.prochaine_question,
-        est_termine: result.suite.est_termine,
-        score_final: result.score_final,
-      };
-
-      const newEchanges = [...echanges.slice(0, -1), updatedEchange];
-      if (!result.suite.est_termine && result.suite.prochaine_question) {
-        newEchanges.push({ question: result.suite.prochaine_question, article_vise: "" });
+      const sections = [{ heading: "Énoncé du cas", body: caseMarkdown }];
+      if (studentAnswer.trim()) {
+        sections.push({ heading: "Votre réponse", body: studentAnswer });
       }
-      setEchanges(newEchanges);
-      setCurrentAnswer("");
-      if (result.suite.est_termine) setFinished(true);
-    } catch (e: unknown) { setError(e instanceof Error ? e.message : "Erreur"); }
+      if (evaluationMarkdown) {
+        sections.push({
+          heading: lastScore !== null ? `Correction (${lastScore}/100)` : "Correction",
+          body: evaluationMarkdown,
+        });
+      }
+      await downloadToolExportPdf({
+        title: "Cas pratique — simulateur",
+        subtitle: scenarioId ? `Scénario ${scenarioId}` : undefined,
+        sections,
+        filename: "simulateur-cas-pratique",
+      });
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Erreur export PDF");
+    }
+    setPdfLoading(false);
+  }
+
+  async function callApi(action: string, extra: Record<string, unknown> = {}) {
+    const res = await fetch("/api/generate/simulateur", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action,
+        niveau,
+        theme,
+        format,
+        played_scenario_ids: playedIds,
+        ...extra,
+      }),
+    });
+    const data = (await res.json()) as { error?: string; result?: ApiResult };
+    if (!res.ok) throw new Error(data.error ?? "Erreur");
+    return data.result!;
+  }
+
+  function trackScenario(id: string | null) {
+    if (!id) return;
+    setScenarioId(id);
+    setPlayedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+  }
+
+  function resetAll() {
+    setCaseMarkdown(null);
+    setScenarioId(null);
+    setPlayedIds([]);
+    setStudentAnswer("");
+    setEvaluationMarkdown(null);
+    setLastScore(null);
+    setError(null);
+  }
+
+  async function startSession() {
+    setLoading(true);
+    setError(null);
+    setEvaluationMarkdown(null);
+    setLastScore(null);
+    setStudentAnswer("");
+    try {
+      const result = await callApi("start");
+      setCaseMarkdown(result.markdown);
+      trackScenario(result.scenario_id);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Erreur");
+    }
     setLoading(false);
   }
 
-  if (!state) {
+  async function submitAnswer() {
+    if (!caseMarkdown) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await callApi("evaluate", {
+        enonce: caseMarkdown,
+        student_answer: studentAnswer,
+        scenario_id: scenarioId,
+      });
+      setEvaluationMarkdown(result.markdown);
+      setLastScore(result.score);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Erreur");
+    }
+    setLoading(false);
+  }
+
+  async function newCase(harder: boolean) {
+    setLoading(true);
+    setError(null);
+    setEvaluationMarkdown(null);
+    setLastScore(null);
+    setStudentAnswer("");
+    if (harder) {
+      if (niveau === "L2_L3") setNiveau("M1");
+      else if (niveau === "M1") setNiveau("M2_Bar");
+      if (format === "court") setFormat("standard");
+      else if (format === "standard") setFormat("intensif");
+    }
+    try {
+      const result = await callApi(harder ? "plus_difficile" : "nouveau_cas");
+      setCaseMarkdown(result.markdown);
+      trackScenario(result.scenario_id);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Erreur");
+    }
+    setLoading(false);
+  }
+
+  if (!caseMarkdown) {
     return (
       <div className="space-y-6 max-w-2xl mx-auto">
         <div className="flex items-start gap-4">
-          <div className="p-3 bg-red-100 rounded-xl"><Swords className="h-6 w-6 text-red-600" /></div>
+          <div className="p-3 bg-red-100 rounded-xl">
+            <Swords className="h-6 w-6 text-red-600" />
+          </div>
           <div>
             <h1 className="text-2xl font-bold">Simulateur de cas pratique</h1>
-            <p className="text-muted-foreground mt-1">Jeu de rôle réglementaire — défendez votre position en citant les bons articles. Score final + retour pédagogique.</p>
-            <Badge className="mt-2 bg-red-100 text-red-800 border-0">Très différenciant</Badge>
+            <p className="text-muted-foreground mt-1">
+              Méthode du cas pratique : syllogisme, nuances, barème /100. Scénarios aléatoires (RGPD, AI Act, DSA, droits fondamentaux).
+            </p>
+            <Badge className="mt-2 bg-red-100 text-red-800 border-0">L2 à M2</Badge>
           </div>
         </div>
 
         <div className="bg-white border rounded-xl p-6 space-y-5">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Scénario</label>
+            <label className="text-sm font-medium">Votre niveau</label>
             <div className="space-y-2">
-              {SCENARIOS.map((s) => (
-                <button key={s.id} onClick={() => setScenario(s.id)}
-                  className={cn("w-full text-left p-3 rounded-xl border-2 transition-colors", scenario === s.id ? "border-red-400 bg-red-50" : "border-slate-200 hover:border-slate-300")}>
-                  <p className="font-medium text-sm text-slate-900">{s.label}</p>
-                  {s.desc && <p className="text-xs text-slate-500 mt-0.5">{s.desc}</p>}
+              {NIVEAUX.map((n) => (
+                <button
+                  key={n.id}
+                  type="button"
+                  onClick={() => setNiveau(n.id)}
+                  className={cn(
+                    "w-full text-left p-3 rounded-xl border-2 transition-colors",
+                    niveau === n.id ? "border-red-400 bg-red-50" : "border-slate-200 hover:border-slate-300",
+                  )}
+                >
+                  <p className="font-medium text-sm">{n.label}</p>
+                  <p className="text-xs text-slate-500">{n.desc}</p>
                 </button>
               ))}
             </div>
-            {scenario === "custom" && (
-              <Textarea
-                placeholder="Décrivez votre scénario personnalisé..."
-                value={customScenario}
-                onChange={(e) => setCustomScenario(e.target.value)}
-                className="mt-2"
-              />
-            )}
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Votre interlocuteur</label>
-            <div className="grid grid-cols-1 gap-2">
-              {ROLES.map((r) => (
-                <button key={r.id} onClick={() => setRoleIA(r.id)}
-                  className={cn("flex items-start gap-3 p-3 rounded-xl border-2 text-left transition-colors", roleIA === r.id ? "border-red-400 bg-red-50" : "border-slate-200 hover:border-slate-300")}>
-                  <span className="text-2xl flex-shrink-0">{r.emoji}</span>
-                  <div>
-                    <p className="font-medium text-sm text-slate-900">{r.label}</p>
-                    <p className="text-xs text-slate-500">{r.desc}</p>
-                  </div>
+            <label className="text-sm font-medium">Thème</label>
+            <div className="flex flex-wrap gap-2">
+              {THEMES.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setTheme(t.id)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-sm border transition-colors",
+                    theme === t.id ? "border-red-400 bg-red-50 text-red-900" : "border-slate-200",
+                  )}
+                >
+                  {t.label}
                 </button>
               ))}
             </div>
           </div>
 
-          {error && <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{error}</div>}
-          <Button onClick={startSimulation} disabled={loading || (!scenarioText)} className="w-full bg-red-600 hover:bg-red-700">
-            {loading ? <><Loader2 className="h-4 w-4 animate-spin" />Préparation...</> : <><Swords className="h-4 w-4" />Démarrer la simulation</>}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Format</label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {FORMATS.map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setFormat(f.id)}
+                  className={cn(
+                    "p-3 rounded-xl border-2 text-left transition-colors",
+                    format === f.id ? "border-red-400 bg-red-50" : "border-slate-200",
+                  )}
+                >
+                  <p className="font-medium text-sm">{f.label}</p>
+                  <p className="text-xs text-slate-500">{f.desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {error && (
+            <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{error}</div>
+          )}
+          <Button onClick={startSession} disabled={loading} className="w-full bg-red-600 hover:bg-red-700">
+            {loading ?
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Tirage du cas…
+              </>
+            : <>
+                <Swords className="h-4 w-4" />
+                Commencer
+              </>
+            }
           </Button>
         </div>
       </div>
     );
   }
 
-  const totalScore = echanges.filter(e => e.evaluation).reduce((s, e) => s + (e.evaluation?.score || 0), 0);
-  const totalPossible = echanges.filter(e => e.evaluation).reduce((s, e) => s + (e.evaluation?.sur || 10), 0);
+  const badge = lastScore !== null ? scoreBadge(lastScore) : null;
 
   return (
-    <div className="space-y-5 max-w-3xl mx-auto">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">{roleCfg.emoji}</span>
-          <div>
-            <h1 className="font-bold text-slate-900">{roleCfg.label}</h1>
-            <p className="text-xs text-muted-foreground">{state.scenario_resume}</p>
-          </div>
+    <div className="space-y-5 max-w-3xl mx-auto pb-10">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-xl font-bold">Cas pratique</h1>
+          <p className="text-xs text-muted-foreground">
+            {scenarioId ? `Scénario ${scenarioId}` : "Scénario en cours"} · {niveau} · {format}
+          </p>
         </div>
-        <div className="flex items-center gap-3">
-          {totalPossible > 0 && (
-            <span className="text-sm font-medium text-slate-700">{totalScore}/{totalPossible} pts</span>
-          )}
-          <Button variant="outline" size="sm" onClick={() => { setState(null); setEchanges([]); setFinished(false); }}><RotateCcw className="h-4 w-4" />Recommencer</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => void downloadPdf()} disabled={pdfLoading}>
+            {pdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+            PDF
+          </Button>
+          <Button variant="outline" size="sm" onClick={resetAll}>
+            <RotateCcw className="h-4 w-4" />
+            Reconfigurer
+          </Button>
         </div>
       </div>
 
-      <div className="bg-slate-800 text-white rounded-xl p-5">
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">{roleCfg.label} — Introduction</p>
-        <p className="text-sm leading-relaxed">{state.introduction}</p>
+      <div className="bg-white border rounded-xl p-5">
+        <p className="text-xs font-semibold text-red-700 uppercase tracking-wide mb-2">Phase 1 — Énoncé</p>
+        <ProseBlock content={caseMarkdown} />
       </div>
 
-      {/* Exchanges */}
-      <div className="space-y-4">
-        {echanges.map((e, i) => (
-          <div key={i} className="space-y-3">
-            {/* Question */}
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-              <div className="flex items-start gap-2 justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-red-700 mb-1">{roleCfg.emoji} Question {i + 1}</p>
-                  <p className="text-sm text-slate-800 leading-relaxed">{e.question}</p>
-                </div>
-                {e.article_vise && <Badge variant="outline" className="text-xs flex-shrink-0">{e.article_vise}</Badge>}
-              </div>
-            </div>
-
-            {/* Response */}
-            {e.reponse && (
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 ml-6">
-                <p className="text-xs font-semibold text-blue-700 mb-1">📝 Votre réponse</p>
-                <p className="text-sm text-slate-700">{e.reponse}</p>
-              </div>
-            )}
-
-            {/* Evaluation */}
-            {e.evaluation && (
-              <div className="border rounded-xl overflow-hidden ml-6">
-                <div className={cn("px-4 py-3 flex items-center justify-between", e.evaluation.score >= 7 ? "bg-green-50 border-b border-green-200" : e.evaluation.score >= 5 ? "bg-amber-50 border-b border-amber-200" : "bg-red-50 border-b border-red-200")}>
-                  <div className="flex items-center gap-2">
-                    {[...Array(e.evaluation.sur)].map((_, s) => (
-                      <Star key={s} className={cn("h-3 w-3", s < e.evaluation!.score ? "text-yellow-500 fill-yellow-500" : "text-slate-300")} />
-                    ))}
-                  </div>
-                  <span className="text-sm font-bold">{e.evaluation.score}/{e.evaluation.sur}</span>
-                </div>
-                <div className="p-4 bg-white space-y-3">
-                  {e.evaluation.points_forts.length > 0 && (
-                    <div>
-                      <p className="text-xs font-semibold text-green-700 mb-1">✓ Points forts</p>
-                      {e.evaluation.points_forts.map((p, j) => <p key={j} className="text-xs text-slate-600">• {p}</p>)}
-                    </div>
-                  )}
-                  {e.evaluation.points_manquants.length > 0 && (
-                    <div>
-                      <p className="text-xs font-semibold text-red-700 mb-1">✗ Points manquants</p>
-                      {e.evaluation.points_manquants.map((p, j) => <p key={j} className="text-xs text-slate-600">• {p}</p>)}
-                    </div>
-                  )}
-                  <div className="bg-slate-50 rounded-lg p-3">
-                    <p className="text-xs font-semibold text-slate-700 mb-1">Correction complète <Badge variant="outline" className="text-[10px] ml-1">{e.evaluation.article_attendu}</Badge></p>
-                    <p className="text-xs text-slate-600 leading-relaxed">{e.evaluation.correction}</p>
-                  </div>
-                  {e.reaction_role && <p className="text-xs italic text-slate-500 border-l-2 border-slate-200 pl-3">{e.reaction_role}</p>}
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Final score */}
-      {finished && echanges[echanges.length - 1]?.score_final && (
-        <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white rounded-2xl p-6 text-center space-y-3">
-          <Trophy className="h-12 w-12 mx-auto text-yellow-400" />
-          <p className="text-2xl font-bold">{echanges[echanges.length - 1].score_final!.total}/{echanges[echanges.length - 1].score_final!.sur}</p>
-          <Badge className="bg-yellow-500 text-slate-900">{echanges[echanges.length - 1].score_final!.niveau}</Badge>
-          <p className="text-sm text-slate-300 leading-relaxed">{echanges[echanges.length - 1].score_final!.bilan}</p>
-          <Button onClick={() => { setState(null); setEchanges([]); setFinished(false); }} variant="outline" className="text-white border-white hover:bg-white/10">
-            <RotateCcw className="h-4 w-4" />Nouvelle simulation
+      {!evaluationMarkdown && (
+        <div className="bg-white border rounded-xl p-4 space-y-3">
+          <label className="text-sm font-medium">Votre réponse (syllogisme par problème de droit)</label>
+          <Textarea
+            placeholder="Faits pertinents, problèmes de droit, majeure / mineure / conclusion, nuances…"
+            value={studentAnswer}
+            onChange={(e) => setStudentAnswer(e.target.value)}
+            className="min-h-[160px] text-sm"
+          />
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <Button
+            onClick={submitAnswer}
+            disabled={loading || studentAnswer.trim().length < 40}
+            className="w-full"
+          >
+            {loading ?
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Évaluation…
+              </>
+            : <>
+                <Send className="h-4 w-4" />
+                Soumettre pour correction
+              </>
+            }
           </Button>
         </div>
       )}
 
-      {/* Answer input */}
-      {!finished && echanges.length > 0 && !echanges[echanges.length - 1].reponse && (
-        <div className="bg-white border rounded-xl p-4 space-y-3">
-          <Textarea
-            placeholder="Votre réponse — citez les articles applicables et argumentez votre position..."
-            value={currentAnswer}
-            onChange={(e) => setCurrentAnswer(e.target.value)}
-            className="min-h-[100px] text-sm"
-          />
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          <Button onClick={sendAnswer} disabled={loading || !currentAnswer.trim()} className="w-full">
-            {loading ? <><Loader2 className="h-4 w-4 animate-spin" />Évaluation...</> : <><Send className="h-4 w-4" />Envoyer ma réponse</>}
-          </Button>
-        </div>
+      {evaluationMarkdown && (
+        <>
+          {lastScore !== null && badge && (
+            <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white rounded-2xl p-6 text-center space-y-2">
+              <Trophy className="h-10 w-10 mx-auto text-yellow-400" />
+              <p className="text-3xl font-bold">{lastScore}/100</p>
+              <Badge className={cn("border-0", badge.className)}>{badge.label}</Badge>
+            </div>
+          )}
+          <div className="bg-white border rounded-xl p-5">
+            <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
+              Phases 2 à 4 — Évaluation · Retour · Corrigé type
+            </p>
+            <ProseBlock content={evaluationMarkdown} />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => newCase(false)} disabled={loading}>
+              Nouveau cas
+            </Button>
+            <Button variant="outline" onClick={() => newCase(true)} disabled={loading}>
+              Plus difficile
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setEvaluationMarkdown(null);
+                setLastScore(null);
+                setStudentAnswer("");
+              }}
+            >
+              Réessayer ce cas
+            </Button>
+          </div>
+        </>
       )}
     </div>
   );
