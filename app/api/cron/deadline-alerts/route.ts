@@ -54,7 +54,7 @@ export async function GET(request: Request) {
       const issueCount = issues?.length ?? 0;
 
       await resend.emails.send({
-        from: "CompliAI <alerts@compliai.eu>",
+        from: `CompliAI <${process.env.RESEND_FROM_EMAIL ?? "alerts@compliai.eu"}>`,
         to: user.email,
         subject: `⚠️ ${daysUntilDeadline} jours avant la deadline AI Act — ${issueCount} obligation(s) en attente`,
         html: buildEmailHtml({
@@ -125,7 +125,7 @@ function buildEmailHtml(data: {
       </div>
       ` : `<p style="color: #16a34a; font-weight: 600;">✓ Aucune obligation bloquante en attente. Bien joué !</p>`}
       <div style="text-align: center; margin: 28px 0 0;">
-        <a href="${process.env.NEXT_PUBLIC_APP_URL ?? "https://compliai.eu"}/dashboard"
+        <a href="${process.env.NEXT_PUBLIC_APP_URL ?? "https://www.compliai.eu"}/dashboard"
           style="background: #0f172a; color: white; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; font-size: 14px; display: inline-block;">
           Voir mon tableau de bord →
         </a>

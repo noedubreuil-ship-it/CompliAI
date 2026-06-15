@@ -141,14 +141,14 @@ async function sendAlertEmail(
     <p style="margin: 8px 0 0; color: #78350f;">${alert.description}</p>
   </div>
   <p><strong>Impact sur votre projet :</strong> ${reason}</p>
-  <a href="${process.env.NEXT_PUBLIC_APP_URL ?? "https://compliai.eu"}/dashboard/alerts"
+  <a href="${process.env.NEXT_PUBLIC_APP_URL ?? "https://www.compliai.eu"}/dashboard/alerts"
      style="display: inline-block; background: #1e293b; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; margin-top: 16px;">
     Voir mes alertes
   </a>
   <hr style="margin: 24px 0; border: none; border-top: 1px solid #e2e8f0;">
   <p style="font-size: 12px; color: #94a3b8;">
     Ces alertes constituent des informations générales. Consultez un avocat spécialisé pour valider l'impact sur votre situation spécifique.<br>
-    Pour ne plus recevoir ces alertes, désactivez la veille dans vos <a href="${process.env.NEXT_PUBLIC_APP_URL ?? "https://compliai.eu"}/dashboard/settings">paramètres</a>.
+    Pour ne plus recevoir ces alertes, désactivez la veille dans vos <a href="${process.env.NEXT_PUBLIC_APP_URL ?? "https://www.compliai.eu"}/dashboard/settings">paramètres</a>.
   </p>
 </div>`,
   });

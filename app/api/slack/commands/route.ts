@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     }
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://compliai.eu";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.compliai.eu";
   const text =
     `*CompliAI* — légal IA / UE\n\n` +
     `${userSlackId ? `<@${userSlackId}> ` : ""}Associez les alertes critiques via webhook (dashboard → Intégrations).\n\n` +
