@@ -5,7 +5,7 @@ import { mapPriceIdToTier } from "@/lib/stripe/limits";
 import { resolvePlanFromStripePriceId } from "@/lib/stripe/plan-mapping";
 import { getPlanConfig } from "@/lib/pricing";
 import { grantCredits, initUserCredits } from "@/lib/credits";
-import { sendCreditPackConfirmation } from "@/lib/email";
+import { fulfillCreditPackFromSession } from "@/lib/stripe/fulfill-credit-pack";
 import type Stripe from "stripe";
 
 const admin = createClient(
@@ -51,62 +51,7 @@ export async function POST(request: Request) {
         const session = event.data.object as Stripe.Checkout.Session;
 
         if (session.mode === "payment" && session.metadata?.type === "credit_pack") {
-          const userId = session.metadata.supabase_user_id;
-          const packId = session.metadata.pack_id;
-          const credits = parseInt(session.metadata.credits ?? "0");
-
-          if (userId && credits > 0) {
-            // Incrémente le solde sans écraser le plan existant
-            const { data: current } = await admin
-              .from("user_credits")
-              .select("balance, plan")
-              .eq("user_id", userId)
-              .single();
-
-            const newBalance = (current?.balance ?? 0) + credits;
-            await admin.from("user_credits").upsert(
-              { user_id: userId, balance: newBalance, updated_at: new Date().toISOString() },
-              { onConflict: "user_id" }
-            );
-            await admin.from("credit_transactions").insert({
-              user_id: userId,
-              amount: credits,
-              type: "top_up",
-              description: `Achat pack ${credits.toLocaleString("fr-FR")} crédits`,
-              metadata: { stripe_session_id: session.id, pack_id: packId },
-            });
-
-            // Met à jour le statut d'achat
-            await admin.from("credit_pack_purchases")
-              .update({ status: "completed", stripe_payment_intent: session.payment_intent as string })
-              .eq("stripe_session_id", session.id);
-
-            // Email de confirmation
-            const { data: authUser } = await admin.auth.admin.getUserById(userId);
-            const email = authUser?.user?.email;
-            if (email) {
-              const { data: credits_row } = await admin
-                .from("user_credits")
-                .select("balance")
-                .eq("user_id", userId)
-                .single();
-              const { data: pack } = await admin
-                .from("credit_pack_catalog")
-                .select("name, price_cents")
-                .eq("id", packId)
-                .single();
-
-              await sendCreditPackConfirmation({
-                email,
-                packName: pack?.name ?? `Pack ${credits}`,
-                credits,
-                newBalance: credits_row?.balance ?? credits,
-                amountPaidCents: pack?.price_cents ?? (session.amount_total ?? 0),
-              }).catch(() => null);
-            }
-
-            console.log(JSON.stringify({ level: "info", event: "credit_pack_purchased", userId, credits, sessionId: session.id }));
-          }
+          await fulfillCreditPackFromSession(session);
           break;
         }
 

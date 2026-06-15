@@ -16,12 +16,15 @@ export function CreditBadge({ className }: { className?: string }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getCreditBalance()
-      .then(setCredits)
-      .finally(() => setLoading(false));
+    const refresh = () => getCreditBalance().then(setCredits);
+    refresh().finally(() => setLoading(false));
 
-    const interval = setInterval(() => getCreditBalance().then(setCredits), 120_000);
-    return () => clearInterval(interval);
+    window.addEventListener("compliai:credits-updated", refresh);
+    const interval = setInterval(refresh, 30_000);
+    return () => {
+      window.removeEventListener("compliai:credits-updated", refresh);
+      clearInterval(interval);
+    };
   }, []);
 
   if (loading) {
@@ -78,9 +81,14 @@ export function CreditBadgeCompact() {
   const [credits, setCredits] = useState<CreditInfo | null>(null);
 
   useEffect(() => {
-    getCreditBalance().then(setCredits);
-    const interval = setInterval(() => getCreditBalance().then(setCredits), 120_000);
-    return () => clearInterval(interval);
+    const refresh = () => getCreditBalance().then(setCredits);
+    refresh();
+    window.addEventListener("compliai:credits-updated", refresh);
+    const interval = setInterval(refresh, 30_000);
+    return () => {
+      window.removeEventListener("compliai:credits-updated", refresh);
+      clearInterval(interval);
+    };
   }, []);
 
   if (!credits) return null;

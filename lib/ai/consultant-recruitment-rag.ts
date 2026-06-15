@@ -55,10 +55,10 @@ export async function fetchRecruitmentCaseLawChunks(
     }
   };
 
-  add(await searchEuCaseLawTexts(question, 8, 0.44));
-  for (const q of RECRUITMENT_JP_RAG_QUERIES) {
-    add(await searchEuCaseLawTexts(q, 4, 0.4));
+  add(await searchEuCaseLawTexts(question, 6, 0.44));
+  for (const q of RECRUITMENT_JP_RAG_QUERIES.slice(0, 3)) {
+    add(await searchEuCaseLawTexts(q, 2, 0.4));
   }
 
-  return merged.slice(0, 14);
+  return merged.slice(0, 10);
 }

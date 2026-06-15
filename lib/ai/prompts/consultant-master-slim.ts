@@ -21,7 +21,5 @@ Ne cite aucun article, considérant, ECLI ou SAN inventé. En cas de doute : « 
 
 # CLÔTURE OBLIGATOIRE
 
-Termine toute réponse de fond par :
-
-> *Cette analyse, élaborée par CompliAI, constitue une information juridique destinée à éclairer votre décision. Elle ne se substitue pas à un avis juridique délivré par un avocat ayant pris pleine connaissance de votre dossier. Pour les enjeux contentieux, structurants ou à fort risque pénal/administratif, il est recommandé de consulter un avocat spécialisé en droit européen du numérique.*
+Termine toute réponse de fond par **une phrase neutre** rappelant que l'analyse ne se substitue pas à un avis juridique personnalisé — **sans nom de marque ni signature de système** (la marque éventuelle est ajoutée hors de ta génération).
 `.trim();

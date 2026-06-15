@@ -6,6 +6,7 @@ import { createClient } from "@supabase/supabase-js";
 
 import { embedBatch } from "@/lib/ai/embeddings";
 import { chunkLegalText, stripHtml } from "@/lib/ai/national-ingest-core";
+import { sanitizeRagTextForModel } from "@/lib/ai/sanitize-rag-context";
 
 export interface NationalIngestPlainInput {
   country_code: string;
@@ -85,7 +86,8 @@ export async function ingestPlainNationalDocument(
     const batch = pieces.slice(i, i + BATCH);
     const contents = batch.map((b, j) => {
       const ordinal = `segment ${i + j + 1}/${pieces.length}`;
-      return `${input.country_name} (${input.country_code}) — ${input.title} — ${ordinal} [${b.label}]\n\n${b.content}`;
+      const clean = sanitizeRagTextForModel(b.content);
+      return `${input.country_name} (${input.country_code}) — ${input.title} — ${ordinal} [${b.label}]\n\n${clean}`;
     });
 
     let vectors: number[][];
@@ -97,11 +99,11 @@ export async function ingestPlainNationalDocument(
 
     const rows = batch.map((b, j) => {
       const ordinal = `${i + j + 1}/${pieces.length}`;
-      const rowTitle = `${input.title} — partie ${ordinal} (${b.label})`;
+      const rowTitle = sanitizeRagTextForModel(`${input.title} — ${ordinal} (${b.label})`);
       const rowReference =
         input.reference ?
-          `${input.reference} — ${b.label} — partie ${ordinal}`
-        : `${b.label} (${ordinal})`;
+          sanitizeRagTextForModel(`${input.reference} — ${b.label}`)
+        : b.label;
 
       return {
         country_code: input.country_code,
@@ -112,7 +114,7 @@ export async function ingestPlainNationalDocument(
         reference: rowReference || null,
         date_adopted: input.date_adopted,
         date_applicable: input.date_applicable,
-        content: b.content,
+        content: sanitizeRagTextForModel(b.content),
         embedding: vectors[j],
         source_url: input.source_url,
         language: input.language,

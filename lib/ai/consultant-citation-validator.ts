@@ -133,6 +133,7 @@ export function buildConsultantRewritePrompt(
     "- **Jamais** le libellé « Jurisprudence applicable » (ni variante) comme en-tête ou intertitre.",
     "- **Aucun arrêt** dont l'ECLI n'apparaît pas textuellement dans les blocs === SOURCE === fournis au message utilisateur.",
     "- Si tu ne peux pas citer depuis les sources : « à vérifier sur EUR-Lex » — pas de nom d'arrêt inventé.",
+    "- **Aucune** signature de marque (pas de « élaborée par CompliAI » ou équivalent).",
     "- Prose continue (pas de I/II/III, pas de liste 1–7 sous chaque article AI Act).",
     "- Conserve qualification, échéances (art. 113) et clôture légale.",
     "",

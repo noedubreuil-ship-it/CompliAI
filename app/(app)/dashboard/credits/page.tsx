@@ -152,16 +152,46 @@ export default function CreditsPage() {
   }, [supabase]);
 
   useEffect(() => {
-    loadData();
-
-    // Vérifie si on revient d'un paiement réussi
     const params = new URLSearchParams(window.location.search);
-    if (params.get("success")) {
-      const packName = params.get("pack") ?? "pack";
-      setSuccessMsg(`Paiement confirmé ! Votre ${packName} a été crédité.`);
+    const sessionId = params.get("session_id");
+    const packName = params.get("pack") ?? "pack";
+
+    async function handleReturn() {
+      if (params.get("success") !== "1") {
+        await loadData();
+        return;
+      }
+
+      if (sessionId) {
+        try {
+          const res = await fetch("/api/stripe/confirm-credit-pack", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ session_id: sessionId }),
+          });
+          const data = await res.json();
+          if (res.ok && data.newBalance != null) {
+            setSuccessMsg(
+              `Paiement confirmé ! +${Number(data.credits).toLocaleString("fr-FR")} crédits — nouveau solde : ${Number(data.newBalance).toLocaleString("fr-FR")}.`
+            );
+          } else {
+            setSuccessMsg(
+              `Paiement reçu. Si le solde ne se met pas à jour, rafraîchissez la page dans quelques secondes.`
+            );
+          }
+        } catch {
+          setSuccessMsg(`Paiement reçu. Actualisation du solde en cours…`);
+        }
+      } else {
+        setSuccessMsg(`Paiement confirmé ! Votre ${packName} sera crédité sous peu.`);
+      }
+
       window.history.replaceState({}, "", "/dashboard/credits");
-      setTimeout(() => setSuccessMsg(null), 8000);
+      await loadData();
+      setTimeout(() => setSuccessMsg(null), 10000);
     }
+
+    void handleReturn();
   }, [loadData]);
 
   const saveAutoRecharge = async (enabled: boolean, packId: string | null) => {

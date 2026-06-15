@@ -58,6 +58,8 @@ export function calculateCredits(
   return Math.max(1, inputCredits + outputCredits); // minimum 1 crédit par appel
 }
 
+export const CONSULTANT_CREDITS_TYPICAL = { min: 40, typical: 90, max: 180 } as const;
+
 // ─── Plans & allocations mensuelles ──────────────────────────────────────────
 export type PlanName = "free" | "starter" | "pro" | "enterprise";
 

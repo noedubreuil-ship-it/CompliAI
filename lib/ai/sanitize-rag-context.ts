@@ -15,6 +15,9 @@ const METADATA_PATTERNS: ReadonlyArray<RegExp> = [
   /Cette synthèse CompliAI complète le RGPD[^.]*\.\s*/gi,
   /Synthèse CompliAI[^.]*\.\s*/gi,
   /_Fiche registre CompliAI[^_\n]*_?/gi,
+  /\b(?:eu_case_law|national_case_law|intl_standards|uk_regulator)\b/gi,
+  /\bsegment \d+\/\d+\b/gi,
+  /\s*—\s*partie \d+\/\d+/gi,
 ];
 
 export function sanitizeRagTextForModel(text: string): string {
@@ -26,9 +29,17 @@ export function sanitizeRagTextForModel(text: string): string {
   return out.replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
+/** Nettoie un champ de citation affiché côté client (titre, référence, extrait). */
+export function sanitizeCitationField(text: string): string {
+  return sanitizeRagTextForModel(text)
+    .replace(/\s*—\s*partie\s+\d+\/\d+.*$/i, "")
+    .replace(/\s*\(partie\s+\d+\/\d+.*?\)/gi, "")
+    .trim();
+}
+
 /** Extraits courts pour le panneau Sources (côté client). */
 export function sanitizeRagExcerptForDisplay(text: string, maxLen = 300): string {
-  const clean = sanitizeRagTextForModel(text);
+  const clean = sanitizeCitationField(text);
   if (clean.length <= maxLen) return clean;
   return clean.slice(0, maxLen) + "…";
 }

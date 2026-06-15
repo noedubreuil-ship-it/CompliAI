@@ -44,13 +44,19 @@ interface Message {
 
 interface Conversation {
   id: string;
+  sessionId?: string;
   title: string;
   messages: Message[];
   createdAt: string;
 }
 
 const STORAGE_KEY = "compliai_chat_history";
-const MAX_CONVERSATIONS = 20;
+
+function serializableMessages(messages: Message[]): Message[] {
+  return messages
+    .filter((m) => !m.loading && !m.streaming && m.content.trim().length > 0)
+    .map(({ id, role, content, citations }) => ({ id, role, content, citations }));
+}
 
 function SourcesPanel({ sources }: { sources: LegalCitation[] }) {
   return (
@@ -291,7 +297,7 @@ const MessageBubble = memo(function MessageBubble({
         ) : (
           <>
             {msg.role === "assistant" ? (
-              <div className="relative group">
+              <div>
                 <div className={ASSISTANT_MARKDOWN_CLASS}>
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                   {msg.streaming && (
@@ -302,23 +308,38 @@ const MessageBubble = memo(function MessageBubble({
                   )}
                 </div>
                 {msg.content && !msg.loading && !msg.streaming && (
-                  <div className="absolute top-0 right-0 flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={copyText}
+                      title="Copier toute la réponse"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="h-3.5 w-3.5 text-green-600" />
+                          Copié
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-3.5 w-3.5" />
+                          Copier
+                        </>
+                      )}
+                    </button>
                     <button
                       type="button"
                       onClick={exportPdf}
                       disabled={pdfBusy || !citationFilterQuestion?.trim()}
                       title="Télécharger en PDF"
-                      className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 disabled:opacity-40"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 transition-colors"
                     >
-                      {pdfBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={copyText}
-                      title="Copier la réponse"
-                      className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700"
-                    >
-                      {copied ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
+                      {pdfBusy ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <FileDown className="h-3.5 w-3.5" />
+                      )}
+                      PDF
                     </button>
                   </div>
                 )}
@@ -354,7 +375,25 @@ function loadConversations(): Conversation[] {
 }
 
 function saveConversations(convs: Conversation[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(convs.slice(0, MAX_CONVERSATIONS)));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(convs));
+}
+
+function mergeServerAndLocal(
+  server: Conversation[],
+  local: Conversation[]
+): Conversation[] {
+  const byId = new Map<string, Conversation>();
+  for (const c of server) {
+    if (c.messages.length > 0) byId.set(c.id, c);
+  }
+  for (const c of local) {
+    if (!byId.has(c.id) && serializableMessages(c.messages).length > 0) {
+      byId.set(c.id, { ...c, messages: serializableMessages(c.messages) });
+    }
+  }
+  return Array.from(byId.values()).sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
 }
 
 function formatRelativeDate(iso: string) {
@@ -474,7 +513,23 @@ export default function ChatInterface() {
   );
 
   useEffect(() => {
-    setConversations(loadConversations());
+    async function hydrateHistory() {
+      const local = loadConversations();
+      try {
+        const res = await fetch("/api/chat/sessions");
+        if (res.ok) {
+          const data = (await res.json()) as { conversations?: Conversation[] };
+          const merged = mergeServerAndLocal(data.conversations ?? [], local);
+          setConversations(merged);
+          saveConversations(merged);
+          return;
+        }
+      } catch {
+        /* repli local */
+      }
+      setConversations(local);
+    }
+    void hydrateHistory();
   }, []);
 
   useEffect(() => {
@@ -495,31 +550,47 @@ export default function ChatInterface() {
   function loadConversation(conv: Conversation) {
     setActiveId(conv.id);
     setMessages(conv.messages);
-    setSessionId(undefined);
+    setSessionId(conv.sessionId ?? conv.id);
   }
 
-  function deleteConversation(id: string, e: React.MouseEvent) {
+  async function deleteConversation(id: string, e: React.MouseEvent) {
     e.stopPropagation();
+    const conv = conversations.find((c) => c.id === id);
+    const serverId = conv?.sessionId ?? id;
+    try {
+      await fetch(`/api/chat/sessions?id=${encodeURIComponent(serverId)}`, { method: "DELETE" });
+    } catch {
+      /* local delete anyway */
+    }
     const updated = conversations.filter((c) => c.id !== id);
     setConversations(updated);
     saveConversations(updated);
     if (activeId === id) startNewConversation();
   }
 
-  function persistMessages(convId: string, convMessages: Message[], firstQuestion: string) {
+  function persistMessages(
+    convId: string,
+    convMessages: Message[],
+    firstQuestion: string,
+    serverSessionId?: string
+  ) {
     const existing = loadConversations();
     const idx = existing.findIndex((c) => c.id === convId);
+    const stableId = serverSessionId ?? existing[idx]?.sessionId ?? convId;
     const entry: Conversation = {
-      id: convId,
+      id: stableId,
+      sessionId: serverSessionId ?? existing[idx]?.sessionId,
       title: firstQuestion.length > 55 ? firstQuestion.slice(0, 55) + "…" : firstQuestion,
-      messages: convMessages,
+      messages: serializableMessages(convMessages),
       createdAt: idx >= 0 ? existing[idx].createdAt : new Date().toISOString(),
     };
-    const updated = idx >= 0
-      ? existing.map((c) => (c.id === convId ? entry : c))
-      : [entry, ...existing];
+    const withoutDup = existing.filter((c) => c.id !== convId && c.id !== stableId);
+    const updated = [entry, ...withoutDup];
     saveConversations(updated);
     setConversations(updated);
+    if (activeId === convId && stableId !== convId) {
+      setActiveId(stableId);
+    }
   }
 
   useEffect(() => {
@@ -586,6 +657,8 @@ export default function ChatInterface() {
     setMessages(newMessages);
 
     const firstQuestion = messages.length === 0 ? q : (conversations.find((c) => c.id === convId)?.title ?? q);
+
+    let resolvedSessionId = sessionId;
 
     try {
       const res = await fetch("/api/chat", {
@@ -661,6 +734,20 @@ export default function ChatInterface() {
               streamDoneRef.current = true;
               streamCitationsRef.current = citations;
               flushStreamReveal(assistantId);
+              if (typeof event.session_id === "string") {
+                resolvedSessionId = event.session_id;
+                setSessionId(event.session_id);
+              }
+              if (typeof event.credits_consumed === "number" && event.credits_consumed > 0) {
+                window.dispatchEvent(
+                  new CustomEvent("compliai:credits-updated", {
+                    detail: {
+                      consumed: event.credits_consumed,
+                      balance: event.new_balance,
+                    },
+                  })
+                );
+              }
             }
           } catch {
             // Skip malformed SSE lines
@@ -690,7 +777,7 @@ export default function ChatInterface() {
       });
       isStreamingRef.current = false;
 
-      persistMessages(convId, finalMessages, firstQuestion);
+      persistMessages(convId, finalMessages, firstQuestion, resolvedSessionId);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erreur inconnue";
       aiToast.aiError(msg.includes("fetch") ? undefined : msg);

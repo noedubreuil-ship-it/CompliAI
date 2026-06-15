@@ -101,7 +101,7 @@ export async function POST(request: Request) {
     payment_method_types: ["card"],
     line_items: lineItems,
     mode: "payment",
-    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/credits?success=1&pack=${pack.name}`,
+    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/credits?success=1&session_id={CHECKOUT_SESSION_ID}&pack=${encodeURIComponent(pack.name)}`,
     cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/credits`,
     metadata: {
       supabase_user_id: user.id,

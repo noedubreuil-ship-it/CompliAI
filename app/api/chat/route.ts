@@ -22,7 +22,8 @@ import {
   asksLegalDeadline,
   resolveConsultantNationalCountryCodes,
 } from "@/lib/ai/consultant-national-scope";
-import { sanitizeRagExcerptForDisplay, sanitizeRagTextForModel } from "@/lib/ai/sanitize-rag-context";
+import { sanitizeRagExcerptForDisplay, sanitizeRagTextForModel, sanitizeCitationField } from "@/lib/ai/sanitize-rag-context";
+import { sanitizeConsultantResponse } from "@/lib/ai/sanitize-consultant-response";
 import { buildNationalInstitutionalLawContext } from "@/lib/ai/national-institutional-context";
 import { buildOfficialLegislationPortalCitations } from "@/lib/ai/official-portal-citations";
 import { searchEurLex, buildEurLexContext, buildEurLexSearchUrl } from "@/lib/ai/eurlex";
@@ -52,6 +53,10 @@ import {
   buildInlineCaseLawFallbackContext,
   seedsForRecruitmentFallback,
 } from "@/lib/ai/consultant-recruitment-rag";
+import {
+  detectDpoTransferQuestion,
+  fetchDpoTransferCaseLawChunks,
+} from "@/lib/ai/consultant-dpo-transfer-rag";
 import {
   validateConsultantCitations,
   buildConsultantRewritePrompt,
@@ -147,19 +152,19 @@ export async function POST(request: Request) {
   }
 
   /**
-   * Modèle cible : une « bibliothèque juridique » alimentée hors requête (crons
-   * national-corpus-agents, case-law-seeds, ingest / backfill CLI, fetch
-   * déterministe depuis le registre UE-27). Le consultant interroge ce corpus
-   * via RAG ; il ne remplace pas cette maintenance.
-   *
-   * Filet optionnel au chat (pays explicitement détectés dans la question) :
-   * agent + rafraîchissement TTL peuvent combler un trou récent. En production
-   * « bibliothèque seule », désactiver : NATIONAL_CORPUS_AGENTS_CHAT=0 et
-   * NATIONAL_AUTO_INGEST=0 (voir .env.example).
+   * Maintenance corpus national : **jamais bloquante** pour le stream consultant.
+   * Agents Claude au chat : opt-in `NATIONAL_CORPUS_AGENTS_CHAT=1`.
+   * Auto-ingest lazy : opt-in `NATIONAL_AUTO_INGEST=1` (défaut prod = bibliothèque seule).
    */
   if (detectedCountries.length > 0) {
-    await maintainNationalAgentsForCountriesOnChat(detectedCountries);
-    await refreshNationalCorpusForDetectedCountries(detectedCountries);
+    if (process.env.NATIONAL_CORPUS_AGENTS_CHAT === "1") {
+      void maintainNationalAgentsForCountriesOnChat(detectedCountries).catch(() => null);
+    }
+    if (process.env.NATIONAL_AUTO_INGEST === "1") {
+      void refreshNationalCorpusForDetectedCountries(detectedCountries, { deadlineMs: 2500 }).catch(
+        () => null
+      );
+    }
   }
 
   const statuteMatchCount =
@@ -173,47 +178,71 @@ export async function POST(request: Request) {
     : nationalRagCountries.length <= 3 ? 0.48
     : 0.52;
 
-  let nationalChunksRaw =
-    statuteMatchCount > 0 ?
-      await resolveNationalStatuteChunksForChat(
-        question,
-        nationalRagCountries,
-        statuteMatchCount,
-        statuteThreshold
-      )
-    : [];
-  const nationalChunks = filterOffTopicSources(nationalChunksRaw, question, nationalLegalChunkAccessor);
-
   const recruitmentBoost = detectRecruitmentAiActQuestion(question);
+  const dpoTransferBoost = detectDpoTransferQuestion(question);
+  const wantIntlRag = detectIntlStandardsQuestion(question) || detectAiGovernanceTopic(question);
+  const wantUkRag = detectUkRegulatorQuestion(question);
 
-  let euJudgmentChunksRaw = recruitmentBoost
-    ? await fetchRecruitmentCaseLawChunks(question)
-    : await searchEuCaseLawTexts(question, jpMatchEu, jpThresholdEu);
+  let nationalChunksRaw: Awaited<ReturnType<typeof resolveNationalStatuteChunksForChat>> = [];
+  let euJudgmentChunksRaw: Awaited<ReturnType<typeof searchEuCaseLawTexts>> = [];
+  let nationalJudgmentChunksRaw: Awaited<ReturnType<typeof searchNationalCaseLawTexts>> = [];
+  let intlStandardsChunksRaw: Awaited<ReturnType<typeof searchIntlStandardsTexts>> = [];
+  let ukRegulatorChunksRaw: Awaited<ReturnType<typeof searchUkRegulatorTexts>> = [];
+
+  const euCaseLawPromise = recruitmentBoost
+    ? fetchRecruitmentCaseLawChunks(question)
+    : dpoTransferBoost
+      ? fetchDpoTransferCaseLawChunks(question)
+      : searchEuCaseLawTexts(question, jpMatchEu, jpThresholdEu);
+
+  await Promise.all([
+    statuteMatchCount > 0
+      ? resolveNationalStatuteChunksForChat(
+          question,
+          nationalRagCountries,
+          statuteMatchCount,
+          statuteThreshold
+        ).then((r) => {
+          nationalChunksRaw = r;
+        })
+      : Promise.resolve(),
+    euCaseLawPromise.then((r) => {
+      euJudgmentChunksRaw = r;
+    }),
+    nationalRagCountries.length > 0
+      ? searchNationalCaseLawTexts(
+          question,
+          nationalRagCountries,
+          jpMatchNational,
+          jpThresholdNational
+        ).then((r) => {
+          nationalJudgmentChunksRaw = r;
+        })
+      : Promise.resolve(),
+    wantIntlRag
+      ? searchIntlStandardsTexts(question, 4, 0.52).then((r) => {
+          intlStandardsChunksRaw = r;
+        })
+      : Promise.resolve(),
+    wantUkRag
+      ? searchUkRegulatorTexts(question, 4, 0.52).then((r) => {
+          ukRegulatorChunksRaw = r;
+        })
+      : Promise.resolve(),
+  ]);
+
+  const nationalChunks = filterOffTopicSources(nationalChunksRaw, question, nationalLegalChunkAccessor);
   const euJudgmentChunks = filterOffTopicSources(euJudgmentChunksRaw, question, nationalLegalChunkAccessor);
-
-  let nationalJudgmentChunksRaw =
-    nationalRagCountries.length > 0 ?
-      await searchNationalCaseLawTexts(question, nationalRagCountries, jpMatchNational, jpThresholdNational)
-    : [];
   const nationalJudgmentChunks = filterOffTopicSources(
     nationalJudgmentChunksRaw,
     question,
     nationalLegalChunkAccessor
   );
-
-  const wantIntlRag = detectIntlStandardsQuestion(question) || detectAiGovernanceTopic(question);
-  const wantUkRag = detectUkRegulatorQuestion(question);
-
-  const intlStandardsChunksRaw =
-    wantIntlRag ? await searchIntlStandardsTexts(question, 5, 0.52) : [];
   const intlStandardsChunks = filterOffTopicSources(
     intlStandardsChunksRaw,
     question,
     nationalLegalChunkAccessor
   );
-
-  const ukRegulatorChunksRaw =
-    wantUkRag ? await searchUkRegulatorTexts(question, 5, 0.52) : [];
   const ukRegulatorChunks = filterOffTopicSources(
     ukRegulatorChunksRaw,
     question,
@@ -293,11 +322,22 @@ export async function POST(request: Request) {
   }
 
   // ── 4. Citations renvoyées au client ─────────────────────────────────────
-  const ragCitations = chunks.map((c) => ({
+  const mapCitation = <T extends { regulation: string; article_number: string; article_title: string; excerpt: string }>(
+    c: T
+  ): T => ({
+    ...c,
+    regulation: sanitizeCitationField(c.regulation),
+    article_number: sanitizeCitationField(c.article_number),
+    article_title: sanitizeCitationField(c.article_title),
+    excerpt: sanitizeRagExcerptForDisplay(c.excerpt),
+  });
+
+  const ragCitations = chunks.map((c) =>
+    mapCitation({
     regulation: c.regulation,
     article_number: c.article_number ?? "",
     article_title: c.article_title ?? "",
-    excerpt: sanitizeRagExcerptForDisplay(c.content),
+    excerpt: c.content,
     eurlex_url: c.eurlex_url ?? `https://eur-lex.europa.eu/search.html?text=${encodeURIComponent(c.regulation)}`,
     source: "rag" as const,
   }));
@@ -320,50 +360,56 @@ export async function POST(request: Request) {
     source: "calendar" as const,
   }));
 
-  const nationalCitations = nationalChunks.map((c) => ({
+  const nationalCitations = nationalChunks.map((c) =>
+    mapCitation({
     regulation: `${c.country_name} — ${c.title}`,
     article_number: c.reference ?? c.text_type,
     article_title: `${c.domain} (${c.country_code})`,
-    excerpt: sanitizeRagExcerptForDisplay(c.content),
+    excerpt: c.content,
     eurlex_url: (c.source_url?.trim()) || "",
     source: "national" as const,
   }));
 
-  const euJudgmentCitations = euJudgmentChunks.map((c) => ({
+  const euJudgmentCitations = euJudgmentChunks.map((c) =>
+    mapCitation({
     regulation: `${c.country_name} — ${c.title}`,
     article_number: [c.ecli, c.reference].filter(Boolean).join(" · ") || c.text_type,
     article_title: [c.domain, c.court].filter(Boolean).join(" — ") || c.domain,
-    excerpt: sanitizeRagExcerptForDisplay(c.content),
+    excerpt: c.content,
     eurlex_url: (c.source_url?.trim()) || "",
     source: "eu_case_law" as const,
   }));
 
   const euSeedFallbackCitations =
     recruitmentBoost && euJudgmentChunks.length === 0
-      ? seedsForRecruitmentFallback().slice(0, 6).map((s) => ({
+      ? seedsForRecruitmentFallback().slice(0, 6).map((s) =>
+          mapCitation({
           regulation: `Union européenne — ${s.title}`,
           article_number: s.reference_line,
           article_title: s.ecli ?? "CJUE",
-          excerpt: sanitizeRagExcerptForDisplay(s.body),
+          excerpt: s.body,
           eurlex_url: s.source_url,
           source: "eu_case_law" as const,
-        }))
+        })
+        )
       : [];
 
-  const nationalJudgmentCitations = nationalJudgmentChunks.map((c) => ({
+  const nationalJudgmentCitations = nationalJudgmentChunks.map((c) =>
+    mapCitation({
     regulation: `${c.country_name} — ${c.title}`,
     article_number: [c.ecli, c.reference].filter(Boolean).join(" · ") || c.text_type,
     article_title: [c.domain, c.court, c.country_code].filter(Boolean).join(" — "),
-    excerpt: sanitizeRagExcerptForDisplay(c.content),
+    excerpt: c.content,
     eurlex_url: (c.source_url?.trim()) || "",
     source: "national_case_law" as const,
   }));
 
-  const intlStandardsCitations = intlStandardsChunks.map((c) => ({
+  const intlStandardsCitations = intlStandardsChunks.map((c) =>
+    mapCitation({
     regulation: `${c.country_name} — ${c.title}`,
     article_number: c.reference ?? c.text_type,
     article_title: c.domain,
-    excerpt: sanitizeRagExcerptForDisplay(c.content),
+    excerpt: c.content,
     eurlex_url: (c.source_url?.trim()) || "",
     source: "intl_standards" as const,
   }));
@@ -375,11 +421,12 @@ export async function POST(request: Request) {
       buildOfficialLegislationPortalCitations(nationalRagCountries)
     : [];
 
-  const ukRegulatorCitations = ukRegulatorChunks.map((c) => ({
+  const ukRegulatorCitations = ukRegulatorChunks.map((c) =>
+    mapCitation({
     regulation: `${c.country_name} — ${c.title}`,
     article_number: c.reference ?? c.text_type,
     article_title: [c.domain, c.court].filter(Boolean).join(" — "),
-    excerpt: sanitizeRagExcerptForDisplay(c.content),
+    excerpt: c.content,
     eurlex_url: (c.source_url?.trim()) || "",
     source: "uk_regulator" as const,
   }));
@@ -520,8 +567,18 @@ export async function POST(request: Request) {
             const citationCheck = validateConsultantCitations(finalText, context);
             citationIssues.push(...citationCheck.issues);
 
-            const shouldRewrite =
-              citationCheck.needsRewrite || meta.stopReason === "max_tokens";
+            const shouldRewrite = citationCheck.needsRewrite;
+
+            let creditsConsumed = 0;
+            let newBalance: number | undefined;
+
+            finalText = sanitizeConsultantResponse(finalText);
+            if (finalText !== meta.fullText) {
+              fullResponse = finalText;
+              controller.enqueue(
+                encoder.encode(`data: ${JSON.stringify({ type: "replace", text: finalText })}\n\n`)
+              );
+            }
 
             if (shouldRewrite) {
               try {
@@ -539,13 +596,13 @@ export async function POST(request: Request) {
                   recheck.issues.length < citationCheck.issues.length ||
                   !/jurisprudence applicable/i.test(rewrite.text)
                 ) {
-                  finalText = rewrite.text;
+                  finalText = sanitizeConsultantResponse(rewrite.text);
                   fullResponse = finalText;
                   controller.enqueue(
                     encoder.encode(`data: ${JSON.stringify({ type: "replace", text: finalText })}\n\n`)
                   );
                 }
-                void billAiCall({
+                const rewriteBill = await billAiCall({
                   userId: user.id,
                   plan: consultantPlan,
                   apiModel: rewrite.model,
@@ -553,10 +610,66 @@ export async function POST(request: Request) {
                   inputTokens: rewrite.inputTokens,
                   outputTokens: rewrite.outputTokens,
                   tool: "consultant",
-                }).catch((e) => console.error("[chat] rewrite billing error:", e));
+                }).catch((e) => {
+                  console.error("[chat] rewrite billing error:", e);
+                  return null;
+                });
+                if (rewriteBill && "consumed" in rewriteBill) {
+                  creditsConsumed += rewriteBill.consumed;
+                  newBalance = rewriteBill.newBalance;
+                }
               } catch (rewriteErr) {
                 console.error("[chat] citation rewrite failed:", rewriteErr);
               }
+            }
+
+            const mainBill = await billAiCall({
+              userId: user.id,
+              plan: consultantPlan,
+              apiModel: meta.model,
+              endpoint: "consultant",
+              inputTokens: meta.inputTokens,
+              outputTokens: meta.outputTokens,
+              tool: "consultant",
+            }).catch((e) => {
+              console.error("[chat] billing error:", e);
+              return null;
+            });
+
+            if (mainBill && "consumed" in mainBill) {
+              creditsConsumed += mainBill.consumed;
+              newBalance = mainBill.newBalance;
+            } else if (mainBill && "code" in mainBill) {
+              console.error("[chat] billing failed:", mainBill.code);
+            }
+
+            let persistedSessionId = session_id;
+            if (!persistedSessionId) {
+              const { data: session } = await supabase
+                .from("chat_sessions")
+                .insert({ user_id: user.id, title: question.slice(0, 60) })
+                .select()
+                .single();
+              persistedSessionId = session?.id;
+            } else {
+              await supabase
+                .from("chat_sessions")
+                .update({ updated_at: new Date().toISOString() })
+                .eq("id", persistedSessionId)
+                .eq("user_id", user.id);
+            }
+
+            if (persistedSessionId && finalText) {
+              await supabase.from("chat_messages").insert([
+                { session_id: persistedSessionId, user_id: user.id, role: "user", content: question },
+                {
+                  session_id: persistedSessionId,
+                  user_id: user.id,
+                  role: "assistant",
+                  content: finalText,
+                  citations,
+                },
+              ]);
             }
 
             controller.enqueue(
@@ -566,6 +679,9 @@ export async function POST(request: Request) {
                   max_tokens: meta.maxTokens,
                   stop_reason: meta.stopReason,
                   citation_issues: citationIssues.length > 0 ? citationIssues : undefined,
+                  credits_consumed: creditsConsumed > 0 ? creditsConsumed : undefined,
+                  new_balance: newBalance,
+                  session_id: persistedSessionId,
                 })}\n\n`
               )
             );
@@ -579,16 +695,6 @@ export async function POST(request: Request) {
               ...citationIssues.map((i) => `citation:${i}`),
             ];
 
-            void billAiCall({
-              userId: user.id,
-              plan: consultantPlan,
-              apiModel: meta.model,
-              endpoint: "consultant",
-              inputTokens: meta.inputTokens,
-              outputTokens: meta.outputTokens,
-              tool: "consultant",
-            }).catch((e) => console.error("[chat] billing error:", e));
-
             void logAIInteraction(supabase, {
               userId: user.id,
               tool: "consultant",
@@ -599,25 +705,6 @@ export async function POST(request: Request) {
               model: meta.model,
               warnings,
             });
-
-            // Persistance conversation
-            fullResponse = finalText;
-            let sessionId = session_id;
-            if (!sessionId) {
-              const { data: session } = await supabase
-                .from("chat_sessions")
-                .insert({ user_id: user.id, title: question.slice(0, 60) })
-                .select()
-                .single();
-              sessionId = session?.id;
-            }
-
-            if (sessionId && fullResponse) {
-              await supabase.from("chat_messages").insert([
-                { session_id: sessionId, user_id: user.id, role: "user", content: question },
-                { session_id: sessionId, user_id: user.id, role: "assistant", content: fullResponse, citations },
-              ]);
-            }
           },
         }
       );

@@ -239,6 +239,10 @@ export async function streamClaude(
     }
 
     const finalMessage = await stream.finalMessage();
+    if (finalMessage.usage) {
+      inputTokens = finalMessage.usage.input_tokens ?? inputTokens;
+      outputTokens = finalMessage.usage.output_tokens ?? outputTokens;
+    }
     const stopReason = finalMessage.stop_reason ?? null;
     if (stopReason === "max_tokens") {
       console.warn(

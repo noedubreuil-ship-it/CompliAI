@@ -42,20 +42,12 @@ const sensitive = new Set([
 console.log(`Synchronisation de ${vars.length} variables vers Vercel (production)…`);
 
 for (const { key, value } of vars) {
-  const args = [
-    "vercel",
-    "env",
-    "add",
-    key,
-    "production",
-    "--value",
-    value,
-    "--yes",
-    "--force",
-  ];
-  if (sensitive.has(key)) args.push("--sensitive");
   try {
-    execFileSync("npx", args, { cwd: root, stdio: ["pipe", "pipe", "pipe"] });
+    execFileSync(
+      "npx",
+      ["vercel", "env", "add", key, "production", "--force", "--yes", ...(sensitive.has(key) ? ["--sensitive"] : [])],
+      { cwd: root, input: value, stdio: ["pipe", "pipe", "pipe"] }
+    );
     console.log(`✓ ${key}`);
   } catch (e) {
     console.error(`✗ ${key}:`, e.stderr?.toString() || e.message);
