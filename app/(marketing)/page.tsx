@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { EUFlagSVG } from "@/components/EUFlag";
-import EUFlagShaderBg from "@/components/ui/EUFlagShaderBg";
+import { HeroBackground } from "@/components/marketing/HeroBackground";
 import {
   Shield, CheckCircle2, ArrowRight, FileSearch, MessageSquare,
   Bell, BookOpen, AlertTriangle, Menu, X, Star, Lock, FileText,
@@ -184,16 +184,11 @@ export default function LandingPage() {
       <Nav />
 
       {/* ══════════════════════════════════════════════════════════════════════
-          HERO — Shader background : EU flag flottant + starfield GLSL
+          HERO — Image + dégradés EU
       ══════════════════════════════════════════════════════════════════════ */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center bg-[#000] overflow-hidden">
+      <section className="relative min-h-screen flex flex-col items-center justify-center bg-[#000922] overflow-hidden">
 
-        {/* ── WebGL shader : drapeau EU + fond étoilé ── */}
-        <EUFlagShaderBg />
-
-        {/* ── Overlay gradient pour lisibilité du texte ── */}
-        <div className="absolute inset-0 pointer-events-none z-10"
-          style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 40%, rgba(0,0,0,0.70) 100%)" }} />
+        <HeroBackground />
 
         <div className="relative z-20 max-w-[980px] mx-auto px-5 pt-32 pb-24 text-center">
 

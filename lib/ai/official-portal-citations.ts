@@ -59,8 +59,8 @@ export function buildOfficialLegislationPortalCitations(countryCodes: string[]):
           article_number: law.reference,
           article_title: "Loi nationale RGPD (lien consolidé indicatif)",
           excerpt:
-            `Référence registre CompliAI : ${law.reference} (${law.year}). ` +
-            `Seule la version publiée sur le portail officiel (${law.portal_url}) fait foi.`,
+            `Loi nationale de transposition du RGPD (${law.reference}, ${law.year}). ` +
+            `Version officielle sur le portail législatif national.`,
           eurlex_url: law.fetch_url.trim(),
           source: "official_portal",
         });

@@ -3,6 +3,71 @@ import type { EuCaseLawSeed } from "@/lib/data/eu-case-law-seed-type";
 /** Arrêts / renvois CJUE RGPD-numérique supplémentaires (CELEX indicatifs — vérifier sur EUR‑Lex avant citation judiciaire). */
 export const EU_CASE_LAW_SEEDS_EXTENDED: EuCaseLawSeed[] = [
   {
+    celex: "62021CJ0634",
+    title: "SCHUFA Holding — scoring & article 22 RGPD (décision automatisée)",
+    reference_line: "C-634/21 — ECLI:EU:C:2023:957",
+    source_url: "https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX%3A62021CJ0634",
+    language: "fr",
+    judgment_date: "2023-12-07",
+    ecli: "ECLI:EU:C:2023:957",
+    court: "Cour de justice de l'Union européenne",
+    body: `SCHUFA Holding AG / Communauté autonome de la Basque Country. La Cour précise l'article 22 du RGPD : une décision produisant des effets juridiques ou affectant de manière significative une personne ne se limite pas aux décisions « exclusivement » automatisées.
+
+Lorsque le score de solvabilité établi par SCHUFA constitue la base déterminante de la décision de la banque de crédit, le traitement entre dans le champ de l'article 22. Pertinent pour les systèmes de scoring en recrutement ou présélection lorsque le score influence substantiellement la décision humaine finale — cumul avec supervision humaine AI Act annexe III point 4.`,
+  },
+  {
+    celex: "62021CJ0446",
+    title: "Meta Platforms Ireland — publicités personnalisées & bases légales RGPD",
+    reference_line: "C-446/21 — ECLI:EU:C:2023:552",
+    source_url: "https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX%3A62021CJ0446",
+    language: "fr",
+    judgment_date: "2023-07-04",
+    ecli: "ECLI:EU:C:2023:552",
+    court: "Cour de justice de l'Union européenne",
+    body: `Meta Platforms Ireland Ltd / Bundeskartellamt. La Cour examine le traitement de données à des fins publicitaires personnalisées et rappelle que la fourniture d'un service ne fait pas automatiquement du profilage une « nécessité contractuelle » au sens de l'article 6, paragraphe 1, point b), du RGPD.
+
+Utile pour les systèmes d'IA analysant profils ou comportements à des fins de ciblage — articulation bases légales, transparence et limitation des finalités.`,
+  },
+  {
+    celex: "62023CJ0021",
+    title: "Lindenapotheke — vente en ligne médicaments & marquage CE",
+    reference_line: "C-21/23 — ECLI:EU:C:2024:676",
+    source_url: "https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX%3A62023CJ0021",
+    language: "fr",
+    judgment_date: "2024-10-03",
+    ecli: "ECLI:EU:C:2024:676",
+    court: "Cour de justice de l'Union européenne",
+    body: `Pharmacie en ligne et dispositifs médicaux : la Cour précise les conditions de mise sur le marché, d'information du consommateur et de marquage CE dans un contexte de commerce électronique transfrontalier.
+
+Référence pour les obligations de conformité, documentation technique et information utilisateur — analogie limitée aux systèmes IA intégrés à des parcours numériques réglementés.`,
+  },
+  {
+    celex: "62021CJ0548",
+    title: "Bezirkshauptmannschaft Landeck — marquage CE & procédures de conformité",
+    reference_line: "C-548/21 — ECLI:EU:C:2022:758",
+    source_url: "https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX%3A62021CJ0548",
+    language: "fr",
+    judgment_date: "2022-07-07",
+    ecli: "ECLI:EU:C:2022:758",
+    court: "Cour de justice de l'Union européenne",
+    body: `Autorité autrichienne et fabricant de dispositifs médicaux : la Cour clarifie les rôles respectifs du fabricant, de l'autorité compétente et les exigences de marquage CE avant mise sur le marché.
+
+Pertinent pour les procédures d'évaluation de conformité et la répartition des responsabilités entre opérateurs économiques — utile par analogie aux systèmes IA à haut risque soumis à évaluation et documentation (AI Act ch. III).`,
+  },
+  {
+    celex: "62017CJ0434",
+    title: "Asociación Profesional Elite Taxi — Uber & services numériques",
+    reference_line: "C-434/15 — ECLI:EU:C:2017:981",
+    source_url: "https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX%3A62017CJ0434",
+    language: "fr",
+    judgment_date: "2017-12-20",
+    ecli: "ECLI:EU:C:2017:981",
+    court: "Cour de justice de l'Union européenne",
+    body: `Elite Taxi contre Uber : la Cour qualifie l'activité UberPOP de service de transport et non de simple service de l'économie numérique au sens de la directive 2000/31/CE.
+
+Ne concerne pas directement le RGPD ni l'AI Act en recrutement — ne pas mobiliser pour illustrer les articles 9 à 15 de l'AI Act sur la présélection de CV.`,
+  },
+  {
     celex: "62013CJ0212",
     title: "Ryneš — caméra domicile & données voisins (vidéosurveillance)",
     reference_line: "C-212/13 — ECLI:EU:C:2014:968",

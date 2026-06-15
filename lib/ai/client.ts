@@ -102,11 +102,13 @@ function resolveMaxTokens(options: CallClaudeOptions, cfg: ToolConfig): number {
     if (options.consultantResponseDepth === "brief") {
       return resolveConsultantBriefOutputMaxTokens();
     }
-    return resolveConsultantOutputMaxTokens(
+    const resolved = resolveConsultantOutputMaxTokens(
       options.userMessage,
       options.consultantCreditsPlan,
       cfg.maxTokens
     );
+    /** Plancher produit : évite troncature sur notes longues (surcharge .env basse ignorée). */
+    return Math.max(8192, resolved);
   }
   return cfg.maxTokens;
 }
@@ -189,6 +191,7 @@ export interface StreamClaudeHandlers {
     latencyMs: number;
     inputTokens: number;
     outputTokens: number;
+    stopReason: string | null;
   }) => void | Promise<void>;
   onError?: (error: Error) => void;
 }
@@ -235,6 +238,14 @@ export async function streamClaude(
       }
     }
 
+    const finalMessage = await stream.finalMessage();
+    const stopReason = finalMessage.stop_reason ?? null;
+    if (stopReason === "max_tokens") {
+      console.warn(
+        `[streamClaude] sortie tronquée (max_tokens): tool=${options.tool} max=${maxTokens} out=${outputTokens}`
+      );
+    }
+
     await handlers.onDone?.({
       fullText,
       model,
@@ -243,6 +254,7 @@ export async function streamClaude(
       latencyMs: Date.now() - startedAt,
       inputTokens,
       outputTokens,
+      stopReason,
     });
   } catch (err) {
     const e = err instanceof Error ? err : new Error(String(err));

@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { embedText } from "./embeddings";
 import type { LegalChunk } from "@/lib/types/legal";
+import { sanitizeRagTextForModel } from "./sanitize-rag-context";
 
 // Uses service role to bypass RLS for vector search
 function getSupabaseAdmin() {
@@ -73,7 +74,7 @@ export function buildLegalContext(chunks: LegalChunk[]): string {
       const ref = [chunk.regulation, chunk.article_number && `Art. ${chunk.article_number}`, chunk.article_title]
         .filter(Boolean)
         .join(" — ");
-      return `[${ref}]\n${chunk.content}`;
+      return `[${ref}]\n${sanitizeRagTextForModel(chunk.content)}`;
     })
     .join("\n\n---\n\n");
 }

@@ -1,9 +1,8 @@
 /**
  * Budget max_tokens pour l'outil « consultant ».
  *
- * — **Plans payants** : toujours le plafond configuré (`TOOL_CONFIGS.consultant`, défaut **8192**) ;
- *   l’adaptatif ne s’applique pas (réponses développées type note de synthèse).
- * — **Plan gratuit** : plafond **absolu** par défaut aligné (**8192**), avec budgets adaptatifs
+ * — **Plans payants** : toujours le plafond configuré (`TOOL_CONFIGS.consultant`, défaut **16384**) ;
+ * — **Plan gratuit** : plafond **absolu** par défaut aligné (**16384**), avec budgets adaptatifs
  *   (simple / modéré / complexe) jusqu’à ce plafond ; surcharge `AI_MAX_TOKENS_CONSULTANT_FREE` (.env).
  */
 
@@ -22,7 +21,7 @@ function envNum(key: string, fallback: number): number {
 const SIMPLE_LEAD =
   /^(qu'est-ce que|d[eé]finition|c'est quoi|signifie|quel est le sens de)\b/i;
 const COMPLEX_HINT =
-  /\b(analyse|conformit[eé]|contrat|syst[eè]me|dispositif|puis-je)\b/i;
+  /\b(analyse|conformit[eé]|contrat|syst[eè]me|dispositif|puis-je|échéance|echeance|délai|delai|obligations?|calendrier|à quelle date|a quelle date)\b/i;
 
 export type ConsultantQuestionComplexity = "simple" | "moderate" | "complex";
 
@@ -64,14 +63,14 @@ export function resolveConsultantOutputMaxTokens(
 ): number {
   const tier = plan === undefined || plan === null ? ("starter" as PlanName) : plan;
   const paidCap = Math.max(consultantCeiling, 0);
-  const freeCap = envNum("AI_MAX_TOKENS_CONSULTANT_FREE", 8192);
+  const freeCap = envNum("AI_MAX_TOKENS_CONSULTANT_FREE", 16384);
 
   if (tier === "free") {
     const wish = adaptiveWishForFree(classifyConsultantQuestion(question), paidCap);
-    return Math.max(256, Math.floor(Math.min(wish, freeCap)));
+    return Math.max(4096, Math.floor(Math.min(wish, freeCap)));
   }
 
-  return Math.max(256, Math.floor(paidCap));
+  return Math.max(4096, Math.floor(paidCap));
 }
 
 /**

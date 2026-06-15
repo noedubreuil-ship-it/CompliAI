@@ -17,7 +17,12 @@ import {
 import { refreshNationalCorpusForDetectedCountries } from "@/lib/ai/national-auto-ingest";
 import { maintainNationalAgentsForCountriesOnChat } from "@/lib/agents/national-corpus-agent";
 import { detectEuMemberCountriesFromQuestion } from "@/lib/ai/country-detection";
-import { resolveNationalCountryCodesForRag } from "@/lib/ai/national-rag-scope";
+import {
+  AI_ACT_ART113_RAG_QUERY,
+  asksLegalDeadline,
+  resolveConsultantNationalCountryCodes,
+} from "@/lib/ai/consultant-national-scope";
+import { sanitizeRagExcerptForDisplay, sanitizeRagTextForModel } from "@/lib/ai/sanitize-rag-context";
 import { buildNationalInstitutionalLawContext } from "@/lib/ai/national-institutional-context";
 import { buildOfficialLegislationPortalCitations } from "@/lib/ai/official-portal-citations";
 import { searchEurLex, buildEurLexContext, buildEurLexSearchUrl } from "@/lib/ai/eurlex";
@@ -32,7 +37,7 @@ import {
   aiBadRequest,
   preflightToResponse,
 } from "@/lib/ai/http-errors";
-import { streamClaude, type ConsultantResponseDepthMode } from "@/lib/ai/client";
+import { streamClaude, callClaude, type ConsultantResponseDepthMode } from "@/lib/ai/client";
 import {
   validateUserInput,
   validateAIOutput,
@@ -41,6 +46,16 @@ import {
 } from "@/lib/ai/guardrails";
 import { logAIInteraction } from "@/lib/ai/monitoring";
 import { filterOffTopicSources, legalChunkAccessor, nationalLegalChunkAccessor } from "@/lib/ai/source-filter";
+import {
+  detectRecruitmentAiActQuestion,
+  fetchRecruitmentCaseLawChunks,
+  buildInlineCaseLawFallbackContext,
+  seedsForRecruitmentFallback,
+} from "@/lib/ai/consultant-recruitment-rag";
+import {
+  validateConsultantCitations,
+  buildConsultantRewritePrompt,
+} from "@/lib/ai/consultant-citation-validator";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -73,9 +88,9 @@ export async function POST(request: Request) {
   const consultantDepthAddendum =
     consultantDepth === "brief" ?
       "## Instruction utilisateur : réponse **SYNTHÉTIQUE**\n" +
-        "Répondez de façon structurée mais **courte** : conclusions et articles clés en premier ; jurisprudence en mention **compacte** lorsque indispensable. Conservez la pyramide inversée et **la clôture juridique obligatoire**.\n"
+        "Répondez en **prose** (pas de fiche technique ni chiffres romains) : conclusion et échéance en tête si demandée ; articles clés intégrés dans le texte. Conservez la clôture juridique obligatoire.\n"
     : "## Instruction utilisateur : réponse **NOTE DE CABINET**\n" +
-      "Appliquez la **profondeur développée** (« note de synthèse ») déjà prévue dans votre mission consultant pour ce canal.\n";
+      "Rédigez en **prose articulée** (règles de production consultant) : pyramide inversée, échéances explicites si la question le demande, pas de bloc « Jurisprudence applicable » sous chaque article, pas de droit national non sollicité.\n";
 
   // ── Validation entrée + détection hors-champ ─────────────────────────────
   const inputCheck = validateUserInput(question);
@@ -93,12 +108,22 @@ export async function POST(request: Request) {
   }
 
   const detectedCountries = detectEuMemberCountriesFromQuestion(question);
-  const nationalRagCountries = resolveNationalCountryCodesForRag(question, detectedCountries);
+  const nationalRagCountries = resolveConsultantNationalCountryCodes(question, detectedCountries);
 
   // ── 1. RAG local (pgvector) ───────────────────────────────────────────────
-  // Plus de chunks lorsqu’un pays est visé (question nationale / comparative).
   const ragMatchCount = nationalRagCountries.length > 0 ? 5 : 3;
-  const rawChunks = await searchLegalChunks(question, ragMatchCount, 0.6);
+  let rawChunks = await searchLegalChunks(question, ragMatchCount, 0.6);
+
+  if (asksLegalDeadline(question)) {
+    const deadlineChunks = await searchLegalChunks(AI_ACT_ART113_RAG_QUERY, 4, 0.52);
+    const seen = new Set(rawChunks.map((c) => c.id));
+    for (const c of deadlineChunks) {
+      if (!seen.has(c.id)) {
+        rawChunks.push(c);
+        seen.add(c.id);
+      }
+    }
+  }
   // Évite la "contamination RAG" (cf. § 1.3 du protocole universel et § 5
   // du protocole de vérification jurisprudentielle) : on retire les sources
   // hors-sujet (ex. fiches « Code de bonnes pratiques GPAI » remontées sur
@@ -159,7 +184,11 @@ export async function POST(request: Request) {
     : [];
   const nationalChunks = filterOffTopicSources(nationalChunksRaw, question, nationalLegalChunkAccessor);
 
-  const euJudgmentChunksRaw = await searchEuCaseLawTexts(question, jpMatchEu, jpThresholdEu);
+  const recruitmentBoost = detectRecruitmentAiActQuestion(question);
+
+  let euJudgmentChunksRaw = recruitmentBoost
+    ? await fetchRecruitmentCaseLawChunks(question)
+    : await searchEuCaseLawTexts(question, jpMatchEu, jpThresholdEu);
   const euJudgmentChunks = filterOffTopicSources(euJudgmentChunksRaw, question, nationalLegalChunkAccessor);
 
   let nationalJudgmentChunksRaw =
@@ -195,6 +224,11 @@ export async function POST(request: Request) {
   const euJudgmentsContext =
     euJudgmentChunks.length > 0 ? buildNationalLegalContext(euJudgmentChunks, "Extraits CJUE/TJ/TG indexés.") : "";
 
+  const recruitmentCaseLawFallback =
+    recruitmentBoost && euJudgmentChunks.length === 0
+      ? buildInlineCaseLawFallbackContext(seedsForRecruitmentFallback())
+      : "";
+
   const nationalJudgmentsContext =
     nationalJudgmentChunks.length > 0 ?
       buildNationalLegalContext(nationalJudgmentChunks, "Extraits jurisprudence nationale indexée.")
@@ -215,14 +249,13 @@ export async function POST(request: Request) {
 
   let institutionalNationalLawGuide = "";
   if (detectedCountries.length > 0) {
-    institutionalNationalLawGuide = buildNationalInstitutionalLawContext(detectedCountries);
-  } else if (nationalRagCountries.length >= 20) {
-    institutionalNationalLawGuide =
-      `Répertoire UE-27 (aperçu) : le RAG inclut désormais des extraits potentiels pour **chaque État membre** lorsque vous activez ce mode (\`NATIONAL_RAG_SCOPE=eu27\`) ou lorsque votre question évoque l’ensemble de l’Union. ` +
-      `Pour trouver rapidement une DPA nationale, utiliser les **répertoire public EDPB** : https://www.edpb.europa.eu/about-edpb/about-edpb/members_fr — ` +
-      `les portails officiels de chaque juridiction restent sources de droit positives.`;
-  } else if (nationalRagCountries.length > 0) {
-    institutionalNationalLawGuide = buildNationalInstitutionalLawContext(nationalRagCountries);
+    institutionalNationalLawGuide = sanitizeRagTextForModel(
+      buildNationalInstitutionalLawContext(detectedCountries)
+    );
+  } else if (nationalRagCountries.length > 0 && nationalRagCountries.length < 20) {
+    institutionalNationalLawGuide = sanitizeRagTextForModel(
+      buildNationalInstitutionalLawContext(nationalRagCountries)
+    );
   }
 
   const ragCountryScopeLabel =
@@ -264,7 +297,7 @@ export async function POST(request: Request) {
     regulation: c.regulation,
     article_number: c.article_number ?? "",
     article_title: c.article_title ?? "",
-    excerpt: c.content.slice(0, 300) + (c.content.length > 300 ? "…" : ""),
+    excerpt: sanitizeRagExcerptForDisplay(c.content),
     eurlex_url: c.eurlex_url ?? `https://eur-lex.europa.eu/search.html?text=${encodeURIComponent(c.regulation)}`,
     source: "rag" as const,
   }));
@@ -291,7 +324,7 @@ export async function POST(request: Request) {
     regulation: `${c.country_name} — ${c.title}`,
     article_number: c.reference ?? c.text_type,
     article_title: `${c.domain} (${c.country_code})`,
-    excerpt: c.content.slice(0, 300) + (c.content.length > 300 ? "…" : ""),
+    excerpt: sanitizeRagExcerptForDisplay(c.content),
     eurlex_url: (c.source_url?.trim()) || "",
     source: "national" as const,
   }));
@@ -300,16 +333,28 @@ export async function POST(request: Request) {
     regulation: `${c.country_name} — ${c.title}`,
     article_number: [c.ecli, c.reference].filter(Boolean).join(" · ") || c.text_type,
     article_title: [c.domain, c.court].filter(Boolean).join(" — ") || c.domain,
-    excerpt: c.content.slice(0, 300) + (c.content.length > 300 ? "…" : ""),
+    excerpt: sanitizeRagExcerptForDisplay(c.content),
     eurlex_url: (c.source_url?.trim()) || "",
     source: "eu_case_law" as const,
   }));
+
+  const euSeedFallbackCitations =
+    recruitmentBoost && euJudgmentChunks.length === 0
+      ? seedsForRecruitmentFallback().slice(0, 6).map((s) => ({
+          regulation: `Union européenne — ${s.title}`,
+          article_number: s.reference_line,
+          article_title: s.ecli ?? "CJUE",
+          excerpt: sanitizeRagExcerptForDisplay(s.body),
+          eurlex_url: s.source_url,
+          source: "eu_case_law" as const,
+        }))
+      : [];
 
   const nationalJudgmentCitations = nationalJudgmentChunks.map((c) => ({
     regulation: `${c.country_name} — ${c.title}`,
     article_number: [c.ecli, c.reference].filter(Boolean).join(" · ") || c.text_type,
     article_title: [c.domain, c.court, c.country_code].filter(Boolean).join(" — "),
-    excerpt: c.content.slice(0, 300) + (c.content.length > 300 ? "…" : ""),
+    excerpt: sanitizeRagExcerptForDisplay(c.content),
     eurlex_url: (c.source_url?.trim()) || "",
     source: "national_case_law" as const,
   }));
@@ -318,7 +363,7 @@ export async function POST(request: Request) {
     regulation: `${c.country_name} — ${c.title}`,
     article_number: c.reference ?? c.text_type,
     article_title: c.domain,
-    excerpt: c.content.slice(0, 300) + (c.content.length > 300 ? "…" : ""),
+    excerpt: sanitizeRagExcerptForDisplay(c.content),
     eurlex_url: (c.source_url?.trim()) || "",
     source: "intl_standards" as const,
   }));
@@ -334,7 +379,7 @@ export async function POST(request: Request) {
     regulation: `${c.country_name} — ${c.title}`,
     article_number: c.reference ?? c.text_type,
     article_title: [c.domain, c.court].filter(Boolean).join(" — "),
-    excerpt: c.content.slice(0, 300) + (c.content.length > 300 ? "…" : ""),
+    excerpt: sanitizeRagExcerptForDisplay(c.content),
     eurlex_url: (c.source_url?.trim()) || "",
     source: "uk_regulator" as const,
   }));
@@ -344,6 +389,7 @@ export async function POST(request: Request) {
     ...nationalCitations,
     ...nationalJudgmentCitations,
     ...euJudgmentCitations,
+    ...euSeedFallbackCitations,
     ...intlStandardsCitations,
     ...ukRegulatorCitations,
     ...ragCitations,
@@ -355,7 +401,7 @@ export async function POST(request: Request) {
   const contextSections: string[] = [];
 
   if (legalContext) {
-    contextSections.push(`=== SOURCE : Corpus interne CompliAI (RAG) ===\n${legalContext}\n=== FIN SOURCE ===`);
+    contextSections.push(`=== SOURCE : Corpus juridique indexé (RAG) ===\n${legalContext}\n=== FIN SOURCE ===`);
   }
 
   if (institutionalNationalLawGuide) {
@@ -376,6 +422,11 @@ export async function POST(request: Request) {
     contextSections.push(
       `=== SOURCE : Corpus jurisprudence UE (extraits indexés CURIA / EUR-Lex) ===\n` +
         `${euJudgmentsContext}\n=== FIN SOURCE ===`
+    );
+  } else if (recruitmentCaseLawFallback.trim()) {
+    contextSections.push(
+      `=== SOURCE : Corpus jurisprudence UE (extraits indexés CURIA / EUR-Lex) ===\n` +
+        `${recruitmentCaseLawFallback}\n=== FIN SOURCE ===`
     );
   }
 
@@ -456,12 +507,77 @@ export async function POST(request: Request) {
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "error", message: err.message })}\n\n`));
           },
           onDone: async (meta) => {
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "done" })}\n\n`));
+            let finalText = meta.fullText;
+            const citationIssues: string[] = [];
+
+            if (meta.stopReason === "max_tokens") {
+              console.warn(
+                `[chat] réponse tronquée: len=${meta.fullText.length} max_tokens=${meta.maxTokens} out=${meta.outputTokens}`
+              );
+              citationIssues.push("truncated_max_tokens");
+            }
+
+            const citationCheck = validateConsultantCitations(finalText, context);
+            citationIssues.push(...citationCheck.issues);
+
+            const shouldRewrite =
+              citationCheck.needsRewrite || meta.stopReason === "max_tokens";
+
+            if (shouldRewrite) {
+              try {
+                const rewrite = await callClaude({
+                  tool: "consultant",
+                  userMessage: buildConsultantRewritePrompt(finalText, citationIssues),
+                  context: context || undefined,
+                  consultantCreditsPlan: consultantPlan,
+                  consultantResponseDepth: consultantDepth,
+                  temperatureOverride: 0,
+                });
+                const recheck = validateConsultantCitations(rewrite.text, context);
+                if (
+                  recheck.ok ||
+                  recheck.issues.length < citationCheck.issues.length ||
+                  !/jurisprudence applicable/i.test(rewrite.text)
+                ) {
+                  finalText = rewrite.text;
+                  fullResponse = finalText;
+                  controller.enqueue(
+                    encoder.encode(`data: ${JSON.stringify({ type: "replace", text: finalText })}\n\n`)
+                  );
+                }
+                void billAiCall({
+                  userId: user.id,
+                  plan: consultantPlan,
+                  apiModel: rewrite.model,
+                  endpoint: "consultant_rewrite",
+                  inputTokens: rewrite.inputTokens,
+                  outputTokens: rewrite.outputTokens,
+                  tool: "consultant",
+                }).catch((e) => console.error("[chat] rewrite billing error:", e));
+              } catch (rewriteErr) {
+                console.error("[chat] citation rewrite failed:", rewriteErr);
+              }
+            }
+
+            controller.enqueue(
+              encoder.encode(
+                `data: ${JSON.stringify({
+                  type: "done",
+                  max_tokens: meta.maxTokens,
+                  stop_reason: meta.stopReason,
+                  citation_issues: citationIssues.length > 0 ? citationIssues : undefined,
+                })}\n\n`
+              )
+            );
             controller.close();
 
             // Validation sortie + logging best-effort
-            const outputCheck = validateAIOutput(meta.fullText);
-            const warnings = [...inputWarnings, ...outputCheck.warnings];
+            const outputCheck = validateAIOutput(finalText);
+            const warnings = [
+              ...inputWarnings,
+              ...outputCheck.warnings,
+              ...citationIssues.map((i) => `citation:${i}`),
+            ];
 
             void billAiCall({
               userId: user.id,
@@ -477,7 +593,7 @@ export async function POST(request: Request) {
               userId: user.id,
               tool: "consultant",
               userInput: question,
-              outputLength: meta.fullText.length,
+              outputLength: finalText.length,
               latencyMs: meta.latencyMs,
               temperature: meta.temperature,
               model: meta.model,
@@ -485,6 +601,7 @@ export async function POST(request: Request) {
             });
 
             // Persistance conversation
+            fullResponse = finalText;
             let sessionId = session_id;
             if (!sessionId) {
               const { data: session } = await supabase

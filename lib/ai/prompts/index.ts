@@ -8,7 +8,8 @@
 import { MASTER_SYSTEM_PROMPT } from "./master";
 import { UNIVERSAL_CONSULTANT_PROTOCOL } from "./universal-protocol";
 import { JURISPRUDENCE_VERIFICATION_PROTOCOL } from "./jurisprudence-verification";
-import { CONSULTANT_DEFINITIVE_PROTOCOL } from "./consultant-definitive-protocol";
+import { buildConsultantSystemPrompt } from "./build-consultant-system-prompt";
+import { CONSULTANT_PRODUCTION_RULES } from "./consultant-production-rules";
 import {
   CONSULTANT_PROMPT,
   SCANNER_PROMPT,
@@ -25,7 +26,8 @@ export { ARRETS_GUIDE_SYSTEM_PROMPT } from "./arrets-guide";
 export { QUIZ_EU_INTERACTIVE_SYSTEM_PROMPT, getQuizEuEtudiantsConversationPrompt } from "./quiz-eu-etudiants";
 export { UNIVERSAL_CONSULTANT_PROTOCOL } from "./universal-protocol";
 export { JURISPRUDENCE_VERIFICATION_PROTOCOL } from "./jurisprudence-verification";
-export { CONSULTANT_DEFINITIVE_PROTOCOL } from "./consultant-definitive-protocol";
+export { buildConsultantSystemPrompt } from "./build-consultant-system-prompt";
+export { CONSULTANT_PRODUCTION_RULES } from "./consultant-production-rules";
 export {
   CONSULTANT_PROMPT,
   SCANNER_PROMPT,
@@ -62,22 +64,9 @@ export const TOOL_PROMPTS: Record<ToolName, string> = {
 };
 
 /**
- * Construit le system prompt final en combinant, dans cet ordre :
- *   1. MASTER_SYSTEM_PROMPT — identité, registre, anti-hallucination, clôture,
- *      règle § 4 bis (jurisprudence obligatoire sous chaque article).
- *   2. UNIVERSAL_CONSULTANT_PROTOCOL — protocole opérationnel v2.0 (qualification
- *      universelle, citations, anti-hallucination renforcé, règles par texte).
- *   3. JURISPRUDENCE_VERIFICATION_PROTOCOL — 4 contrôles avant citation,
- *      liste noire des affaires fréquemment mal utilisées, recommandations
- *      par domaine, séries CNIL, sources RAG à filtrer, formule de repli.
- *   4. CONSULTANT_DEFINITIVE_PROTOCOL (**consultant uniquement**) — synthèse
- *      « prompt universel » : qualification préalable, conclusions intangibles,
- *      structures-types, clôture longue développée pour le canal chat.
- *   5. TOOL_PROMPTS[tool] — mission spécifique de l'outil.
- *
- * Les protocoles **1 à 3** s'appliquent à **tous** les outils **sauf**
- * `arrets_guide` et `quiz` (prompts pédagogiques / examinateur autonomes).
- * Le **4** uniquement au **consultant** chat.
+ * Construit le system prompt final.
+ * **Consultant** : stack court dédié (sans master § 4 bis ni protocoles contradictoires).
+ * **Autres outils** : master + protocoles transverses + outil.
  */
 export function buildSystemPrompt(tool: ToolName): string {
   if (tool === "arrets_guide") {
@@ -86,13 +75,13 @@ export function buildSystemPrompt(tool: ToolName): string {
   if (tool === "quiz") {
     return getQuizEuEtudiantsConversationPrompt();
   }
+  if (tool === "consultant") {
+    return buildConsultantSystemPrompt();
+  }
   let body =
     `${MASTER_SYSTEM_PROMPT}\n\n` +
     `${UNIVERSAL_CONSULTANT_PROTOCOL}\n\n` +
     `${JURISPRUDENCE_VERIFICATION_PROTOCOL}`;
-  if (tool === "consultant") {
-    body += `\n\n${CONSULTANT_DEFINITIVE_PROTOCOL}`;
-  }
   body += `\n\n${TOOL_PROMPTS[tool]}`;
   return body;
 }

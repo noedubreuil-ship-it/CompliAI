@@ -3,6 +3,7 @@ import {
   MASTER_SYSTEM_PROMPT,
   UNIVERSAL_CONSULTANT_PROTOCOL,
   JURISPRUDENCE_VERIFICATION_PROTOCOL,
+  CONSULTANT_PRODUCTION_RULES,
   TOOL_PROMPTS,
   buildSystemPrompt,
   type ToolName,
@@ -116,21 +117,23 @@ describe("JURISPRUDENCE_VERIFICATION_PROTOCOL", () => {
 });
 
 describe("buildSystemPrompt", () => {
-  it("concatène master + universel + jurisprudence + outil dans l'ordre", () => {
+  it("consultant : stack court (identité → production → maître slim → mission), sans protocoles hérités", () => {
     const sys = buildSystemPrompt("consultant");
-    const idxMaster = sys.indexOf(MASTER_SYSTEM_PROMPT);
-    const idxUniversal = sys.indexOf(UNIVERSAL_CONSULTANT_PROTOCOL);
-    const idxJurisprudence = sys.indexOf(JURISPRUDENCE_VERIFICATION_PROTOCOL);
-    const idxConsultant = sys.indexOf("CONSULTANT EN CONFORMITÉ EUROPÉENNE");
-    expect(idxMaster).toBe(0);
-    expect(idxUniversal).toBeGreaterThan(idxMaster);
-    expect(idxJurisprudence).toBeGreaterThan(idxUniversal);
-    expect(idxConsultant).toBeGreaterThan(idxJurisprudence);
+    expect(sys.indexOf("PRIORITÉ ABSOLUE")).toBeGreaterThanOrEqual(0);
+    expect(sys).toMatch(/juriste senior parisien/);
+    expect(sys).toMatch(/CONSULTANT EN CONFORMITÉ EUROPÉENNE/);
+    expect(sys).not.toMatch(/PROTOCOLE UNIVERSEL/);
+    expect(sys).not.toMatch(/JURISPRUDENCE OBLIGATOIRE SOUS CHAQUE ARTICLE/);
+    expect(sys).not.toMatch(/PROTOCOLE DE VÉRIFICATION DES CITATIONS JURISPRUDENTIELLES/);
+    expect(sys).toMatch(/Pas\*?\* de § 4 bis/);
+    const idxProduction = sys.indexOf(CONSULTANT_PRODUCTION_RULES);
+    const idxMission = sys.indexOf("CONSULTANT EN CONFORMITÉ EUROPÉENNE");
+    expect(idxProduction).toBeGreaterThan(0);
+    expect(idxMission).toBeGreaterThan(idxProduction);
   });
 
-  it("injecte les trois protocoles transverses pour les outils consultant / docs / scanner / cerveau", () => {
+  it("injecte les trois protocoles transverses pour scanner / docs / cerveau (pas consultant)", () => {
     const withConsultantProtocols: ToolName[] = [
-      "consultant",
       "scanner",
       "doc_art11",
       "doc_fria",

@@ -49,9 +49,7 @@ export interface ToolConfig {
  */
 export const TOOL_CONFIGS: Record<ToolName, ToolConfig> = {
   consultant: {
-    // Plafond sortie utilisé **en totalité** pour les plans payants (défaut 8192 : réponses type note de cabinet).
-    // Plan gratuit : plafond et budgets adaptatifs dans `consultant-tokens.ts`.
-    maxTokens: envNumber("AI_MAX_TOKENS_CONSULTANT", 8192),
+    maxTokens: envNumber("AI_MAX_TOKENS_CONSULTANT", 16384),
     temperature: 0.1,
   },
   scanner: {

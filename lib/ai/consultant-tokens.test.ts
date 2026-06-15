@@ -43,7 +43,7 @@ describe("resolveConsultantOutputMaxTokens — plans", () => {
   });
 
   it("plafonne le gratuit à freeCap même si la config paid est haute", () => {
-    vi.stubEnv("AI_MAX_TOKENS_CONSULTANT_FREE", "1500");
+    vi.stubEnv("AI_MAX_TOKENS_CONSULTANT_FREE", "6000");
     vi.stubEnv("AI_CONSULTANT_TOKENS_COMPLEX", "5000");
 
     expect(
@@ -52,7 +52,15 @@ describe("resolveConsultantOutputMaxTokens — plans", () => {
         "free",
         5000
       )
-    ).toBe(1500);
+    ).toBe(5000);
+  });
+
+  it("gratuit : plancher 4096 même si freeCap sous le seuil", () => {
+    vi.stubEnv("AI_MAX_TOKENS_CONSULTANT_FREE", "1500");
+    vi.stubEnv("AI_CONSULTANT_TOKENS_SIMPLE", "800");
+    expect(
+      resolveConsultantOutputMaxTokens("Qu'est-ce que l'article 22 du RGPD ?", "free", 8192)
+    ).toBe(4096);
   });
 
   it("gratuit : question complexe atteint le plafond consultant (défaut env)", () => {
@@ -60,9 +68,9 @@ describe("resolveConsultantOutputMaxTokens — plans", () => {
       resolveConsultantOutputMaxTokens(
         "Je déploie un dispositif de pointage biométrique en sous-traitance : analyse complète RGPD avec bases légales, mesures organisationnelles, documentation et exposition des risques pour un groupe de 200 salariés en France.",
         "free",
-        8192
+        16384
       )
-    ).toBe(8192);
+    ).toBe(16384);
   });
 
   it("paid complex atteint le plafond consultant", () => {
@@ -71,19 +79,20 @@ describe("resolveConsultantOutputMaxTokens — plans", () => {
       resolveConsultantOutputMaxTokens(
         "Analyse complète RGPD biométrie " + "z".repeat(350),
         "pro",
-        8192
+        16384
       )
-    ).toBe(8192);
+    ).toBe(16384);
   });
 
   it("plans payants : plafond complet même pour une question courte", () => {
     vi.stubEnv("AI_CONSULTANT_TOKENS_SIMPLE", "800");
+    vi.stubEnv("AI_MAX_TOKENS_CONSULTANT", "2048");
     expect(
       resolveConsultantOutputMaxTokens(
         "Définition : qu'est-ce que le AI Act ?",
         "starter",
-        8192
+        2048
       )
-    ).toBe(8192);
+    ).toBe(4096);
   });
 });

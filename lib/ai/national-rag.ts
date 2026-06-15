@@ -10,6 +10,7 @@ import {
   CORPUS_DOMAIN_UK_REGULATOR,
 } from "@/lib/ai/legal-corpus-domains";
 import { embedText } from "./embeddings";
+import { sanitizeRagTextForModel } from "./sanitize-rag-context";
 
 function getSupabaseAdmin() {
   return createClient(
@@ -258,7 +259,7 @@ export function buildNationalLegalContext(chunks: NationalLegalText[], sectionLa
     .map((c) => {
       const metaBits = [c.ecli, c.court, c.reference, c.country_name].filter(Boolean).join(" — ");
       const ref = [metaBits, c.domain, c.title].filter(Boolean).join(" — ");
-      return `[${ref}]\n${c.content}`;
+      return `[${ref}]\n${sanitizeRagTextForModel(c.content)}`;
     })
     .join("\n\n---\n\n");
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, type ReactNode } from "react";
+import { useState, useRef, useEffect, useCallback, memo, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -14,6 +14,23 @@ import { cn } from "@/lib/utils";
 import type { LegalCitation } from "@/lib/types/legal";
 import { filtrerSourcesHorsSujet } from "@/lib/ai/source-filter";
 import { useAIToast } from "@/components/ui/toast-provider";
+import { charsToRevealThisFrame } from "@/lib/chat/smooth-stream-reveal";
+
+const ASSISTANT_MARKDOWN_CLASS =
+  "text-sm leading-relaxed text-slate-800 prose prose-sm max-w-none " +
+  "prose-headings:font-semibold prose-headings:text-slate-900 prose-headings:mt-4 prose-headings:mb-2 " +
+  "prose-h1:text-base prose-h2:text-sm prose-h3:text-sm " +
+  "prose-p:my-2 prose-p:leading-relaxed " +
+  "prose-strong:text-slate-900 prose-strong:font-semibold " +
+  "prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline " +
+  "prose-blockquote:border-l-4 prose-blockquote:border-blue-300 prose-blockquote:pl-4 prose-blockquote:italic " +
+  "prose-blockquote:text-slate-600 prose-blockquote:bg-blue-50 prose-blockquote:py-1 prose-blockquote:rounded-r " +
+  "prose-ul:my-2 prose-ul:pl-4 prose-li:my-0.5 " +
+  "prose-ol:my-2 prose-ol:pl-4 " +
+  "prose-table:text-xs prose-table:w-full " +
+  "prose-th:bg-slate-100 prose-th:p-2 prose-th:text-left prose-th:font-semibold " +
+  "prose-td:p-2 prose-td:border-b prose-td:border-slate-100 " +
+  "prose-code:bg-slate-100 prose-code:px-1 prose-code:rounded prose-code:text-xs";
 
 interface Message {
   id: string;
@@ -21,6 +38,8 @@ interface Message {
   content: string;
   citations?: LegalCitation[];
   loading?: boolean;
+  /** Réponse en cours de streaming — texte brut, pas de re-parse Markdown à chaque token */
+  streaming?: boolean;
 }
 
 interface Conversation {
@@ -208,7 +227,7 @@ function SourcesPanel({ sources }: { sources: LegalCitation[] }) {
 }
 
 // ─── MessageBubble with copy button ──────────────────────────────────────────
-function MessageBubble({
+const MessageBubble = memo(function MessageBubble({
   msg,
   citationFilterQuestion,
 }: {
@@ -273,22 +292,16 @@ function MessageBubble({
           <>
             {msg.role === "assistant" ? (
               <div className="relative group">
-                <div className="text-sm leading-relaxed text-slate-800 prose prose-sm max-w-none
-                  prose-headings:font-semibold prose-headings:text-slate-900 prose-headings:mt-4 prose-headings:mb-2
-                  prose-h1:text-base prose-h2:text-sm prose-h3:text-sm
-                  prose-p:my-2 prose-p:leading-relaxed
-                  prose-strong:text-slate-900 prose-strong:font-semibold
-                  prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
-                  prose-blockquote:border-l-4 prose-blockquote:border-blue-300 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-slate-600 prose-blockquote:bg-blue-50 prose-blockquote:py-1 prose-blockquote:rounded-r
-                  prose-ul:my-2 prose-ul:pl-4 prose-li:my-0.5
-                  prose-ol:my-2 prose-ol:pl-4
-                  prose-table:text-xs prose-table:w-full
-                  prose-th:bg-slate-100 prose-th:p-2 prose-th:text-left prose-th:font-semibold
-                  prose-td:p-2 prose-td:border-b prose-td:border-slate-100
-                  prose-code:bg-slate-100 prose-code:px-1 prose-code:rounded prose-code:text-xs">
+                <div className={ASSISTANT_MARKDOWN_CLASS}>
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                  {msg.streaming && (
+                    <span
+                      className="inline-block w-[2px] h-[1em] ml-0.5 align-text-bottom bg-blue-500/70 animate-pulse"
+                      aria-hidden
+                    />
+                  )}
                 </div>
-                {msg.content && !msg.loading && (
+                {msg.content && !msg.loading && !msg.streaming && (
                   <div className="absolute top-0 right-0 flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                     <button
                       type="button"
@@ -330,7 +343,7 @@ function MessageBubble({
       </div>
     </div>
   );
-}
+});
 
 function loadConversations(): Conversation[] {
   try {
@@ -368,6 +381,97 @@ export default function ChatInterface() {
   const [responseDepth, setResponseDepth] = useState<"brief" | "detailed">("detailed");
   const recognitionRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const streamBufferRef = useRef("");
+  const streamDisplayPosRef = useRef(0);
+  const streamRafRef = useRef<number | null>(null);
+  const streamLastFrameRef = useRef(0);
+  const streamDoneRef = useRef(false);
+  const streamAssistantIdRef = useRef<string | null>(null);
+  const streamCitationsRef = useRef<LegalCitation[]>([]);
+  const isStreamingRef = useRef(false);
+
+  const stopStreamReveal = useCallback(() => {
+    if (streamRafRef.current !== null) {
+      cancelAnimationFrame(streamRafRef.current);
+      streamRafRef.current = null;
+    }
+    streamLastFrameRef.current = 0;
+  }, []);
+
+  const flushStreamReveal = useCallback(
+    (assistantId: string) => {
+      const target = streamBufferRef.current;
+      streamDisplayPosRef.current = target.length;
+      const citations = streamCitationsRef.current;
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantId
+            ? { ...m, content: target, citations, loading: false, streaming: false }
+            : m
+        )
+      );
+      stopStreamReveal();
+    },
+    [stopStreamReveal]
+  );
+
+  const scrollMessagesToBottom = useCallback(() => {
+    const el = messagesContainerRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, []);
+
+  const startStreamReveal = useCallback(
+    (assistantId: string) => {
+      if (streamRafRef.current !== null) return;
+
+      const tick = (now: number) => {
+        if (streamAssistantIdRef.current !== assistantId) {
+          streamRafRef.current = null;
+          return;
+        }
+
+        const target = streamBufferRef.current;
+        let pos = streamDisplayPosRef.current;
+        const lag = target.length - pos;
+
+        if (lag > 0) {
+          const delta = streamLastFrameRef.current ? now - streamLastFrameRef.current : 16;
+          streamLastFrameRef.current = now;
+          pos = Math.min(pos + charsToRevealThisFrame(lag, delta), target.length);
+          streamDisplayPosRef.current = pos;
+
+          const content = target.slice(0, pos);
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantId
+                ? { ...m, content, loading: false, streaming: true }
+                : m
+            )
+          );
+          scrollMessagesToBottom();
+        }
+
+        if (pos >= target.length && streamDoneRef.current) {
+          const citations = streamCitationsRef.current;
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantId
+                ? { ...m, content: target, citations, loading: false, streaming: false }
+                : m
+            )
+          );
+          streamRafRef.current = null;
+          return;
+        }
+
+        streamRafRef.current = requestAnimationFrame(tick);
+      };
+
+      streamRafRef.current = requestAnimationFrame(tick);
+    },
+    [scrollMessagesToBottom]
+  );
 
   useEffect(() => {
     setConversations(loadConversations());
@@ -453,6 +557,7 @@ export default function ChatInterface() {
   }
 
   useEffect(() => {
+    if (isStreamingRef.current) return;
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
@@ -462,6 +567,12 @@ export default function ChatInterface() {
 
     setInput("");
     setStreaming(true);
+    isStreamingRef.current = true;
+    streamBufferRef.current = "";
+    streamDisplayPosRef.current = 0;
+    streamDoneRef.current = false;
+    streamCitationsRef.current = [];
+    stopStreamReveal();
 
     const convId = activeId ?? crypto.randomUUID();
     if (!activeId) setActiveId(convId);
@@ -469,6 +580,7 @@ export default function ChatInterface() {
     const userMsg: Message = { id: crypto.randomUUID(), role: "user", content: q };
     const assistantId = crypto.randomUUID();
     const assistantMsg: Message = { id: assistantId, role: "assistant", content: "", loading: true };
+    streamAssistantIdRef.current = assistantId;
 
     const newMessages = [...messages, userMsg, assistantMsg];
     setMessages(newMessages);
@@ -490,12 +602,14 @@ export default function ChatInterface() {
         const data = await res.json().catch(() => ({}));
         aiToast.insufficientCredits(data.balance ?? 0);
         setMessages((prev) => prev.filter((m) => m.id !== assistantId && m.id !== userMsg.id));
+        isStreamingRef.current = false;
         setStreaming(false);
         return;
       }
       if (res.status === 429) {
         aiToast.rateLimited();
         setMessages((prev) => prev.filter((m) => m.id !== assistantId && m.id !== userMsg.id));
+        isStreamingRef.current = false;
         setStreaming(false);
         return;
       }
@@ -503,6 +617,7 @@ export default function ChatInterface() {
         const data = await res.json().catch(() => ({}));
         aiToast.aiError((data as { error?: string }).error);
         setMessages((prev) => prev.filter((m) => m.id !== assistantId && m.id !== userMsg.id));
+        isStreamingRef.current = false;
         setStreaming(false);
         return;
       }
@@ -512,13 +627,15 @@ export default function ChatInterface() {
       const decoder = new TextDecoder();
       let citations: LegalCitation[] = [];
       let finalMessages = newMessages;
+      let sseBuffer = "";
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n");
+        sseBuffer += decoder.decode(value, { stream: true });
+        const lines = sseBuffer.split("\n");
+        sseBuffer = lines.pop() ?? "";
 
         for (const line of lines) {
           if (!line.startsWith("data: ")) continue;
@@ -526,35 +643,52 @@ export default function ChatInterface() {
             const event = JSON.parse(line.slice(6));
             if (event.type === "citations") {
               citations = event.citations;
-            } else if (event.type === "text") {
-              setMessages((prev) => {
-                const updated = prev.map((m) =>
-                  m.id === assistantId
-                    ? { ...m, content: m.content + event.text, loading: false }
-                    : m
-                );
-                finalMessages = updated;
-                return updated;
-              });
+              streamCitationsRef.current = event.citations;
+            } else if (event.type === "text" && typeof event.text === "string") {
+              streamBufferRef.current += event.text;
+              startStreamReveal(assistantId);
             } else if (event.type === "error") {
+              stopStreamReveal();
               aiToast.aiError(typeof event.message === "string" ? event.message : undefined);
               setMessages((prev) => prev.filter((m) => m.id !== assistantId));
               setStreaming(false);
+              isStreamingRef.current = false;
               return;
+            } else if (event.type === "replace" && typeof event.text === "string") {
+              streamBufferRef.current = event.text;
+              flushStreamReveal(assistantId);
             } else if (event.type === "done") {
-              setMessages((prev) => {
-                const updated = prev.map((m) =>
-                  m.id === assistantId ? { ...m, citations, loading: false } : m
-                );
-                finalMessages = updated;
-                return updated;
-              });
+              streamDoneRef.current = true;
+              streamCitationsRef.current = citations;
+              flushStreamReveal(assistantId);
             }
           } catch {
             // Skip malformed SSE lines
           }
         }
       }
+
+      // Si le serveur n'a pas émis "done", afficher le buffer restant
+      if (!streamDoneRef.current) {
+        streamDoneRef.current = true;
+        flushStreamReveal(assistantId);
+      }
+      await new Promise<void>((resolve) => {
+        const waitDone = () => {
+          if (streamRafRef.current === null) {
+            resolve();
+            return;
+          }
+          requestAnimationFrame(waitDone);
+        };
+        waitDone();
+      });
+
+      setMessages((prev) => {
+        finalMessages = prev;
+        return prev;
+      });
+      isStreamingRef.current = false;
 
       persistMessages(convId, finalMessages, firstQuestion);
     } catch (err) {
@@ -568,6 +702,9 @@ export default function ChatInterface() {
         )
       );
     } finally {
+      stopStreamReveal();
+      streamAssistantIdRef.current = null;
+      isStreamingRef.current = false;
       setStreaming(false);
     }
   }
@@ -651,7 +788,7 @@ export default function ChatInterface() {
         </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
         <div className="mx-auto w-full max-w-3xl space-y-6 pt-10">
         {messages.length === 0 && (
           <div className="flex min-h-[50vh] flex-col items-center justify-center px-4 text-center">
