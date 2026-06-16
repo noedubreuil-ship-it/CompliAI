@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -8,8 +9,15 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error && data.user) {
+      // Send welcome email only for new users (created within the last 30s)
+      const createdAt = new Date(data.user.created_at).getTime();
+      const isNewUser = Date.now() - createdAt < 30_000;
+      if (isNewUser && data.user.email) {
+        const fullName = data.user.user_metadata?.full_name as string | undefined;
+        sendWelcomeEmail({ email: data.user.email, userName: fullName }).catch(() => {});
+      }
       return NextResponse.redirect(`${origin}${next}`);
     }
   }

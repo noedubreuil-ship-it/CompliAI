@@ -10,11 +10,61 @@ const ebGaramond = EB_Garamond({
   weight: ["400", "500", "600", "700", "800"],
 });
 
+const BASE_URL = "https://www.compliai.eu";
+
 export const metadata: Metadata = {
-  title: "CompliAI — Conformité Réglementaire IA Européenne",
+  metadataBase: new URL(BASE_URL),
+  title: {
+    default: "CompliAI — Conformité AI Act & RGPD pour les DPO et équipes juridiques",
+    template: "%s — CompliAI",
+  },
   description:
-    "Auditez votre projet IA, identifiez vos obligations réglementaires (AI Act, RGPD, DSA) et générez votre roadmap de conformité en minutes.",
-  keywords: ["AI Act", "RGPD", "conformité IA", "audit IA", "DSA", "DMA"],
+    "Plateforme IA pour DPO, avocats et équipes conformité. Checklist AI Act, DPIA Art.35, jurisprudence CJUE, comparateur UE-27. Conformité RGPD & AI Act en quelques minutes.",
+  keywords: [
+    "AI Act conformité",
+    "RGPD DPO",
+    "DPIA Art 35",
+    "audit IA conformité",
+    "checklist AI Act",
+    "jurisprudence CJUE RGPD",
+    "conformité IA entreprise",
+    "DSA DMA",
+    "logiciel DPO",
+    "outil conformité réglementaire",
+  ],
+  authors: [{ name: "CompliAI", url: BASE_URL }],
+  creator: "CompliAI",
+  openGraph: {
+    type: "website",
+    locale: "fr_FR",
+    url: BASE_URL,
+    siteName: "CompliAI",
+    title: "CompliAI — Conformité AI Act & RGPD pour les DPO",
+    description:
+      "Checklist AI Act, DPIA, jurisprudence CJUE, comparateur 27 États membres. L'outil de conformité IA pour les équipes juridiques européennes.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "CompliAI — Conformité AI Act & RGPD",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "CompliAI — Conformité AI Act & RGPD",
+    description: "Checklist AI Act, DPIA, jurisprudence CJUE. L'outil de conformité IA pour les DPO.",
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large" },
+  },
+  alternates: {
+    canonical: BASE_URL,
+  },
 };
 
 export default function RootLayout({

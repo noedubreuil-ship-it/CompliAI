@@ -16,6 +16,7 @@ import { filtrerSourcesHorsSujet } from "@/lib/ai/source-filter";
 import { useAIToast } from "@/components/ui/toast-provider";
 import { estimateConsultantCreditsRange } from "@/lib/ai/consultant-credits";
 import { charsToRevealThisFrame } from "@/lib/chat/smooth-stream-reveal";
+import { CreditsUpsellModal } from "@/components/ui/credits-upsell-modal";
 
 const ASSISTANT_MARKDOWN_CLASS =
   "text-sm leading-relaxed text-slate-800 prose prose-sm max-w-none " +
@@ -464,6 +465,8 @@ export default function ChatInterface() {
   const [voiceSupported, setVoiceSupported] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [responseDepth, setResponseDepth] = useState<"brief" | "detailed">("detailed");
+  const [upsellOpen, setUpsellOpen] = useState(false);
+  const [upsellBalance, setUpsellBalance] = useState(0);
   const creditRange = useMemo(
     () => estimateConsultantCreditsRange("starter", responseDepth),
     [responseDepth]
@@ -723,7 +726,8 @@ export default function ChatInterface() {
 
       if (res.status === 402) {
         const data = await res.json().catch(() => ({}));
-        aiToast.insufficientCredits(data.balance ?? 0);
+        setUpsellBalance(data.balance ?? 0);
+        setUpsellOpen(true);
         setMessages((prev) => prev.filter((m) => m.id !== assistantId && m.id !== userMsg.id));
         isStreamingRef.current = false;
         setStreaming(false);
@@ -847,6 +851,7 @@ export default function ChatInterface() {
   }
 
   return (
+    <>
     <div className="flex h-full min-h-0 bg-[#fafafa]">
       {/* Sidebar historique — style Claude */}
       <div className={cn(
@@ -1050,5 +1055,12 @@ export default function ChatInterface() {
       </div>
       </div>
     </div>
+
+    <CreditsUpsellModal
+      open={upsellOpen}
+      balance={upsellBalance}
+      onClose={() => setUpsellOpen(false)}
+    />
+    </>
   );
 }

@@ -53,6 +53,78 @@ function wrapEmail(title: string, body: string): string {
 </html>`;
 }
 
+// ─── Email de bienvenue ────────────────────────────────────────────────────────
+export async function sendWelcomeEmail({
+  email,
+  userName,
+}: {
+  email: string;
+  userName?: string;
+}) {
+  const displayName = userName ?? email.split("@")[0];
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.compliai.eu";
+
+  const body = `
+    <h2 style="margin:0 0 8px;font-size:22px;color:#111;font-weight:700;">
+      Bienvenue sur CompliAI 👋
+    </h2>
+    <p style="color:#444;line-height:1.7;margin:0 0 20px;font-size:14px;">
+      Bonjour ${displayName},<br/><br/>
+      Votre compte CompliAI est prêt. Vous pouvez dès maintenant accéder à tous vos outils de conformité : DPIA, checklist AI Act, jurisprudence CJUE, et bien plus.
+    </p>
+
+    <!-- 3 étapes -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+      ${[
+        { n: "1", title: "Posez votre première question", desc: "Le consultant IA répond à vos questions RGPD et AI Act avec sources officielles.", href: `${appUrl}/dashboard/chat` },
+        { n: "2", title: "Générez une DPIA ou checklist", desc: "Renseignez votre projet et obtenez un document complet en 5 minutes.", href: `${appUrl}/dashboard/tools` },
+        { n: "3", title: "Explorez la jurisprudence", desc: "CJUE, CNIL, EDPB — toutes les décisions importantes indexées.", href: `${appUrl}/dashboard/tools/jurisprudence` },
+      ]
+        .map(
+          (step) => `
+      <tr>
+        <td style="padding:12px 0;border-bottom:1px solid #f0f0f0;vertical-align:top;">
+          <table cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="width:32px;vertical-align:top;padding-top:2px;">
+                <div style="width:24px;height:24px;background:#003399;border-radius:50%;text-align:center;line-height:24px;color:#fff;font-size:12px;font-weight:700;">${step.n}</div>
+              </td>
+              <td style="padding-left:12px;">
+                <p style="margin:0 0 2px;font-size:14px;font-weight:600;color:#111;">${step.title}</p>
+                <p style="margin:0 0 6px;font-size:12px;color:#666;">${step.desc}</p>
+                <a href="${step.href}" style="font-size:12px;color:#003399;font-weight:600;text-decoration:none;">Commencer →</a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>`
+        )
+        .join("")}
+    </table>
+
+    <div style="text-align:center;margin-top:8px;">
+      <a href="${appUrl}/dashboard"
+         style="display:inline-block;background:#003399;color:#ffffff;font-weight:700;font-size:14px;padding:14px 32px;border-radius:8px;text-decoration:none;">
+        Accéder à mon espace →
+      </a>
+    </div>
+
+    <p style="color:#888;font-size:12px;line-height:1.6;margin-top:24px;border-top:1px solid #f0f0f0;padding-top:16px;">
+      Une question ? Répondez directement à cet email ou visitez notre <a href="${appUrl}/docs" style="color:#003399;">documentation</a>.<br/>
+      Vous êtes inscrit avec l'adresse ${email}.
+    </p>
+  `;
+
+  const resend = getResend();
+  if (!resend) return null;
+  return resend.emails.send({
+    from: FROM,
+    to: email,
+    subject: "Bienvenue sur CompliAI — votre espace conformité est prêt",
+    html: wrapEmail("Bienvenue sur CompliAI", body),
+  });
+}
+
 // ─── Alerte crédits bas ────────────────────────────────────────────────────────
 export async function sendLowCreditsAlert({
   email,
