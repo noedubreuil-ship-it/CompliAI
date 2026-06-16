@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, Shield, ArrowRight } from "lucide-react";
 import { MarketingFooter } from "@/components/marketing/MarketingFooter";
+import { loginRedirectHref } from "@/lib/marketing/site-links";
 
 const PLANS = [
   {
@@ -11,7 +12,7 @@ const PLANS = [
     period: "pour toujours",
     description: "Découvrez CompliAI sans engagement",
     cta: "Commencer gratuitement",
-    ctaHref: "/auth/login",
+    ctaHref: loginRedirectHref("/dashboard"),
     highlight: false,
     features: [
       "1 audit par mois",
@@ -28,7 +29,7 @@ const PLANS = [
     period: "/mois",
     description: "Pour les startups en phase de croissance",
     cta: "Choisir Starter",
-    ctaHref: "/auth/login",
+    ctaHref: loginRedirectHref("/dashboard"),
     highlight: false,
     features: [
       "3 audits par mois",
@@ -48,7 +49,7 @@ const PLANS = [
     period: "/mois",
     description: "Pour les scale-ups et équipes Legal/Compliance",
     cta: "Choisir Pro",
-    ctaHref: "/auth/login",
+    ctaHref: loginRedirectHref("/dashboard"),
     highlight: true,
     features: [
       "Audits illimités",

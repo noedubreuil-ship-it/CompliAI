@@ -71,7 +71,7 @@ export async function POST(request: Request) {
 
     await supabase.from("generated_documents").insert({
       user_id: auth.userId,
-      doc_type: "jurisprudence_analysis",
+      doc_type: "resume-arret",
       title: `Fiche arrêt — ${String((result.fiche as Record<string, unknown>)?.reference ?? text.slice(0, 60))}`,
       content: result,
       raw_text: raw,

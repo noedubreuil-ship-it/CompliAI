@@ -1,9 +1,11 @@
 import { consumeCredits, type ConsumeError, type ConsumeResult } from "@/lib/credits";
 import type { PlanName } from "@/lib/pricing";
+import type { ConsultantBillingDepth } from "@/lib/ai/model-routing";
 import {
   apiModelToBillingModel,
   getCreditMultiplier,
 } from "@/lib/ai/model-routing";
+import { consultantMinCreditsForDepth } from "@/lib/ai/consultant-credits";
 import type { BillingContext } from "@/lib/ai/billing-context";
 
 export type BillAiCallParams = {
@@ -14,6 +16,7 @@ export type BillAiCallParams = {
   inputTokens: number;
   outputTokens: number;
   tool?: string;
+  responseDepth?: ConsultantBillingDepth;
 };
 
 /**
@@ -28,7 +31,17 @@ export async function billAiCall(
 
   const tool = params.tool ?? params.endpoint;
   const billingModel = apiModelToBillingModel(params.apiModel);
-  const creditMultiplier = getCreditMultiplier({ plan: params.plan, tool });
+  const creditMultiplier = getCreditMultiplier({
+    plan: params.plan,
+    tool,
+    responseDepth: params.responseDepth,
+  });
+  const minCredits =
+    tool === "consultant" &&
+    params.endpoint === "consultant" &&
+    params.responseDepth
+      ? consultantMinCreditsForDepth(params.responseDepth)
+      : undefined;
 
   return consumeCredits({
     userId: params.userId,
@@ -37,6 +50,7 @@ export async function billAiCall(
     inputTokens,
     outputTokens,
     creditMultiplier,
+    minCredits,
   });
 }
 

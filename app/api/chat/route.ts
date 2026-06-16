@@ -646,6 +646,7 @@ export async function POST(request: Request) {
                   inputTokens: rewrite.inputTokens,
                   outputTokens: rewrite.outputTokens,
                   tool: "consultant",
+                  responseDepth: consultantDepth,
                 }).catch((e) => {
                   console.error("[chat] rewrite billing error:", e);
                   return null;
@@ -669,6 +670,7 @@ export async function POST(request: Request) {
               inputTokens: meta.inputTokens,
               outputTokens: meta.outputTokens,
               tool: "consultant",
+              responseDepth: consultantDepth,
             }).catch((e) => {
               console.error("[chat] billing error:", e);
               return null;

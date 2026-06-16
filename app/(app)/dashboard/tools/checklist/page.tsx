@@ -19,6 +19,7 @@ import {
   Filter,
 } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 type ItemStatus = "not_started" | "in_progress" | "done" | "not_applicable";
 
@@ -254,9 +255,12 @@ function formPayloadForApi(f: ChecklistForm): Record<string, string> {
 }
 
 export default function ChecklistPage() {
+  const searchParams = useSearchParams();
+  const projectId = searchParams.get("project_id");
   const [form, setForm] = useState<ChecklistForm>(defaultForm);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<Record<string, unknown> | null>(null);
+  const [docId, setDocId] = useState<string | null>(null);
   const [itemStatuses, setItemStatuses] = useState<Record<string, ItemStatus>>({});
   const [expandedCat, setExpandedCat] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -401,13 +405,17 @@ export default function ChecklistPage() {
       const res = await fetch("/api/generate/checklist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formPayloadForApi(form)),
+        body: JSON.stringify({
+          ...formPayloadForApi(form),
+          project_id: projectId || undefined,
+        }),
       });
-      const data = (await res.json()) as { error?: string; content?: Record<string, unknown> };
+      const data = (await res.json()) as { error?: string; content?: Record<string, unknown>; doc_id?: string };
       if (!res.ok) throw new Error(data.error ?? "Erreur");
       const content = data.content!;
       setResult(content);
       setItemStatuses({});
+      setDocId(typeof data.doc_id === "string" ? data.doc_id : null);
       const cats = Array.isArray(content.categories) ? content.categories : [];
       const first =
         cats[0] && typeof cats[0] === "object" && cats[0] !== null ?
@@ -425,6 +433,53 @@ export default function ChecklistPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function exportPdf() {
+    if (!result) return;
+    const title = typeof result.title === "string" && result.title.trim() ? result.title.trim() : "Checklist conformité";
+    const summary = typeof result.summary === "string" ? result.summary : "";
+    const { relevantCount, doneCount, pct } = progressStats(allItems as any[], itemStatuses);
+
+    const sections = [
+      { heading: "Résumé", body: summary || "—" },
+      { heading: "Progression", body: `${pct}% (${doneCount}/${relevantCount})` },
+      {
+        heading: "Items",
+        body: (allItems as any[])
+          .map((it) => {
+            const id = typeof it.id === "string" ? it.id : "";
+            const st = id ? (itemStatuses[id] ?? "not_started") : "not_started";
+            const pr = typeof it.priority === "string" ? it.priority : "";
+            return `- [${statusLabelFR(st)}] ${id} — ${String(it.title ?? "")}${pr ? ` (${pr})` : ""}`;
+          })
+          .join("\n"),
+      },
+    ];
+
+    const res = await fetch("/api/generate/export-pdf", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title,
+        subtitle: docId ? `Document: ${docId}` : undefined,
+        filename: "checklist-compliai",
+        sections,
+      }),
+    });
+
+    if (!res.ok) {
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      throw new Error(data.error ?? "Erreur export PDF");
+    }
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "checklist-compliai.pdf";
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   const resetFilters = useCallback(() => {
@@ -754,6 +809,9 @@ export default function ChecklistPage() {
               </Button>
               <Button variant="outline" size="sm" onClick={() => globalThis.window?.print()}>
                 <Printer className="h-4 w-4 mr-1" /> PDF (impression)
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => exportPdf().catch((e) => setError(e instanceof Error ? e.message : String(e)))}>
+                <Printer className="h-4 w-4 mr-1" /> PDF (export)
               </Button>
             </div>
           </div>

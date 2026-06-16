@@ -22,6 +22,7 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
   const requete = typeof body.requete === "string" ? body.requete.trim() : "";
   if (!requete) return NextResponse.json({ error: "requete requise" }, { status: 400 });
+  const projectId = typeof body.project_id === "string" && body.project_id.trim() ? body.project_id.trim() : null;
 
   const filtres = typeof body.filtres === "string" ? body.filtres : "Toutes juridictions";
   const mode = typeof body.mode === "string" ? body.mode : undefined;
@@ -73,7 +74,8 @@ export async function POST(request: Request) {
 
     await supabase.from("generated_documents").insert({
       user_id: auth.userId,
-      doc_type: "jurisprudence_analysis",
+      project_id: projectId,
+      doc_type: "recherche-jurisprudentielle",
       title: `Recherche JP — ${requete.slice(0, 80)}`,
       content,
       raw_text: raw,

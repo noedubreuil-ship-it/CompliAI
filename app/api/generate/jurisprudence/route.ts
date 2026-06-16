@@ -4,6 +4,8 @@ import { enrichPromptWithNationalRag } from "@/lib/ai/national-rag-for-tools";
 import { authenticateForGenerate } from "@/lib/ai/generate-route";
 import { buildJurisprudenceAnalyzerPrompt, generateJurisprudenceAnalysisDocument, extractJson } from "@/lib/ai/generators";
 import { searchEurLex, buildEurLexContext } from "@/lib/ai/eurlex";
+import { JurisprudenceEuAnalyzerSchema } from "@/lib/ai/schemas/jurisprudence-eu-analyzer";
+import { aiUnavailable } from "@/lib/ai/http-errors";
 
 export const runtime = "nodejs";
 
@@ -31,6 +33,7 @@ export async function POST(req: NextRequest) {
   let reference = "";
   let text = "";
   let analysisFocus = "";
+  let projectId: string | null = null;
 
   // ── Handle multipart form (PDF upload) ────────────────────────────────────
   if (contentType.includes("multipart/form-data")) {
@@ -39,6 +42,8 @@ export async function POST(req: NextRequest) {
       reference = String(formData.get("reference") ?? "");
       analysisFocus = String(formData.get("analysis_focus") ?? "");
       const additionalText = String(formData.get("text") ?? "");
+      const rawProjectId = String(formData.get("project_id") ?? "").trim();
+      projectId = rawProjectId ? rawProjectId : null;
       const file = formData.get("file") as File | null;
 
       if (file && file.size > 0) {
@@ -74,6 +79,7 @@ export async function POST(req: NextRequest) {
     reference = body.reference ?? "";
     text = (body.text ?? "").slice(0, MAX_TEXT_LENGTH);
     analysisFocus = body.analysis_focus ?? "";
+    projectId = typeof body.project_id === "string" && body.project_id.trim() ? body.project_id.trim() : null;
   }
 
   if (!text.trim() && !reference.trim()) {
@@ -82,8 +88,10 @@ export async function POST(req: NextRequest) {
 
   // When only a reference is provided (no text body), search EUR-Lex for the actual document
   let eurLexContext = "";
+  let eurLexResultsCount = 0;
   if (!text.trim() && reference.trim()) {
     const eurLexResults = await searchEurLex(reference, 3);
+    eurLexResultsCount = eurLexResults.length;
     if (eurLexResults.length > 0) {
       eurLexContext = buildEurLexContext(eurLexResults);
     }
@@ -106,18 +114,31 @@ export async function POST(req: NextRequest) {
     });
 
     const raw = await generateJurisprudenceAnalysisDocument(prompt, auth.billing("jurisprudence", "jurisprudence"));
-    const content = extractJson(raw);
+    const content = extractJson(raw) as Record<string, unknown>;
+    const validated = JurisprudenceEuAnalyzerSchema.safeParse(content);
+    if (!validated.success) {
+      console.error("[jurisprudence] invalid JSON shape:", validated.error.flatten());
+      return aiUnavailable("Sortie IA invalide (jurisprudence). Réessayez.");
+    }
 
     // Save to generated_documents
     await supabase.from("generated_documents").insert({
       user_id: auth.userId,
+      project_id: projectId,
       doc_type: "jurisprudence_analysis",
       title: `Analyse jurisprudentielle — ${reference || "Décision"}`,
-      content,
+      content: validated.data,
       raw_text: raw,
     });
 
-    return NextResponse.json({ content });
+    return NextResponse.json({
+      content: validated.data,
+      proof: {
+        eurlex_results: eurLexResultsCount,
+        used_eurlex_context: Boolean(eurLexContext.trim()),
+        used_pdf_or_text: Boolean(text.trim()),
+      },
+    });
   } catch (err) {
     console.error("Jurisprudence analysis error:", err);
     return NextResponse.json({ error: "Erreur lors de l'analyse" }, { status: 500 });

@@ -1,5 +1,6 @@
 import { runGenerateRoute } from "@/lib/ai/generate-route";
 import { buildNationalRagContextForTool } from "@/lib/ai/national-rag-for-tools";
+import { createClient } from "@/lib/supabase/server";
 import {
   generateAnalyseurDecisionsDocument,
   parseAnalyseurDecisionHeadline,
@@ -34,6 +35,7 @@ export async function POST(request: Request) {
   return runGenerateRoute(
     request,
     async (ctx) => {
+      const supabase = await createClient();
       const rag = await buildNationalRagContextForTool({
         query: `${texteDecision} ${reference ?? ""}`,
         includeEuCaseLaw: true,
@@ -52,11 +54,27 @@ export async function POST(request: Request) {
         throw new Error("Réponse IA vide");
       }
 
+      const projectId = typeof body.project_id === "string" && body.project_id.trim() ? body.project_id.trim() : null;
+      await supabase.from("generated_documents").insert({
+        user_id: ctx.userId,
+        project_id: projectId,
+        doc_type: "analyse-decision",
+        title: `Décision autorité — ${reference ?? "Analyse"}`,
+        content: { profil, headline: parseAnalyseurDecisionHeadline(markdown) },
+        raw_text: markdown,
+      });
+
       return {
         markdown,
         profil,
         headline: parseAnalyseurDecisionHeadline(markdown),
         format: "markdown" as const,
+        proof: {
+          statute_hits: rag.statuteHits,
+          national_case_law_hits: rag.nationalCaseLawHits,
+          eu_case_law_hits: rag.euCaseLawHits,
+          country_codes: rag.countryCodes,
+        },
       };
     },
     { body, requirePro: true },

@@ -14,6 +14,14 @@ export const OPUS_PREMIUM_TOOLS = new Set([
 
 export const OPUS_CREDIT_MULTIPLIER = 2;
 
+/** Multiplicateur crédits consultant (même appel API, plus de crédits facturés). */
+export const CONSULTANT_CREDIT_MULTIPLIER = 1.25;
+
+/** Note développée : facturation crédits plus élevée que la synthèse courte. */
+export const CONSULTANT_DETAILED_CREDIT_MULTIPLIER = 1.6;
+
+export type ConsultantBillingDepth = "brief" | "detailed";
+
 export function apiModelToBillingModel(apiModel: string): AIModel {
   const m = apiModel.toLowerCase();
   if (m.includes("haiku")) return "haiku";
@@ -37,9 +45,23 @@ export function resolveModelApiId(opts: {
   return MODEL_CONFIG.sonnet.apiId;
 }
 
-export function getCreditMultiplier(opts: { plan: PlanName; tool: string }): number {
+export function getCreditMultiplier(opts: {
+  plan: PlanName;
+  tool: string;
+  responseDepth?: ConsultantBillingDepth;
+}): number {
   const useOpus =
     (opts.plan === "pro" || opts.plan === "enterprise") &&
     OPUS_PREMIUM_TOOLS.has(opts.tool);
-  return useOpus ? OPUS_CREDIT_MULTIPLIER : 1;
+
+  let mult = useOpus ? OPUS_CREDIT_MULTIPLIER : 1;
+
+  if (opts.tool === "consultant") {
+    mult *= CONSULTANT_CREDIT_MULTIPLIER;
+    if (opts.responseDepth !== "brief") {
+      mult *= CONSULTANT_DETAILED_CREDIT_MULTIPLIER;
+    }
+  }
+
+  return mult;
 }

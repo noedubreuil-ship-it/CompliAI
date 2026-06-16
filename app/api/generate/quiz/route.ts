@@ -32,6 +32,7 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
   const topic = typeof body.topic === "string" ? body.topic.trim() : "";
   if (!topic) return NextResponse.json({ error: "topic requis" }, { status: 400 });
+  const projectId = typeof body.project_id === "string" && body.project_id.trim() ? body.project_id.trim() : null;
 
   const niveau = typeof body.niveau === "string" ? body.niveau : "L3";
   const countRaw = typeof body.count === "number" ? body.count : Number(body.count ?? 5);
@@ -56,7 +57,8 @@ export async function POST(request: Request) {
 
     await supabase.from("generated_documents").insert({
       user_id: auth.userId,
-      doc_type: "jurisprudence_analysis",
+      project_id: projectId,
+      doc_type: "quiz",
       title: `Quiz — ${topic.slice(0, 80)}`,
       content: result,
       raw_text: raw,

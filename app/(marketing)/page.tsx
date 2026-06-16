@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { EUFlagSVG } from "@/components/EUFlag";
 import { HeroBackground } from "@/components/marketing/HeroBackground";
+import { MarketingSiteFooter } from "@/components/marketing/MarketingSiteFooter";
+import { loginRedirectHref } from "@/lib/marketing/site-links";
 import {
   Shield, CheckCircle2, ArrowRight, FileSearch, MessageSquare,
   Bell, BookOpen, AlertTriangle, Menu, X, Star, Lock, FileText,
@@ -30,12 +32,12 @@ const REGULATIONS = [
 ];
 
 const TOOLS = [
-  { icon: FileText, name: "Documentation Art. 11", tag: "Obligatoire" },
-  { icon: Search, name: "FRIA Art. 27", tag: "Droits fondamentaux" },
-  { icon: Gavel, name: "Clauses contractuelles", tag: "Avocats" },
-  { icon: GraduationCap, name: "Quiz droit de l'IA", tag: "Étudiants" },
-  { icon: BarChart3, name: "Jurisprudence CJUE", tag: "Recherche" },
-  { icon: GitCompare, name: "Comparateur 27 États", tag: "Légistique" },
+  { icon: FileText, name: "Documentation Art. 11", tag: "Obligatoire", href: "/dashboard/tools/art11" },
+  { icon: Search, name: "FRIA Art. 27", tag: "Droits fondamentaux", href: "/dashboard/tools/fria" },
+  { icon: Gavel, name: "Clauses contractuelles", tag: "Avocats", href: "/dashboard/tools/clauses-contrat" },
+  { icon: GraduationCap, name: "Quiz droit de l'IA", tag: "Étudiants", href: "/dashboard/tools/quiz" },
+  { icon: BarChart3, name: "Jurisprudence CJUE", tag: "Recherche", href: "/dashboard/tools/jurisprudence" },
+  { icon: GitCompare, name: "Comparateur 27 États", tag: "Légistique", href: "/dashboard/tools/comparateur" },
 ];
 
 const TESTIMONIALS = [
@@ -370,13 +372,18 @@ export default function LandingPage() {
                 Consultant juridique IA 24/7
               </h3>
               <p className="text-[#6E6E73] text-sm leading-relaxed">
-                Analyse depuis la bibliothèque juridique indexée (droits européens, JP, États membres selon ingestion). Choisissez synthèse ou note développée dans l’application. Une information juridique, pas un dossier défendu par un avocat : vérifiez les sources officielles pour tout acte engageant.
+                Analyse depuis la bibliothèque juridique indexée (droits européens, jurisprudence, États membres).
+                Synthèse ou note développée au choix. Information juridique générale — pas un dossier défendu par un
+                avocat.
               </p>
               <div className="mt-6 h-px bg-[#F5F5F7]" />
-              <div className="mt-4 flex items-center gap-2 text-[#003399] text-sm font-medium cursor-pointer hover:gap-3 transition-all">
+              <Link
+                href={loginRedirectHref("/dashboard/chat")}
+                className="mt-4 flex items-center gap-2 text-[#003399] text-sm font-medium cursor-pointer hover:gap-3 transition-all"
+              >
                 <MessageSquare className="h-4 w-4" />
                 Accéder au consultant
-              </div>
+              </Link>
             </div>
 
             {/* Card 3 */}
@@ -391,10 +398,13 @@ export default function LandingPage() {
                 L'AI Act impose un registre des systèmes à haut risque. CompliAI le génère et le maintient automatiquement.
               </p>
               <div className="mt-6 h-px bg-white/10" />
-              <div className="mt-4 flex items-center gap-2 text-[#FFCC00] text-sm font-medium cursor-pointer hover:gap-3 transition-all">
+              <Link
+                href={loginRedirectHref("/dashboard/register")}
+                className="mt-4 flex items-center gap-2 text-[#FFCC00] text-sm font-medium cursor-pointer hover:gap-3 transition-all"
+              >
                 <BookOpen className="h-4 w-4" />
                 Voir le registre
-              </div>
+              </Link>
             </div>
 
             {/* Card 4 — large */}
@@ -542,6 +552,47 @@ export default function LandingPage() {
       ══════════════════════════════════════════════════════════════════════ */}
       <section id="outils" className="bg-white py-24">
         <div className="max-w-[980px] mx-auto px-5">
+          <div className="text-center mb-10">
+            <p className="text-xs font-semibold text-[#003399] tracking-widest uppercase mb-4">Aperçu produit</p>
+            <h2 className="font-bold tracking-[-0.03em] text-[#1D1D1F] text-2xl md:text-3xl mb-3">
+              Voyez ce que vous obtenez après inscription
+            </h2>
+            <p className="text-sm text-[#6E6E73] max-w-xl mx-auto">
+              Consultant sourcé, checklist DPO et audit express — trois parcours utilisés chaque jour par les équipes
+              conformité.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-4 mb-16">
+            {[
+              {
+                title: "Consultant juridique",
+                desc: "Chat avec citations EUR-Lex / CJUE, note développée ou synthèse.",
+                href: "/dashboard/chat",
+              },
+              {
+                title: "Checklist conformité",
+                desc: "Roadmap AI Act + RGPD priorisée, export CSV/PDF, suivi des statuts.",
+                href: "/dashboard/tools/checklist",
+              },
+              {
+                title: "Audit express",
+                desc: "Verdict AI Act en quelques minutes, score et actions bloquantes.",
+                href: "/dashboard/projects/new",
+              },
+            ].map((card) => (
+              <Link
+                key={card.title}
+                href={loginRedirectHref(card.href)}
+                className="rounded-2xl border border-black/[0.06] bg-[#F5F5F7] p-5 hover:bg-white hover:shadow-md transition-all"
+              >
+                <p className="font-semibold text-[#1D1D1F] text-sm">{card.title}</p>
+                <p className="text-xs text-[#6E6E73] mt-2 leading-relaxed">{card.desc}</p>
+                <p className="text-xs text-[#003399] font-medium mt-4">Essayer →</p>
+              </Link>
+            ))}
+          </div>
+
           <div className="text-center mb-14">
             <p className="text-xs font-semibold text-[#003399] tracking-widest uppercase mb-4">16 outils spécialisés</p>
             <h2 className="font-bold tracking-[-0.03em] text-[#1D1D1F]"
@@ -552,7 +603,7 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-10">
             {TOOLS.map(tool => (
-              <Link key={tool.name} href="/auth/login">
+              <Link key={tool.name} href={loginRedirectHref(tool.href)}>
                 <div className="flex items-center gap-3 p-4 bg-[#F5F5F7] hover:bg-white border border-transparent hover:border-black/[0.08] rounded-2xl transition-all hover:shadow-[0_4px_20px_rgba(0,0,0,0.06)] cursor-pointer group">
                   <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shrink-0 shadow-sm group-hover:bg-[#003399]/5 transition-colors">
                     <tool.icon className="h-4 w-4 text-[#1D1D1F]" style={{ width: "16px", height: "16px" }} />
@@ -568,7 +619,7 @@ export default function LandingPage() {
           </div>
 
           <div className="text-center">
-            <Link href="/auth/login">
+            <Link href={loginRedirectHref("/dashboard/tools")}>
               <button className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#003399] text-white text-sm font-medium hover:bg-[#0044cc] transition-colors cursor-pointer">
                 Voir tous les outils
                 <ChevronRight className="h-3.5 w-3.5" />
@@ -700,72 +751,11 @@ export default function LandingPage() {
               </button>
             </Link>
           </div>
-          <p className="text-white/15 text-xs mt-6">Sans carte bancaire · Annulation à tout moment</p>
+          <p className="text-white/45 text-xs mt-6">Sans carte bancaire · Annulation à tout moment</p>
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════════════
-          FOOTER — Apple style (multi-colonnes)
-      ══════════════════════════════════════════════════════════════════════ */}
-      <footer className="bg-[#F5F5F7] border-t border-black/[0.06]">
-        <div className="max-w-[980px] mx-auto px-5 py-12">
-
-          {/* Footer columns */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
-            {[
-              {
-                title: "Produit",
-                links: ["Fonctionnalités", "Tarifs", "Changelog", "Roadmap"],
-              },
-              {
-                title: "Réglementations",
-                links: ["AI Act", "RGPD", "DSA", "DMA", "Data Act"],
-              },
-              {
-                title: "Ressources",
-                links: ["Documentation", "Blog", "EUR-Lex", "CNIL", "EDPB"],
-              },
-              {
-                title: "Légal",
-                links: ["Mentions légales", "Confidentialité", "CGU", "Contact"],
-              },
-            ].map(col => (
-              <div key={col.title}>
-                <p className="text-xs font-semibold text-[#1D1D1F] mb-3">{col.title}</p>
-                <ul className="space-y-2">
-                  {col.links.map(link => (
-                    <li key={link}>
-                      <a href="#" className="text-xs text-[#6E6E73] hover:text-[#1D1D1F] transition-colors cursor-pointer">
-                        {link}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-
-          {/* Bottom bar */}
-          <div className="border-t border-black/[0.06] pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-md bg-[#003399] flex items-center justify-center">
-                <Shield className="h-3.5 w-3.5 text-white" />
-              </div>
-              <span className="text-xs font-semibold text-[#1D1D1F]">
-                Compli<span className="text-[#003399]">AI</span>
-              </span>
-              <span className="text-xs text-[#6E6E73]">
-                © {new Date().getFullYear()} · Tous droits réservés
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5 text-[10px] text-[#6E6E73]">
-              <EUFlagSVG width={16} height={11} />
-              Basé sur EUR-Lex · Textes officiels de l'Union européenne
-            </div>
-          </div>
-
-        </div>
-      </footer>
+      <MarketingSiteFooter />
 
     </div>
   );

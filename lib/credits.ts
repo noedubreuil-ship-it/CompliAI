@@ -126,11 +126,14 @@ export async function consumeCredits(params: {
   outputTokens: number;
   /** Multiplicateur (ex. ×2 pour Opus premium Pro). */
   creditMultiplier?: number;
+  /** Plancher de crédits facturés (consultant). */
+  minCredits?: number;
 }): Promise<ConsumeResult | ConsumeError> {
   const admin = getAdmin();
   const base = calculateCredits(params.model, params.inputTokens, params.outputTokens);
   const mult = params.creditMultiplier ?? 1;
-  const amount = Math.max(1, Math.ceil(base * mult));
+  const floor = params.minCredits ?? 1;
+  const amount = Math.max(floor, Math.ceil(base * mult));
 
   const { data, error } = await admin.rpc("consume_credits", {
     p_user_id: params.userId,

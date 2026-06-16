@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback, memo, type ReactNode } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo, memo, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import type { LegalCitation } from "@/lib/types/legal";
 import { filtrerSourcesHorsSujet } from "@/lib/ai/source-filter";
 import { useAIToast } from "@/components/ui/toast-provider";
+import { estimateConsultantCreditsRange } from "@/lib/ai/consultant-credits";
 import { charsToRevealThisFrame } from "@/lib/chat/smooth-stream-reveal";
 
 const ASSISTANT_MARKDOWN_CLASS =
@@ -463,6 +464,10 @@ export default function ChatInterface() {
   const [voiceSupported, setVoiceSupported] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [responseDepth, setResponseDepth] = useState<"brief" | "detailed">("detailed");
+  const creditRange = useMemo(
+    () => estimateConsultantCreditsRange("starter", responseDepth),
+    [responseDepth]
+  );
   const recognitionRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -988,6 +993,9 @@ export default function ChatInterface() {
                 Synthèse courte
               </button>
             </div>
+            <span className="text-xs text-neutral-400">
+              ~{creditRange.min}–{creditRange.typical} crédits / question
+            </span>
           </div>
           <div className="relative flex items-end gap-2 rounded-3xl border border-neutral-200 bg-white p-2 shadow-lg shadow-neutral-200/50 ring-1 ring-neutral-100">
             <div className="relative flex-1">

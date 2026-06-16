@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield, Loader2, Eye, EyeOff } from "lucide-react";
+import { redirectDestinationLabel } from "@/lib/marketing/site-links";
 
 function LoginForm() {
   const [email, setEmail] = useState("");
@@ -22,6 +23,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") ?? "/dashboard";
+  const redirectLabel = redirectDestinationLabel(redirectTo);
   const supabase = createClient();
 
   async function handleSubmit(e: React.FormEvent) {
@@ -69,6 +71,11 @@ function LoginForm() {
                 ? "Commencez à auditer vos projets IA en conformité avec le droit européen."
                 : "Accédez à votre espace de conformité réglementaire."}
             </CardDescription>
+            {redirectTo !== "/dashboard" && (
+              <p className="text-xs text-blue-700 bg-blue-50 border border-blue-100 rounded-md px-3 py-2 mt-2">
+                Après connexion, vous serez redirigé vers : <strong>{redirectLabel}</strong>
+              </p>
+            )}
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -160,9 +167,14 @@ function LoginForm() {
 
         <p className="text-center text-xs text-muted-foreground mt-4">
           En vous connectant, vous acceptez nos{" "}
-          <a href="/legal/cgu" className="underline hover:text-foreground">CGU</a>{" "}
+          <Link href="/legal/cgu" className="underline hover:text-foreground">
+            CGU
+          </Link>{" "}
           et notre{" "}
-          <a href="/legal/privacy" className="underline hover:text-foreground">politique de confidentialité</a>.
+          <Link href="/legal/privacy" className="underline hover:text-foreground">
+            politique de confidentialité
+          </Link>
+          .
         </p>
       </div>
     </div>

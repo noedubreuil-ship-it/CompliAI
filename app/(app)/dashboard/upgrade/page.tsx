@@ -190,6 +190,33 @@ export default function UpgradePage() {
         ))}
       </div>
 
+      {/* Bundles / packs livrables */}
+      <div className="rounded-xl border border-slate-200 bg-white p-5">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
+            <Shield className="h-5 w-5 text-slate-700" />
+          </div>
+          <div className="flex-1">
+            <p className="font-semibold text-slate-900 text-sm">Bundle DPO — Pack conformité (livrables)</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Checklist + DPIA + politique IA employés générés et enregistrés dans vos documents, pour démarrer vite sur un projet.
+            </p>
+            <div className="mt-3 flex flex-col sm:flex-row gap-2">
+              <Link href="/dashboard/templates">
+                <Button variant="outline" size="sm">
+                  Voir le pack (1‑click)
+                </Button>
+              </Link>
+              <Link href="/dashboard/tools/checklist">
+                <Button variant="ghost" size="sm">
+                  Commencer par la checklist →
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Packs de crédits supplémentaires */}
       <div className="rounded-xl border bg-amber-50 border-amber-200 p-5 flex flex-col sm:flex-row items-center gap-4">
         <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">

@@ -12,6 +12,10 @@ export default function TemplatesManageClient() {
   const [list, setList] = useState<Row[]>([]);
   const [name, setName] = useState("");
   const [docType, setDocType] = useState("dpia");
+  const [packProjectId, setPackProjectId] = useState("");
+  const [packRunning, setPackRunning] = useState(false);
+  const [packError, setPackError] = useState<string | null>(null);
+  const [packDone, setPackDone] = useState(false);
 
   async function refresh() {
     const res = await fetch("/api/templates");
@@ -58,6 +62,75 @@ export default function TemplatesManageClient() {
             Enregistrez des gabarits JSON par type pour accélérer vos prochains DPIA / RoPA (corps étendu à venir dans les générateurs).
           </p>
         </div>
+      </div>
+
+      <div className="rounded-xl border bg-white p-5 space-y-3">
+        <div>
+          <p className="text-sm font-semibold">Pack conformité (1‑click)</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Génère automatiquement une base de livrables DPO pour un projet (Checklist + DPIA + Politique IA). Les documents sont enregistrés dans “Mes documents”.
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Input
+            value={packProjectId}
+            onChange={(e) => setPackProjectId(e.target.value)}
+            placeholder="project_id (UUID)"
+          />
+          <Button
+            type="button"
+            disabled={packRunning || !packProjectId.trim()}
+            onClick={async () => {
+              setPackRunning(true);
+              setPackError(null);
+              setPackDone(false);
+              try {
+                const project_id = packProjectId.trim();
+                const calls = [
+                  fetch("/api/generate/checklist", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ regulation: "AI Act (UE 2024/1689)", company_size: "50-249 salariés", sector: "Tech / SaaS / IA", specific_context: "", project_id }),
+                  }),
+                  fetch("/api/generate/dpia", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ treatment_name: "Traitement principal", controller: "", purposes: "", data_types: "", data_subjects: "", sector: "", recipients: "", project_id }),
+                  }),
+                  fetch("/api/generate/policy", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ company_name: "", sector: "", scope: "IA générative et outils IA internes", project_id }),
+                  }),
+                ];
+                for (const resP of calls) {
+                  const res = await resP;
+                  if (!res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    throw new Error((data as any)?.error ?? "Erreur génération pack");
+                  }
+                }
+                setPackDone(true);
+              } catch (e: any) {
+                setPackError(e?.message ?? String(e));
+              } finally {
+                setPackRunning(false);
+              }
+            }}
+          >
+            {packRunning ? "Génération…" : "Lancer le pack"}
+          </Button>
+        </div>
+        {packError ? <p className="text-xs text-red-600">{packError}</p> : null}
+        {packDone ? (
+          <p className="text-xs text-emerald-700">
+            Pack généré. Ouvrir{" "}
+            <Link className="underline" href="/dashboard/documents">
+              Mes documents
+            </Link>
+            .
+          </p>
+        ) : null}
       </div>
 
       <form onSubmit={save} className="rounded-xl border bg-white p-5 space-y-3">

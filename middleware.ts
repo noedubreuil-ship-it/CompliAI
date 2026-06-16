@@ -32,6 +32,30 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
+  // Raccourcis publics → outils / chat (auth requise)
+  if (pathname === "/chat" || pathname.startsWith("/chat/")) {
+    const target = "/dashboard/chat";
+    if (!user) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = "/auth/login";
+      redirectUrl.searchParams.set("redirectTo", target);
+      return NextResponse.redirect(redirectUrl);
+    }
+    return NextResponse.redirect(new URL(target, request.url));
+  }
+
+  if (pathname === "/tools" || pathname.startsWith("/tools/")) {
+    const target =
+      pathname === "/tools" ? "/dashboard/tools" : `/dashboard/tools${pathname.slice("/tools".length)}`;
+    if (!user) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = "/auth/login";
+      redirectUrl.searchParams.set("redirectTo", target);
+      return NextResponse.redirect(redirectUrl);
+    }
+    return NextResponse.redirect(new URL(target, request.url));
+  }
+
   // Protect dashboard routes
   if (pathname.startsWith("/dashboard") && !user) {
     const redirectUrl = request.nextUrl.clone();

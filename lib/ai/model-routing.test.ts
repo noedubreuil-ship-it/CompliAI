@@ -4,6 +4,8 @@ import {
   apiModelToBillingModel,
   getCreditMultiplier,
   OPUS_CREDIT_MULTIPLIER,
+  CONSULTANT_CREDIT_MULTIPLIER,
+  CONSULTANT_DETAILED_CREDIT_MULTIPLIER,
 } from "./model-routing";
 import { MODEL_CONFIG } from "@/lib/pricing";
 
@@ -30,6 +32,18 @@ describe("model-routing", () => {
       MODEL_CONFIG.sonnet.apiId,
     );
     expect(getCreditMultiplier({ plan: "pro", tool: "comparateur" })).toBe(1);
+  });
+
+  it("consultant bills more credits for detailed vs brief", () => {
+    const brief = getCreditMultiplier({ plan: "starter", tool: "consultant", responseDepth: "brief" });
+    const detailed = getCreditMultiplier({
+      plan: "starter",
+      tool: "consultant",
+      responseDepth: "detailed",
+    });
+    expect(brief).toBe(CONSULTANT_CREDIT_MULTIPLIER);
+    expect(detailed).toBe(CONSULTANT_CREDIT_MULTIPLIER * CONSULTANT_DETAILED_CREDIT_MULTIPLIER);
+    expect(detailed).toBeGreaterThan(brief);
   });
 
   it("maps API model ids to billing models", () => {
