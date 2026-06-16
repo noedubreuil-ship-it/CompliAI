@@ -851,8 +851,7 @@ export default function ChatInterface() {
   }
 
   return (
-    <>
-    <div className="flex h-full min-h-0 bg-[#fafafa]">
+    <div className="flex flex-1 min-h-0 bg-[#fafafa]">
       {/* Sidebar historique — style Claude */}
       <div className={cn(
         "flex flex-col border-r border-neutral-200/80 bg-[#f5f5f5] transition-all duration-200 shrink-0 overflow-hidden",
@@ -908,7 +907,7 @@ export default function ChatInterface() {
       </div>
 
       {/* Main chat */}
-      <div className="relative flex flex-col flex-1 min-w-0 min-h-0">
+      <div className="relative flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
         <div className="absolute left-3 top-3 z-10 flex items-center gap-1">
           <button
             type="button"
@@ -930,7 +929,7 @@ export default function ChatInterface() {
         </div>
 
       {/* Messages */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+      <div ref={messagesContainerRef} className="flex-1 min-h-0 overflow-y-auto px-4 py-4 sm:px-6">
         <div className="mx-auto w-full max-w-3xl space-y-6 pt-10">
         {messages.length === 0 && (
           <div className="flex min-h-[50vh] flex-col items-center justify-center px-4 text-center">
@@ -1054,13 +1053,12 @@ export default function ChatInterface() {
         </div>
       </div>
       </div>
-    </div>
 
-    <CreditsUpsellModal
-      open={upsellOpen}
-      balance={upsellBalance}
-      onClose={() => setUpsellOpen(false)}
-    />
-    </>
+      <CreditsUpsellModal
+        open={upsellOpen}
+        balance={upsellBalance}
+        onClose={() => setUpsellOpen(false)}
+      />
+    </div>
   );
 }

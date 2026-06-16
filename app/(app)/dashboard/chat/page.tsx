@@ -6,7 +6,7 @@ export const metadata = {
 
 export default function ChatPage() {
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col">
+    <div className="flex flex-1 min-h-0 flex-col">
       <ChatInterface />
     </div>
   );
