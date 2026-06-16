@@ -31,14 +31,14 @@ export default async function DashboardLayout({
     <ToastProvider>
       <CrispChat />
       <SupportFab />
-      <div className="flex min-h-screen flex-col bg-[#fafafa] text-neutral-900">
+      <div className="flex h-screen flex-col overflow-hidden bg-[#fafafa] text-neutral-900">
         <DashboardNavbar
           userEmail={user.email ?? ""}
           userName={profile?.full_name ?? ""}
           tier={profile?.subscription_tier ?? "free"}
         />
 
-        <main className="relative flex min-h-0 flex-1 flex-col">
+        <main className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
           <div
             aria-hidden
             className="pointer-events-none fixed inset-0 z-0 opacity-[0.04]"
