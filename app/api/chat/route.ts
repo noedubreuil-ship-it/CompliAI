@@ -63,13 +63,21 @@ import {
 } from "@/lib/ai/consultant-citation-validator";
 
 export async function POST(request: Request) {
+  const t0 = Date.now();
+  const timings: Record<string, number> = {};
+  const mark = (k: string) => {
+    timings[k] = Date.now() - t0;
+  };
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) return aiUnauthorized();
+  mark("auth");
 
   const limited = await rateLimitUser(user.id, "chat", RATE_LIMITS.chat);
   if (limited) return limited;
+  mark("ratelimit");
 
   const credits = await getCreditBalance(user.id);
   const plan: PlanName = credits?.plan ?? "free";
@@ -78,6 +86,7 @@ export async function POST(request: Request) {
     const blocked = preflightToResponse(preflight);
     if (blocked) return blocked;
   }
+  mark("preflight");
 
   const body = await request.json();
   const { question, session_id, response_depth } = body as {
@@ -111,6 +120,7 @@ export async function POST(request: Request) {
       message: OUT_OF_SCOPE_MESSAGE,
     });
   }
+  mark("validate");
 
   const detectedCountries = detectEuMemberCountriesFromQuestion(question);
   const nationalRagCountries = resolveConsultantNationalCountryCodes(question, detectedCountries);
@@ -118,6 +128,7 @@ export async function POST(request: Request) {
   // ── 1. RAG local (pgvector) ───────────────────────────────────────────────
   const ragMatchCount = nationalRagCountries.length > 0 ? 5 : 3;
   let rawChunks = await searchLegalChunks(question, ragMatchCount, 0.6);
+  mark("rag_base");
 
   if (asksLegalDeadline(question)) {
     const deadlineChunks = await searchLegalChunks(AI_ACT_ART113_RAG_QUERY, 4, 0.52);
@@ -129,6 +140,7 @@ export async function POST(request: Request) {
       }
     }
   }
+  mark("rag_deadlines");
   // Évite la "contamination RAG" (cf. § 1.3 du protocole universel et § 5
   // du protocole de vérification jurisprudentielle) : on retire les sources
   // hors-sujet (ex. fiches « Code de bonnes pratiques GPAI » remontées sur
@@ -137,6 +149,7 @@ export async function POST(request: Request) {
   // pas afficher une source que le modèle n'a pas réellement vue.
   const chunks = filterOffTopicSources(rawChunks, question, legalChunkAccessor);
   const legalContext = buildLegalContext(chunks);
+  mark("rag_filter");
 
   const jurisprudenceHeavy = /jurisprudence|arr[eê]t|cour de justice|\bcjue\b|\btjue\b|rechtsprechung|case law|ECLI\b|pourvoi|cour supr[eê]me|h[oö]chstes gericht/i.test(
     question
@@ -230,6 +243,7 @@ export async function POST(request: Request) {
         })
       : Promise.resolve(),
   ]);
+  mark("rag_parallel");
 
   const nationalChunks = filterOffTopicSources(nationalChunksRaw, question, nationalLegalChunkAccessor);
   const euJudgmentChunks = filterOffTopicSources(euJudgmentChunksRaw, question, nationalLegalChunkAccessor);
@@ -301,6 +315,7 @@ export async function POST(request: Request) {
     eurLexResults = await searchEurLex(question, 5);
     eurLexContext = buildEurLexContext(eurLexResults);
   }
+  mark("eurlex_fallback");
 
   // ── 3. Décisions du calendrier EU + doctrine associée ────────────────────
   const relevantDecisions = getRelevantCalendarDecisions(question, 3);
@@ -320,6 +335,7 @@ export async function POST(request: Request) {
       }
     }
   }
+  mark("doctrine");
 
   // ── 4. Citations renvoyées au client ─────────────────────────────────────
   const mapCitation = <T extends { regulation: string; article_number: string; article_title: string; excerpt: string }>(
@@ -443,6 +459,7 @@ export async function POST(request: Request) {
     ...eurLexCitations,
     ...calendarCitations,
   ];
+  mark("citations");
 
   // ── 5. Composition du contexte injecté au modèle ─────────────────────────
   const contextSections: string[] = [];
@@ -522,6 +539,7 @@ export async function POST(request: Request) {
   }
 
   const context = contextSections.join("\n\n");
+  mark("context_compose");
 
   // ── 6. Streaming SSE via l'orchestrateur ─────────────────────────────────
   const encoder = new TextEncoder();
@@ -530,6 +548,22 @@ export async function POST(request: Request) {
 
   const readable = new ReadableStream({
     async start(controller) {
+      console.log(
+        JSON.stringify({
+          level: "info",
+          event: "chat_timings_pre_stream",
+          userId: user.id,
+          timings,
+          rag: {
+            chunks: chunks.length,
+            national: nationalChunks.length,
+            euCaseLaw: euJudgmentChunks.length,
+            nationalCaseLaw: nationalJudgmentChunks.length,
+            eurlex: eurLexResults.length,
+          },
+        })
+      );
+
       controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "citations", citations })}\n\n`));
 
       const credits = await getCreditBalance(user.id);
@@ -554,6 +588,7 @@ export async function POST(request: Request) {
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "error", message: err.message })}\n\n`));
           },
           onDone: async (meta) => {
+            const tGenDone = Date.now() - t0;
             let finalText = meta.fullText;
             const citationIssues: string[] = [];
 
@@ -582,6 +617,7 @@ export async function POST(request: Request) {
 
             if (shouldRewrite) {
               try {
+                const rwStart = Date.now();
                 const rewrite = await callClaude({
                   tool: "consultant",
                   userMessage: buildConsultantRewritePrompt(finalText, citationIssues),
@@ -618,11 +654,13 @@ export async function POST(request: Request) {
                   creditsConsumed += rewriteBill.consumed;
                   newBalance = rewriteBill.newBalance;
                 }
+                timings.rewrite_ms = Date.now() - rwStart;
               } catch (rewriteErr) {
                 console.error("[chat] citation rewrite failed:", rewriteErr);
               }
             }
 
+            const billStart = Date.now();
             const mainBill = await billAiCall({
               userId: user.id,
               plan: consultantPlan,
@@ -642,7 +680,9 @@ export async function POST(request: Request) {
             } else if (mainBill && "code" in mainBill) {
               console.error("[chat] billing failed:", mainBill.code);
             }
+            timings.billing_ms = Date.now() - billStart;
 
+            const persistStart = Date.now();
             let persistedSessionId = session_id;
             if (!persistedSessionId) {
               const { data: session } = await supabase
@@ -671,6 +711,8 @@ export async function POST(request: Request) {
                 },
               ]);
             }
+            timings.persist_ms = Date.now() - persistStart;
+            timings.total_ms = Date.now() - t0;
 
             controller.enqueue(
               encoder.encode(
@@ -682,6 +724,8 @@ export async function POST(request: Request) {
                   credits_consumed: creditsConsumed > 0 ? creditsConsumed : undefined,
                   new_balance: newBalance,
                   session_id: persistedSessionId,
+                  timings,
+                  gen_ms: tGenDone,
                 })}\n\n`
               )
             );
@@ -705,6 +749,22 @@ export async function POST(request: Request) {
               model: meta.model,
               warnings,
             });
+
+            console.log(
+              JSON.stringify({
+                level: "info",
+                event: "chat_timings_done",
+                userId: user.id,
+                timings,
+                meta: {
+                  model: meta.model,
+                  inputTokens: meta.inputTokens,
+                  outputTokens: meta.outputTokens,
+                  stopReason: meta.stopReason,
+                  latencyMs: meta.latencyMs,
+                },
+              })
+            );
           },
         }
       );
