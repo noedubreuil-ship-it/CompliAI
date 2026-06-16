@@ -59,12 +59,31 @@ function serializableMessages(messages: Message[]): Message[] {
 }
 
 function SourcesPanel({ sources }: { sources: LegalCitation[] }) {
+  const [open, setOpen] = useState(false);
+  const visible = open ? sources : sources.slice(0, 0);
+
   return (
     <div className="mt-4 space-y-2">
-      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-        Sources juridiques ({sources.length})
-      </p>
-      {sources.map((cite, i) => {
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+          Sources juridiques ({sources.length})
+        </p>
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="text-xs font-medium text-slate-600 hover:text-slate-900"
+        >
+          {open ? "Masquer" : "Afficher"}
+        </button>
+      </div>
+
+      {!open && (
+        <p className="text-xs text-slate-500">
+          Les sources sont chargées à la demande pour éviter les ralentissements.
+        </p>
+      )}
+
+      {visible.map((cite, i) => {
         const source = cite.source ?? "rag";
         const isEurLex = source === "eurlex";
         const isNational = source === "national";

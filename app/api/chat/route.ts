@@ -459,6 +459,7 @@ export async function POST(request: Request) {
     ...eurLexCitations,
     ...calendarCitations,
   ];
+  const citationsCapped = citations.slice(0, 18);
   mark("citations");
 
   // ── 5. Composition du contexte injecté au modèle ─────────────────────────
@@ -564,7 +565,7 @@ export async function POST(request: Request) {
         })
       );
 
-      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "citations", citations })}\n\n`));
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "citations", citations: citationsCapped })}\n\n`));
 
       const credits = await getCreditBalance(user.id);
       const consultantPlan = credits?.plan ?? "free";
