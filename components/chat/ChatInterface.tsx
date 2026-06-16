@@ -59,8 +59,21 @@ function serializableMessages(messages: Message[]): Message[] {
 }
 
 function SourcesPanel({ sources }: { sources: LegalCitation[] }) {
-  const [open, setOpen] = useState(false);
-  const visible = open ? sources : sources.slice(0, 0);
+  // Affichage comme avant (ouvert par défaut), mais rendu progressif pour éviter le freeze.
+  const [open, setOpen] = useState(true);
+  const [renderCount, setRenderCount] = useState(12);
+  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
+
+  useEffect(() => {
+    if (!open) return;
+    if (renderCount >= sources.length) return;
+    const id = window.setTimeout(() => {
+      setRenderCount((c) => Math.min(sources.length, c + 24));
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [open, renderCount, sources.length]);
+
+  const visible = open ? sources.slice(0, renderCount) : [];
 
   return (
     <div className="mt-4 space-y-2">
@@ -77,9 +90,9 @@ function SourcesPanel({ sources }: { sources: LegalCitation[] }) {
         </button>
       </div>
 
-      {!open && (
+      {open && renderCount < sources.length && (
         <p className="text-xs text-slate-500">
-          Les sources sont chargées à la demande pour éviter les ralentissements.
+          Chargement des sources… {renderCount}/{sources.length}
         </p>
       )}
 
@@ -214,6 +227,8 @@ function SourcesPanel({ sources }: { sources: LegalCitation[] }) {
           linkTitle = "Ouvrir le portail officiel du droit national";
         }
 
+        const showExcerpt = expanded[i] === true;
+
         return (
           <div key={i} className={`rounded-lg p-3 text-xs border ${wrapper}`}>
             <div className="flex items-start justify-between gap-2">
@@ -230,7 +245,18 @@ function SourcesPanel({ sources }: { sources: LegalCitation[] }) {
                   <p className={`mt-0.5 ${subColor}`}>{cite.article_title}</p>
                 )}
                 {cite.excerpt && cite.excerpt !== "(Consulter le texte complet sur EUR-Lex)" && (
-                  <p className={`mt-1.5 italic ${excerptColor}`}>&ldquo;{cite.excerpt}&rdquo;</p>
+                  <div className="mt-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setExpanded((p) => ({ ...p, [i]: !p[i] }))}
+                      className={`text-[11px] font-medium ${subColor} hover:opacity-90`}
+                    >
+                      {showExcerpt ? "Masquer l’extrait" : "Afficher l’extrait"}
+                    </button>
+                    {showExcerpt && (
+                      <p className={`mt-1 italic ${excerptColor}`}>&ldquo;{cite.excerpt}&rdquo;</p>
+                    )}
+                  </div>
                 )}
                 {showEuHint && (
                   <p className="mt-1.5 text-indigo-600 font-medium">Résultat de recherche EUR-Lex — consultez le texte complet ↗</p>
