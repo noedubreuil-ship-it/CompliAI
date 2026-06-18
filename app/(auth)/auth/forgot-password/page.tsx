@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,22 +13,30 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const supabase = createClient();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
-    });
+    try {
+      const res = await fetch("/api/auth/request-reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
 
-    if (error) {
-      setError("Une erreur est survenue. Vérifiez votre email et réessayez.");
-    } else {
-      setSent(true);
+      if (res.status === 429) {
+        const data = await res.json();
+        setError(data.error ?? "Trop de tentatives. Réessayez plus tard.");
+      } else {
+        // Toujours afficher succès (anti-énumération d'emails)
+        setSent(true);
+      }
+    } catch {
+      setError("Une erreur est survenue. Vérifiez votre connexion et réessayez.");
     }
+
     setLoading(false);
   }
 
