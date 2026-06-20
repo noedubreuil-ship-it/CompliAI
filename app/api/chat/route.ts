@@ -61,6 +61,7 @@ import {
   validateConsultantCitations,
   buildConsultantRewritePrompt,
 } from "@/lib/ai/consultant-citation-validator";
+import { translateQueryForRag } from "@/lib/ai/query-translate";
 
 export async function POST(request: Request) {
   const t0 = Date.now();
@@ -125,12 +126,19 @@ export async function POST(request: Request) {
   const detectedCountries = detectEuMemberCountriesFromQuestion(question);
   const nationalRagCountries = resolveConsultantNationalCountryCodes(question, detectedCountries);
 
+  // ── Traduction de la question pour la recherche RAG ───────────────────────
+  // Le corpus juridique est en français. Si l'utilisateur écrit dans une autre
+  // langue UE (DE, NL, ES, IT, PL...), on traduit la question en français pour
+  // l'embedding RAG uniquement. La réponse est générée dans la langue d'origine.
+  const { translated: ragQuery, originalLanguage, wasTranslated } = await translateQueryForRag(question);
+  mark("query_translate");
+
   // ── 1. RAG local (pgvector) ───────────────────────────────────────────────
   const ragMatchCount = nationalRagCountries.length > 0 ? 5 : 3;
-  let rawChunks = await searchLegalChunks(question, ragMatchCount, 0.6);
+  let rawChunks = await searchLegalChunks(ragQuery, ragMatchCount, 0.6);
   mark("rag_base");
 
-  if (asksLegalDeadline(question)) {
+  if (asksLegalDeadline(question) || asksLegalDeadline(ragQuery)) {
     const deadlineChunks = await searchLegalChunks(AI_ACT_ART113_RAG_QUERY, 4, 0.52);
     const seen = new Set(rawChunks.map((c) => c.id));
     for (const c of deadlineChunks) {
@@ -569,6 +577,16 @@ export async function POST(request: Request) {
       const credits = await getCreditBalance(user.id);
       const consultantPlan = credits?.plan ?? "free";
 
+      // Instruction de langue : répondre dans la langue de l'utilisateur
+      const languageAddendum =
+        wasTranslated && originalLanguage && originalLanguage !== "fr"
+          ? `## Instruction langue\nL'utilisateur écrit dans une autre langue que le français (code détecté : ${originalLanguage}). ` +
+            `Tu dois répondre **dans la même langue que sa question** — pas en français. ` +
+            `Les références aux articles, règlements et textes de loi restent dans leur forme officielle européenne ` +
+            `(ex. "article 53 du règlement (UE) 2024/1689" peut être traduit dans la langue de l'utilisateur). ` +
+            `La rigueur juridique et les règles de production s'appliquent dans toutes les langues.\n`
+          : "";
+
       await streamClaude(
         {
           tool: "consultant",
@@ -576,7 +594,7 @@ export async function POST(request: Request) {
           context: context || undefined,
           consultantCreditsPlan: consultantPlan,
           consultantResponseDepth: consultantDepth,
-          systemAddendum: consultantDepthAddendum,
+          systemAddendum: consultantDepthAddendum + languageAddendum,
         },
         {
           onText: (text) => {
