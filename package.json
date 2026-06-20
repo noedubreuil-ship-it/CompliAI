@@ -11,6 +11,7 @@
     "extract:prompts": "python3 scripts/extract-tool-prompts-from-transcript.py",
     "qa:consultant": "vitest run lib/ai/consultant-product-qasamples.test.ts",
     "ingest": "tsx --env-file=.env.local scripts/ingest-legal-docs.ts",
+    "fetch:eurlex": "tsx scripts/fetch-eurlex-fr.ts",
     "ingest:case-law": "tsx --env-file=.env.local scripts/ingest-case-law-seeds.ts",
     "ingest:supplementary-corpus": "tsx --env-file=.env.local scripts/ingest-supplementary-corpus.ts",
     "validate:migrations": "tsx scripts/validate-migrations.ts",

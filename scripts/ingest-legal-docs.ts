@@ -152,12 +152,44 @@ function parseArticles(text: string): ArticleChunk[] {
 
     if (content.length < 50) continue;
 
-    chunks.push({
-      article_number: articleNumber,
-      article_title: articleTitle,
-      chapter: chapterAt(text.indexOf(part)),
-      content: content.slice(0, 2000),
-    });
+    // Sub-chunk long articles by paragraph to preserve full content
+    // Each sub-chunk keeps the parent article reference
+    const MAX_CHARS = 4000;
+    if (content.length <= MAX_CHARS) {
+      chunks.push({
+        article_number: articleNumber,
+        article_title: articleTitle,
+        chapter: chapterAt(text.indexOf(part)),
+        content,
+      });
+    } else {
+      // Split on paragraph boundaries (numbered paragraphs or double newlines)
+      const paragraphs = content.split(/(?=\n\d+\.\s|\n{2,})/);
+      let buffer = "";
+      let subIdx = 1;
+      for (const para of paragraphs) {
+        if ((buffer + para).length > MAX_CHARS && buffer.length > 0) {
+          chunks.push({
+            article_number: `${articleNumber}_§${subIdx}`,
+            article_title: articleTitle,
+            chapter: chapterAt(text.indexOf(part)),
+            content: buffer.trim(),
+          });
+          buffer = para;
+          subIdx++;
+        } else {
+          buffer += para;
+        }
+      }
+      if (buffer.trim().length > 50) {
+        chunks.push({
+          article_number: `${articleNumber}_§${subIdx}`,
+          article_title: articleTitle,
+          chapter: chapterAt(text.indexOf(part)),
+          content: buffer.trim(),
+        });
+      }
+    }
   }
 
   // Fallback: chunk by paragraphs (for guidelines, opinions, non-article documents)
@@ -171,7 +203,7 @@ function parseArticles(text: string): ArticleChunk[] {
         article_number: `P${++idx}`,
         article_title: p.slice(0, 80),
         chapter: "",
-        content: p.slice(0, 2000),
+        content: p.slice(0, 4000),
       });
     }
   }
