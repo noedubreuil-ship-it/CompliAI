@@ -149,7 +149,7 @@ function MobileNavLink({
       href={locked ? "/dashboard/upgrade" : item.href}
       className={cn(
         "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",
-        active ? "bg-neutral-900 text-white" : "text-neutral-600 hover:bg-neutral-50",
+        active ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900" : "text-neutral-600 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-white/10",
       )}
     >
       <item.icon className="h-4 w-4 shrink-0 opacity-70" />
@@ -274,15 +274,15 @@ export function DashboardNavbar({ userEmail, userName, tier }: DashboardNavbarPr
             </Button>
           </SheetTrigger>
 
-          <SheetContent side="right" className="flex w-[min(100vw-2rem,20rem)] flex-col p-0">
-            <SheetHeader className="border-b border-neutral-100 px-4 py-4">
+          <SheetContent side="right" className="flex w-[min(100vw-2rem,20rem)] flex-col p-0 dark:bg-neutral-900">
+            <SheetHeader className="border-b border-neutral-100 dark:border-white/10 px-4 py-4">
               <SheetTitle className="flex items-center gap-3">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-neutral-900">
                   <User className="h-4 w-4 text-white" />
                 </div>
                 <div className="min-w-0 text-left">
-                  <p className="truncate text-sm font-semibold text-neutral-900">{userName || "Utilisateur"}</p>
-                  <p className="truncate text-xs text-neutral-500">{userEmail}</p>
+                  <p className="truncate text-sm font-semibold text-neutral-900 dark:text-white">{userName || "Utilisateur"}</p>
+                  <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">{userEmail}</p>
                 </div>
               </SheetTitle>
             </SheetHeader>
@@ -336,28 +336,30 @@ export function DashboardNavbar({ userEmail, userName, tier }: DashboardNavbarPr
                 </AccordionItem>
               </Accordion>
 
-              <div className="mt-4 space-y-1 border-t border-neutral-100 px-1 pt-4">
-                <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-neutral-500">Compte</p>
+              <div className="mt-4 space-y-1 border-t border-neutral-100 dark:border-white/10 px-1 pt-4">
+                <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Compte</p>
 
                 <div
                   className={cn(
                     "mb-2 flex items-center justify-between rounded-xl px-4 py-3",
-                    isPro ? "border border-amber-200/60 bg-amber-50/50" : "border border-neutral-200 bg-neutral-50",
+                    isPro
+                      ? "border border-amber-200/60 bg-amber-50/50 dark:border-amber-400/20 dark:bg-amber-900/20"
+                      : "border border-neutral-200 bg-neutral-50 dark:border-white/10 dark:bg-white/5",
                   )}
                 >
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Plan</p>
-                    <p className="mt-0.5 text-base font-bold text-neutral-900">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Plan</p>
+                    <p className="mt-0.5 text-base font-bold text-neutral-900 dark:text-white">
                       {tier === "free" ? "Gratuit" : tier.charAt(0).toUpperCase() + tier.slice(1)}
                     </p>
                   </div>
-                  {isPro ? <Shield className="h-5 w-5 text-neutral-700" /> : <Sparkles className="h-5 w-5 text-neutral-300" />}
+                  {isPro ? <Shield className="h-5 w-5 text-neutral-700 dark:text-neutral-300" /> : <Sparkles className="h-5 w-5 text-neutral-300 dark:text-neutral-500" />}
                 </div>
 
                 {!isPro && (
                   <Link
                     href="/dashboard/upgrade"
-                    className="mb-2 flex items-center gap-3 rounded-xl bg-neutral-900 px-4 py-3 text-white"
+                    className="mb-2 flex items-center gap-3 rounded-xl bg-neutral-900 dark:bg-white/10 dark:hover:bg-white/15 px-4 py-3 text-white"
                   >
                     <Zap className="h-5 w-5 shrink-0 text-amber-400" />
                     <div className="flex-1">
@@ -378,18 +380,18 @@ export function DashboardNavbar({ userEmail, userName, tier }: DashboardNavbarPr
                   <Link
                     key={href}
                     href={href}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50 hover:text-neutral-900"
+                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-neutral-800 dark:text-neutral-100 hover:bg-neutral-50 dark:hover:bg-white/10 hover:text-neutral-900 dark:hover:text-white"
                   >
-                    <Icon className="h-4 w-4 text-neutral-500" />
+                    <Icon className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
                     {label}
                   </Link>
                 ))}
               </div>
             </div>
 
-            <div className="space-y-2 border-t border-neutral-100 px-4 py-3">
+            <div className="space-y-2 border-t border-neutral-100 dark:border-white/10 px-4 py-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-neutral-600">Thème</span>
+                <span className="text-sm text-neutral-600 dark:text-neutral-300">Thème</span>
                 <div className="flex gap-1">
                   {[
                     { v: "light" as const, Icon: Sun },
@@ -401,7 +403,9 @@ export function DashboardNavbar({ userEmail, userName, tier }: DashboardNavbarPr
                       onClick={() => setTheme(v)}
                       className={cn(
                         "rounded-lg p-1.5 transition-colors",
-                        theme === v ? "bg-neutral-900 text-white" : "text-neutral-400 hover:bg-neutral-100",
+                        theme === v
+                          ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                          : "text-neutral-400 dark:text-neutral-500 hover:bg-neutral-100 dark:hover:bg-white/10",
                       )}
                     >
                       <Icon className="h-3.5 w-3.5" />
@@ -412,7 +416,7 @@ export function DashboardNavbar({ userEmail, userName, tier }: DashboardNavbarPr
               <button
                 type="button"
                 onClick={() => void handleSignOut()}
-                className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-neutral-500 hover:bg-red-50 hover:text-red-600"
+                className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-neutral-500 dark:text-neutral-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400"
               >
                 <LogOut className="h-4 w-4" />
                 Se déconnecter
