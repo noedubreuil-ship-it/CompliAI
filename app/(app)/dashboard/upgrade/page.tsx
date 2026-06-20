@@ -107,7 +107,7 @@ export default function UpgradePage() {
     <div className="max-w-3xl mx-auto space-y-8">
       <div className="text-center">
         <h1 className="text-2xl font-bold">Choisissez votre plan</h1>
-        <p className="text-muted-foreground mt-2">
+        <p className="text-neutral-600 mt-2">
           Conformité réglementaire AI Act & RGPD pour votre entreprise
         </p>
         {currentTier && (
@@ -149,15 +149,15 @@ export default function UpgradePage() {
             <CardHeader>
               <CardTitle className="text-xl">{plan.name}</CardTitle>
               <div className="mt-1">
-                <span className="text-3xl font-bold">{plan.price}€</span>
-                <span className="text-muted-foreground text-sm">/mois</span>
+                <span className="text-3xl font-bold text-neutral-900">{plan.price}€</span>
+                <span className="text-neutral-500 text-sm">/mois</span>
               </div>
-              <p className="text-sm text-muted-foreground">{plan.description}</p>
+              <p className="text-sm text-neutral-600">{plan.description}</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <ul className="space-y-2">
                 {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-2 text-sm">
+                  <li key={feature} className="flex items-start gap-2 text-sm text-neutral-800">
                     <Check className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
                     {feature}
                   </li>

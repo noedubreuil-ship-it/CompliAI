@@ -76,7 +76,7 @@ function NavDropdownPanel({
   footerLabel?: string;
 }) {
   return (
-    <ul className="w-[min(100vw-2rem,22rem)] p-2">
+    <ul className="w-[min(100vw-2rem,22rem)] p-2 bg-white rounded-lg">
       {items.map((item) => {
         const locked = item.requiresPro && !isPro;
         const active = isNavItemActive(pathname, item.href);
@@ -87,7 +87,7 @@ function NavDropdownPanel({
                 href={locked ? "/dashboard/upgrade" : item.href}
                 className={cn(
                   "flex select-none gap-3 rounded-lg p-2.5 leading-none no-underline outline-none transition-colors",
-                  active ? "bg-neutral-100 text-neutral-900" : "hover:bg-neutral-50",
+                  active ? "bg-neutral-100 text-neutral-900" : "text-neutral-800 hover:bg-neutral-50 hover:text-neutral-900",
                 )}
               >
                 <div
@@ -100,7 +100,7 @@ function NavDropdownPanel({
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{item.label}</span>
+                    <span className="text-sm font-semibold text-neutral-900">{item.label}</span>
                     {item.badge && (
                       <span className="rounded-full bg-neutral-200 px-1.5 py-0.5 text-[10px] font-semibold text-neutral-600">
                         {item.badge}
@@ -122,7 +122,7 @@ function NavDropdownPanel({
           <NavigationMenuLink asChild>
             <Link
               href={footerHref}
-              className="block rounded-lg px-3 py-2 text-xs font-medium text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900"
+              className="block rounded-lg px-3 py-2 text-xs font-medium text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
             >
               {footerLabel} →
             </Link>
@@ -337,7 +337,7 @@ export function DashboardNavbar({ userEmail, userName, tier }: DashboardNavbarPr
               </Accordion>
 
               <div className="mt-4 space-y-1 border-t border-neutral-100 px-1 pt-4">
-                <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-neutral-400">Compte</p>
+                <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-neutral-500">Compte</p>
 
                 <div
                   className={cn(
@@ -378,9 +378,9 @@ export function DashboardNavbar({ userEmail, userName, tier }: DashboardNavbarPr
                   <Link
                     key={href}
                     href={href}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50"
+                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50 hover:text-neutral-900"
                   >
-                    <Icon className="h-4 w-4 text-neutral-400" />
+                    <Icon className="h-4 w-4 text-neutral-500" />
                     {label}
                   </Link>
                 ))}
