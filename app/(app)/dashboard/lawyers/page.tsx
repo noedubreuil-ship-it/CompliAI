@@ -10,6 +10,7 @@ import {
   LAW_FIRMS, ALL_COUNTRIES, ALL_SPECIALIZATIONS,
   type LawFirm, type Country, type Specialization,
 } from "@/lib/data/law-firms";
+import { LawyerListingForm } from "./ListingForm";
 
 const TIER_CONFIG = {
   top: { label: "Top cabinet", color: "bg-blue-100 text-blue-700 border-blue-200", border: "border-blue-200" },
@@ -138,7 +139,10 @@ export default function LawyersPage() {
             Cabinets européens sélectionnés pour leur expertise en AI Act, RGPD et droit du numérique
           </p>
         </div>
-        <span className="text-sm text-muted-foreground">{filtered.length} cabinet{filtered.length > 1 ? "s" : ""}</span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-muted-foreground">{filtered.length} cabinet{filtered.length > 1 ? "s" : ""}</span>
+          <LawyerListingForm />
+        </div>
       </div>
 
       {/* AI recommendation banner */}

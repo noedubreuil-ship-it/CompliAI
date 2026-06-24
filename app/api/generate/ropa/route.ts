@@ -8,6 +8,7 @@ import {
   generateRopaDocument,
   normalizeRopaContentForClient,
 } from "@/lib/ai/generators";
+import { buildToolLanguageAddendum } from "@/lib/ai/query-translate";
 import { mergeDocumentTemplate } from "@/lib/document-templates";
 import { indexGeneratedDocumentEmbedding } from "@/lib/documents-semantic";
 
@@ -36,7 +37,9 @@ export async function POST(request: Request) {
       query: ragQuery,
       includeEuCaseLaw: true,
     });
-    const raw = await generateRopaDocument(prompt, auth.billing("ropa", "ropa"));
+    const inputText = [merged.company_name, merged.activities, merged.treatment_name].filter(Boolean).join(" ");
+    const langAddendum = buildToolLanguageAddendum(String(inputText));
+    const raw = await generateRopaDocument(prompt, auth.billing("ropa", "ropa"), langAddendum);
     const parsed = extractJson(raw) as Record<string, unknown>;
     const content = normalizeRopaContentForClient(parsed);
 

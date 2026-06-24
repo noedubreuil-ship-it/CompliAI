@@ -324,7 +324,7 @@ export function buildFRIAPrompt(data: Record<string, unknown>): string {
   return buildFRIA27UserPrompt(normalizeFRIAIntake(data));
 }
 
-export async function generateFRIA27Document(prompt: string, ctx?: BillingContext): Promise<{ raw: string; stop_reason: string | null }> {
+export async function generateFRIA27Document(prompt: string, ctx?: BillingContext, systemAddendum = ""): Promise<{ raw: string; stop_reason: string | null }> {
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const { model, max_tokens, temperature } = friaAnthropicParams();
   const message = await messagesCreateWithBilling(anthropic, {
@@ -332,7 +332,7 @@ export async function generateFRIA27Document(prompt: string, ctx?: BillingContex
     max_tokens,
     temperature,
     system:
-      `${getFRIA27SystemPrompt()}\n\nTu réponds STRICTEMENT avec un unique objet JSON valide selon schéma message utilisateur. N’ajoute aucun bloc markdown.`,
+      `${getFRIA27SystemPrompt()}\n\nTu réponds STRICTEMENT avec un unique objet JSON valide selon schéma message utilisateur. N’ajoute aucun bloc markdown.${systemAddendum}`,
     messages: [{ role: "user", content: prompt }],
   }, ctx);
   let combined = "";
@@ -442,14 +442,14 @@ Le titre JSON \`title\` doit suivre exactement la valeur d'exemple donnée (${ti
 Pour chaque \`content\`: **texte prêt diffusion** avec retours ligne et tableaux Markdown si utile. Respecter formulations **positives + négatives**, ton employé-accessible sans jargon inutile.`;
 }
 
-export async function generateEmployeePolicyDocument(prompt: string, ctx?: BillingContext): Promise<string> {
+export async function generateEmployeePolicyDocument(prompt: string, ctx?: BillingContext, systemAddendum = ""): Promise<string> {
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const { model, max_tokens, temperature } = employeePolicyAnthropicParams();
   const message = await messagesCreateWithBilling(anthropic, {
     model,
     max_tokens,
     temperature,
-    system: getEmployeePolicyIaSystemPrompt(),
+    system: getEmployeePolicyIaSystemPrompt() + systemAddendum,
     messages: [{ role: "user", content: prompt }],
   }, ctx);
   return message.content[0].type === "text" ? message.content[0].text : "";
@@ -891,7 +891,7 @@ export function buildRoPAPrompt(data: Record<string, unknown>): string {
   return buildRopaUserPrompt(normalizeRopaIntake(data));
 }
 
-export async function generateRopaDocument(prompt: string, ctx?: BillingContext): Promise<string> {
+export async function generateRopaDocument(prompt: string, ctx?: BillingContext, systemAddendum = ""): Promise<string> {
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const { model, max_tokens, temperature } = ropaAnthropicParams();
   const message = await messagesCreateWithBilling(anthropic, {
@@ -899,7 +899,7 @@ export async function generateRopaDocument(prompt: string, ctx?: BillingContext)
     max_tokens,
     temperature,
     system:
-      `${getRopaSystemPrompt()}\n\nTu réponds STRICTEMENT avec un **unique objet JSON** selon le schéma du message utilisateur. Aucun markdown.`,
+      `${getRopaSystemPrompt()}\n\nTu réponds STRICTEMENT avec un **unique objet JSON** selon le schéma du message utilisateur. Aucun markdown.${systemAddendum}`,
     messages: [{ role: "user", content: prompt }],
   }, ctx);
   let combined = "";
@@ -1361,28 +1361,28 @@ function checklistAnthropicParams(): { model: string; max_tokens: number; temper
   return { model: modelEnv || AI_CONFIG.model, max_tokens, temperature };
 }
 
-export async function generateComplianceChecklistDocument(prompt: string, ctx?: BillingContext): Promise<string> {
+export async function generateComplianceChecklistDocument(prompt: string, ctx?: BillingContext, systemAddendum = ""): Promise<string> {
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const { model, max_tokens, temperature } = checklistAnthropicParams();
   const message = await messagesCreateWithBilling(anthropic, {
     model,
     max_tokens,
     temperature,
-    system: getComplianceChecklistSystemPrompt(),
+    system: getComplianceChecklistSystemPrompt() + systemAddendum,
     messages: [{ role: "user", content: prompt }],
   }, ctx);
   return message.content[0].type === "text" ? message.content[0].text : "";
 }
 
 // ─── Jurisprudence Analyzer (EU) — export prompt builder + générateur dédié ─
-export async function generateJurisprudenceAnalysisDocument(prompt: string, ctx?: BillingContext): Promise<string> {
+export async function generateJurisprudenceAnalysisDocument(prompt: string, ctx?: BillingContext, systemAddendum = ""): Promise<string> {
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const { model, max_tokens, temperature } = jurisprudenceAnthropicParams();
   const message = await messagesCreateWithBilling(anthropic, {
     model,
     max_tokens,
     temperature,
-    system: getJurisprudenceAnalyzerSystemPrompt(),
+    system: getJurisprudenceAnalyzerSystemPrompt() + systemAddendum,
     messages: [{ role: "user", content: prompt }],
   }, ctx);
   return message.content[0].type === "text" ? message.content[0].text : "";
@@ -1459,14 +1459,14 @@ export {
  * Le MASTER_SYSTEM_PROMPT et la clôture obligatoire s'appliquent dans le
  * consultant chat et dans le rendu PDF côté front, pas au format brut.
  */
-export async function generateDocument(prompt: string, ctx?: BillingContext): Promise<string> {
+export async function generateDocument(prompt: string, ctx?: BillingContext, systemAddendum = ""): Promise<string> {
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const message = await messagesCreateWithBilling(anthropic, {
     model: AI_CONFIG.model,
     max_tokens: 8192,
     temperature: 0.1,
     system:
-      "Tu agis comme un juriste senior parisien spécialisé en droit européen du numérique (AI Act, RGPD, NIS2, DSA, DMA, CRA, Data Act, PLD révisée, STCE 225). Tu produis ici un document structuré au format JSON strict, sans aucune prose hors JSON. Tu ne fabriques ni numéro d'article, ni sanction, ni jurisprudence. Tu commences ta réponse par { et tu la termines par }.",
+      "Tu agis comme un juriste senior parisien spécialisé en droit européen du numérique (AI Act, RGPD, NIS2, DSA, DMA, CRA, Data Act, PLD révisée, STCE 225). Tu produis ici un document structuré au format JSON strict, sans aucune prose hors JSON. Tu ne fabriques ni numéro d'article, ni sanction, ni jurisprudence. Tu commences ta réponse par { et tu la termines par }." + systemAddendum,
     messages: [{ role: "user", content: prompt }],
   }, ctx);
   return message.content[0].type === "text" ? message.content[0].text : "";

@@ -68,9 +68,33 @@ export async function translateQueryForRag(question: string): Promise<{
 }
 
 /**
+ * Builds a language response instruction to append to a system prompt.
+ * Returns an empty string if the detected language is French (default).
+ */
+export function buildToolLanguageAddendum(inputText: string): string {
+  const lang = detectLanguage(inputText);
+  if (!lang || lang === "fr") return "";
+  const langNames: Record<string, string> = {
+    de: "allemand", nl: "néerlandais", es: "espagnol", it: "italien",
+    pl: "polonais", pt: "portugais", ro: "roumain", sv: "suédois",
+    da: "danois", fi: "finnois", cs: "tchèque", sk: "slovaque",
+    hu: "hongrois", el: "grec", bg: "bulgare", en: "anglais",
+  };
+  const langName = langNames[lang] ?? lang;
+  return (
+    `\n\n## Instruction langue\n` +
+    `L'utilisateur s'exprime en ${langName} (code : ${lang}). ` +
+    `Tu dois rédiger l'intégralité de ta réponse dans cette même langue. ` +
+    `Les références aux articles, règlements et textes de loi restent dans leur forme officielle européenne ` +
+    `mais peuvent être formulées dans la langue de l'utilisateur. ` +
+    `La rigueur juridique et les règles de production s'appliquent dans toutes les langues.\n`
+  );
+}
+
+/**
  * Détecte la langue d'une question par heuristique légère (pas de LLM).
  */
-function detectLanguage(text: string): string {
+export function detectLanguage(text: string): string {
   const t = text.toLowerCase();
 
   const markers: [string, RegExp][] = [

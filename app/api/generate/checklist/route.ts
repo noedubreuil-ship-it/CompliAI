@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { enrichPromptWithNationalRag } from "@/lib/ai/national-rag-for-tools";
 import { authenticateForGenerate } from "@/lib/ai/generate-route";
 import { buildChecklistPrompt, extractJson, generateComplianceChecklistDocument } from "@/lib/ai/generators";
+import { buildToolLanguageAddendum } from "@/lib/ai/query-translate";
 import { ComplianceChecklistSchema } from "@/lib/ai/schemas/compliance-checklist";
 import { aiUnavailable } from "@/lib/ai/http-errors";
 
@@ -24,7 +25,9 @@ export async function POST(request: Request) {
       query: ragQuery,
       includeEuCaseLaw: true,
     });
-    const raw = await generateComplianceChecklistDocument(prompt, auth.billing("checklist", "checklist"));
+    const inputText = [body.context, body.company_name, body.regulation].filter(Boolean).join(" ");
+    const langAddendum = buildToolLanguageAddendum(String(inputText));
+    const raw = await generateComplianceChecklistDocument(prompt, auth.billing("checklist", "checklist"), langAddendum);
     const content = extractJson(raw) as Record<string, unknown>;
 
     if (typeof content.checklist_id !== "string" || !content.checklist_id.trim()) {

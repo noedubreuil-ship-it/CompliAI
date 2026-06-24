@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { enrichPromptWithNationalRag } from "@/lib/ai/national-rag-for-tools";
 import { authenticateForGenerate } from "@/lib/ai/generate-route";
 import { buildFRIAPrompt, extractJson, generateFRIA27Document } from "@/lib/ai/generators";
+import { buildToolLanguageAddendum } from "@/lib/ai/query-translate";
 
 export const runtime = "nodejs";
 
@@ -24,7 +25,9 @@ export async function POST(request: Request) {
       query: ragQuery,
       includeEuCaseLaw: true,
     });
-    const modelOut = await generateFRIA27Document(prompt, auth.billing("fria", "doc_fria"));
+    const inputText = [b.entity_name, b.system_description, b.deployment_context].filter(Boolean).join(" ");
+    const langAddendum = buildToolLanguageAddendum(String(inputText));
+    const modelOut = await generateFRIA27Document(prompt, auth.billing("fria", "doc_fria"), langAddendum);
     stopReason = modelOut.stop_reason;
     const raw = modelOut.raw;
 

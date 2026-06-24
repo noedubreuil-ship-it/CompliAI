@@ -6,6 +6,7 @@ import {
 } from "@/lib/ai/national-rag-for-tools";
 import { authenticateForGenerate } from "@/lib/ai/generate-route";
 import { buildDPIAPrompt, generateDocument, extractJson } from "@/lib/ai/generators";
+import { buildToolLanguageAddendum } from "@/lib/ai/query-translate";
 
 export const runtime = "nodejs";
 
@@ -32,7 +33,9 @@ export async function POST(request: Request) {
     let prompt = buildDPIAPrompt(body);
     prompt = appendNationalRagToUserPrompt(prompt, rag.context);
 
-    const raw = await generateDocument(prompt, auth.billing("dpia", "dpia"));
+    const inputText = [body.treatment_name, body.purposes, body.context].filter(Boolean).join(" ");
+    const langAddendum = buildToolLanguageAddendum(String(inputText));
+    const raw = await generateDocument(prompt, auth.billing("dpia", "dpia"), langAddendum);
     const content = extractJson(raw);
 
     const { data: doc } = await supabase.from("generated_documents").insert({

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield, FileText, FolderSearch, MessageSquare, Users, Download, Bell } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { AuditTrailExportButton } from "./ExportButton";
 
 const ACTION_ICONS: Record<string, React.ElementType> = {
   audit_created: FolderSearch,
@@ -40,13 +41,16 @@ export default async function AuditTrailPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Shield className="h-6 w-6" /> Audit Trail
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Journal immuable de toutes les actions — Art. 12 AI Act. Exportable pour démontrer la bonne foi à l&apos;autorité compétente.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Shield className="h-6 w-6" /> Audit Trail
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Journal immuable de toutes les actions — Art. 12 AI Act. Exportable pour démontrer la bonne foi à l&apos;autorité compétente.
+          </p>
+        </div>
+        {trail && trail.length > 0 && <AuditTrailExportButton />}
       </div>
 
       <Card>

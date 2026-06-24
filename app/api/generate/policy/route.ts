@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { enrichPromptWithNationalRag } from "@/lib/ai/national-rag-for-tools";
 import { authenticateForGenerate } from "@/lib/ai/generate-route";
 import { buildEmployeePolicyPrompt, generateEmployeePolicyDocument, extractJson } from "@/lib/ai/generators";
+import { buildToolLanguageAddendum } from "@/lib/ai/query-translate";
 
 export const runtime = "nodejs";
 
@@ -21,7 +22,9 @@ export async function POST(request: Request) {
       query: ragQuery,
       includeEuCaseLaw: false,
     });
-    const raw = await generateEmployeePolicyDocument(prompt, auth.billing("policy", "doc_memoire"));
+    const inputText = [body.company_name, body.sector, body.ai_tools_used].filter(Boolean).join(" ");
+    const langAddendum = buildToolLanguageAddendum(String(inputText));
+    const raw = await generateEmployeePolicyDocument(prompt, auth.billing("policy", "doc_memoire"), langAddendum);
     const content = extractJson(raw);
 
     const { data: doc } = await supabase.from("generated_documents").insert({
