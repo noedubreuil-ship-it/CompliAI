@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Contexte projet pour Claude Code sur le repo CompliAI. Ce fichier sert de point d'entree pour les chantiers d'infrastructure, de diagnostic et de maintenance. Il ne remplace pas les runbooks RAG : il indique ou regarder et quelles regles respecter.
+Contexte projet pour Claude Code sur le repo CompliAI. Ce fichier sert de point d'entree pour les chantiers d'infrastructure, de diagnostic et de maintenance. Il doit rester factuel, sans secret, et a jour avec les runbooks operationnels.
 
 ## 1. Vue D'ensemble Du Projet
 
@@ -8,156 +8,258 @@ Contexte projet pour Claude Code sur le repo CompliAI. Ce fichier sert de point 
 - URL : https://www.compliai.eu
 - Objectif : SaaS B2B de conformite au droit europeen de l'IA et du numerique.
 - Cible : entreprises internationales, toutes nationalites, souhaitant deployer des produits IA ou numeriques en Union europeenne.
-- Tarif public : 49 EUR/mois.
-- Positionnement : outil operationnel de diagnostic, generation documentaire, RAG juridique et suivi de conformite pour les textes europeens et sources officielles.
+- Tarif : 49 EUR/mois.
+- Stade : produit en production avec 500+ utilisateurs actifs.
+- Positionnement : outil operationnel de diagnostic, generation documentaire, RAG juridique, suivi de conformite et veille officielle sur les textes europeens et sources nationales.
 
 ## 2. Pile Technique Exacte
 
 - Framework : Next.js `14.2.18`.
-- UI/runtime : React `18.3.1`, TypeScript `^5`, Tailwind CSS `^3.4.1`, Radix UI, Framer Motion.
-- Backend applicatif : Next.js App Router, routes API dans `app/api/**`.
+- Runtime UI : React `18.3.1`, React DOM `18.3.1`.
+- Langage : TypeScript `^5`, avec exigence de typage strict et absence de `any` non justifie.
+- Styling/UI : Tailwind CSS `^3.4.1`, Radix UI, Lucide React, Framer Motion, `class-variance-authority`, `tailwind-merge`.
+- Backend applicatif : Next.js App Router, API routes dans `app/api/**`.
 - Base de donnees : Supabase Postgres via `@supabase/supabase-js` `^2.45.4` et `@supabase/ssr` `^0.5.1`.
+- ORM : Drizzle ORM n'est pas present dans le `package.json` actuel. Les acces DB passent par le client Supabase et les migrations SQL dans `supabase/migrations/`.
 - Auth : Supabase Auth, profils applicatifs via table `profiles`.
-- ORM : Drizzle n'est pas utilise dans l'etat actuel du repo ; les migrations sont SQL Supabase et le code utilise le client Supabase.
-- Vector store : Supabase `pgvector`, embeddings dimension `1536`.
-- Index vectoriel : HNSW `m = 16`, `ef_construction = 64`.
-- Recherche RAG : hybride `pgvector` + `tsvector`/GIN, fonction `search_legal_chunks_hybrid`.
-- Modele de parsing ingestion RAG : `claude-sonnet-4-6`, temperature `0`, max tokens `8192`.
-- Modele d'embedding impose : OpenAI `text-embedding-3-small`, dimension `1536`.
 - Paiements : Stripe `^17.3.1`.
 - Email : Resend `^4.0.1`.
-- Cache : Upstash Redis via REST, utilise pour cache semantique et invalidation RAG. Si Upstash n'est pas configure, le cache se desactive proprement.
+- IA Anthropic : `@anthropic-ai/sdk` `^0.90.0`.
+- IA OpenAI : `openai` `^4.68.0`.
+- Parsing RAG juridique : Claude Sonnet 4.6 (`claude-sonnet-4-6`), temperature `0`, max tokens `8192`.
+- Chat juridique : pipeline Claude cote serveur ; verifier `lib/ai/config.ts` avant tout changement de modele.
+- Embeddings : OpenAI `text-embedding-3-small`, dimension `1536`, modele impose.
+- Vector store : Supabase `pgvector`.
+- Index vectoriel : HNSW avec `m = 16`, `ef_construction = 64`.
+- Recherche hybride : `pgvector` + `tsvector`/GIN, fonction `search_legal_chunks_hybrid`.
+- Cache semantique : Upstash Redis via REST, utilise pour le cache semantique et l'invalidation RAG. Si Upstash n'est pas configure, le cache se desactive proprement.
 - Monitoring applicatif : Sentry `^10.51.0`.
-- Hebergement cible : Vercel.
-- Crons cibles : GitHub Actions scheduled workflows. Les scripts cron existent, mais l'activation planifiee doit rester explicite et progressive.
+- Hebergement : Vercel.
+- Crons RAG cibles : GitHub Actions scheduled workflows.
 - Tests : Vitest `^3.0.5`.
+- Parsing XML/HTML monitoring : `fast-xml-parser` `^5.9.3`, `node-html-parser` `^8.0.3`.
 
-## 3. Documentation Du RAG
+## 3. Architecture Du Code
 
-Fichiers presents a la racine du repo :
+- `app/` : routes Next.js App Router, pages publiques, dashboard authentifie et routes API.
+- `app/api/**` : endpoints serveur. Les routes admin sont sous `app/api/admin/**` et doivent etre protegees par logique admin centralisee ou verifiee localement tant que la dette existe.
+- `app/(app)/dashboard/**` : interface authentifiee principale.
+- `app/(app)/dashboard/admin/rag-validation/**` : interface admin de validation des chunks RAG en staging.
+- `app/(public)/**` : routes publiques, pages partageables et pages marketing.
+- `components/` : composants React reutilisables.
+- `components/ui/` : primitives UI et composants de design system applicatif.
+- `lib/` : modules metier, clients externes, logique IA, RAG, credits, email, rate limit et utilitaires.
+- `lib/ai/**` : clients IA, configuration modele, prompts, schemas, RAG chat, cache semantique.
+- `lib/rag-monitoring/**` : connecteurs sources officielles, worker de monitoring et types associes.
+- `lib/rag-ingestion/**` : pipeline d'ingestion, parsers Claude, validateurs et prompts de parsing.
+- `lib/rag-production-indexer/**` : promotion des chunks valides vers `legal_chunks`, archivage et invalidation cache.
+- `lib/rag-quality/**` : golden set, couverture, derive historique, dead chunks.
+- `lib/types/**` : types applicatifs partages.
+- `scripts/` : scripts d'ingestion, diagnostics, cron, backfills, validation migrations et maintenance.
+- `supabase/migrations/` : migrations SQL versionnees sequentiellement.
+- `tests/fixtures/**` : fixtures locales reelles telechargees depuis les sources officielles.
+- `docs/` : documentation technique hors RAG.
+- `design-system/` : documentation de design system et pages de reference.
 
-- `RAG_AUTOMATION_RUNBOOK.md` : runbook operationnel complet du pipeline RAG automatique, activation, rollback, staging, politique d'erreur.
-- `RAG_AUTOMATION_FINAL_SUMMARY.md` : recapitulatif consolide des phases 0 a 6, scores, couts et statut final du chantier.
-- `RAG_INVENTORY.md` : inventaire du corpus RAG, sources, volumes et etat de couverture.
-- `RAG_PIPELINE_SCHEMA.md` : schema cible du pipeline RAG automatique et tables Supabase associees.
-- `MONITORING_SOURCES.md` : catalogue des sources officielles surveillees, throttling, filtres et diagnostics de bruit.
-- `RAG_PRODUCTION_INDEXER.md` : documentation de l'indexer de production, promotion de chunks et archivage.
-- `RAG_QUALITY_ASSURANCE.md` : mecanismes qualite RAG, golden set, derive historique, couverture et chunks morts.
-- `RAG_QUALITY_BASELINE_REPORT.md` : rapport de baseline qualite avec etat du golden set.
-- `RAG_FUTURE_IMPROVEMENTS.md` : dette technique et ameliorations futures, notamment types Supabase section K.
-- `RAG_COST_ESTIMATE.md` : estimation des couts initiaux et recurrents, ajustee apres activation reelle.
-- `RAG_ACTIVATION_REPORT_2026-06-26.md` : journal d'activation effective, staging, migration 042 et observations.
-- `RAG_RETRIEVAL_DIAGNOSTIC.md` : diagnostics de retrieval et analyses des regressions RAG.
+Conventions d'import :
 
-Fichiers demandes dans certains plans mais non presents actuellement a la racine :
+- Preferer les imports relatifs locaux deja utilises dans le module.
+- Ne pas introduire de nouvel alias sans verifier `tsconfig.json`.
+- Garder les modules metier confines a leur domaine (`lib/rag-*`, `lib/ai`, `lib/credits`, etc.).
 
-- `RAG_INGESTION.md` : le contenu ingestion est aujourd'hui documente dans le runbook, le schema pipeline et les tests/code `lib/rag-ingestion/**`.
-- `RAG_VALIDATION_DASHBOARD.md` : le dashboard de validation est documente dans le runbook et implemente dans `app/(app)/dashboard/admin/rag-validation/**`.
+Organisation UI :
 
-## 4. Conventions Du Projet
+- Composants React en PascalCase.
+- Fichiers et dossiers en kebab-case.
+- Composants generiques dans `components/ui/`.
+- Composants metier proches de leur route quand ils sont specifiques a une page.
 
-- Branches : utiliser des branches dediees par chantier. Le format observe pour les branches agent est `cursor/<description-kebab-case>`, par exemple `cursor/add-journal-calendar-sources-dpa-filters`.
-- Commits : style Conventional Commits observe (`feat: ...`, `docs: ...`, `fix: ...`). Les messages doivent etre courts, en francais ou anglais selon le contexte du chantier.
-- Commits en environnement sale : ne stage que les fichiers lies a la demande. Ne jamais embarquer des changements existants non lies.
-- Migrations Supabase : fichiers SQL numerotes dans `supabase/migrations/`. Toujours valider staging avant production. Ne jamais appliquer de DDL production sans sauvegarde et verification.
-- Tests : Vitest, tests colocaux avec suffixe `.test.ts`. Les fixtures externes doivent etre stockees dans `tests/fixtures/**`.
-- Sources officielles : en developpement, utiliser les fixtures locales. Les appels reseau reels sont reserves aux runs explicitement valides.
-- Parsing IA RAG : modele impose `claude-sonnet-4-6` uniquement. Ne jamais remplacer par GPT, Opus, Haiku ou autre sans validation explicite.
-- Embeddings : modele impose `text-embedding-3-small`, dimension `1536` uniquement. Toute migration vers un autre modele est un chantier separe.
-- Types Supabase : dette connue. Regenerer les types avant les gros chantiers DB et documenter les changements.
+## 4. Documentation Existante
 
-## 5. Regles Non Negotiables
+### Documentation RAG
 
-- Aucune modification directe de `legal_chunks` en production sans passer par le pipeline staging -> validation admin -> indexer.
-- Aucune ingestion automatique sans validation admin avant promotion en production.
+- `RAG_AUTOMATION_RUNBOOK.md` : runbook operationnel complet du pipeline RAG automatique ; consulter pour activation, rollback, staging, politique d'erreur.
+- `RAG_AUTOMATION_FINAL_SUMMARY.md` : recapitulatif consolide des phases 0 a 6 ; consulter pour statut final, scores et couts.
+- `RAG_INVENTORY.md` : inventaire du corpus RAG ; consulter pour volumes, regulations et couverture.
+- `RAG_PIPELINE_SCHEMA.md` : schema cible du pipeline RAG automatique ; consulter avant migrations ou changements DB.
+- `MONITORING_SOURCES.md` : catalogue des sources officielles, throttling, filtres et bruit observe ; consulter avant tout changement de monitoring.
+- `RAG_PRODUCTION_INDEXER.md` : documentation de l'indexer production ; consulter avant promotion, rollback ou archivage.
+- `RAG_QUALITY_ASSURANCE.md` : mecanismes de qualite RAG ; consulter avant golden set, coverage, drift ou dead chunks.
+- `RAG_QUALITY_BASELINE_REPORT.md` : baseline qualite du RAG ; consulter pour comparer regressions et score initial.
+- `RAG_FUTURE_IMPROVEMENTS.md` : dette technique et ameliorations ; consulter avant de traiter ou ajouter une dette.
+- `RAG_COST_ESTIMATE.md` : estimation de couts ; consulter avant activation ingestion ou changement de volume.
+- `RAG_ACTIVATION_REPORT_2026-06-26.md` : journal d'activation ; consulter avant toute reprise du deploiement effectif.
+- `RAG_RETRIEVAL_DIAGNOSTIC.md` : diagnostics retrieval ; consulter pour regressions de pertinence.
+- `RAG_INGESTION.md` : non present comme fichier autonome ; l'ingestion est documentee dans le runbook, `RAG_PIPELINE_SCHEMA.md` et `lib/rag-ingestion/**`.
+- `RAG_VALIDATION_DASHBOARD.md` : non present comme fichier autonome ; le dashboard est documente dans le runbook et implemente sous `app/(app)/dashboard/admin/rag-validation/**`.
+
+### Autres Documents Techniques Racine
+
+- `README.md` : presentation generale du projet ; consulter en premier pour onboarding rapide.
+- `AUDIT_PHASE_1_CARTOGRAPHIE.md` : audit cartographie ; consulter pour historique d'analyse fonctionnelle.
+- `AUDIT_PHASE_2_FONCTIONNALITES.md` : audit fonctionnalites ; consulter pour etat produit et modules.
+- `AUDIT_PHASE_3_QUALITE_JURIDIQUE.md` : audit qualite juridique ; consulter pour risques et ameliorations metier.
+- `V2_RESUME_EXECUTIF.md` : synthese executive V2 ; consulter pour contexte produit.
+- `V2_HYPOTHESES_AMELIORATION.md` : hypotheses d'amelioration V2 ; consulter avant refonte produit.
+- `V2_ROADMAP.md` : roadmap V2 ; consulter pour priorisation.
+
+### Documentation Dans `docs/`
+
+- `docs/ANNEXE_IV_DOCUMENTATION_TECHNIQUE.md` : documentation technique Annexe IV.
+- `docs/AI_KILLER_FEATURES.md` : idees de fonctionnalites IA avancees.
+- `docs/ROADMAP_INITIATIVES.md` : initiatives roadmap.
+
+### Documentation Design System
+
+- `design-system/compliai/MASTER.md` : reference principale du design system.
+- `design-system/compliai/pages/landing.md` : reference page landing.
+- `design-system/compliai/pages/dashboard.md` : reference page dashboard.
+
+### Prompts Markdown
+
+- `lib/ai/prompts/data/*.md` : prompts metier versionnes pour les outils IA.
+- `lib/rag-ingestion/prompts/*.md` : prompts de parsing Claude pour documents juridiques.
+
+## 5. Conventions Du Projet
+
+- Branches Git : utiliser des branches dediees au chantier. Formats recommandes : `feature/<sujet>`, `fix/<sujet>`, `chore/<sujet>`, `docs/<sujet>`. Les branches creees par Cursor peuvent utiliser `cursor/<description-kebab-case>`.
+- Commits : format `type: description` en francais ou anglais. Types usuels : `feat`, `fix`, `docs`, `test`, `refactor`, `chore`.
+- Identification agent : commits Cursor avec suffixe `[via cursor]`; commits Claude Code avec suffixe `[via claude-code]`.
+- Environnement sale : ne stage que les fichiers lies a la mission. Ne jamais embarquer des changements existants non lies.
+- Migrations Supabase : versionnees sequentiellement dans `supabase/migrations/`.
+- Rollback migrations : chaque migration nouvelle doit contenir un bloc `-- ==== ROLLBACK ====`, commente en fin de fichier.
+- Tests : Vitest.
+- Tests unitaires : colocaux avec le code, format `fichier.test.ts` a cote de `fichier.ts` quand possible.
+- Fixtures : `tests/fixtures/**`, avec donnees reelles telechargees depuis les sources officielles.
+- TypeScript : strict par discipline projet ; pas de `any` sans justification documentee.
+- Nommage : camelCase pour variables et fonctions.
+- Nommage React/types : PascalCase pour composants React et types/interfaces exportes.
+- Nommage fichiers/dossiers : kebab-case.
+- Parsing IA RAG : Claude Sonnet 4.6 exclusivement.
+- Embeddings RAG : OpenAI `text-embedding-3-small`, dimension `1536`, exclusivement.
+
+## 6. Regles Non Negotiables
+
+- Aucune modification directe de la table `legal_chunks` en production sans passer par le pipeline staging -> validation admin -> indexer.
+- Aucune ingestion sans validation admin via `/dashboard/admin/rag-validation`.
 - Aucun bypass du systeme qualite golden set.
-- Aucun appel API externe vers les sources officielles depuis l'environnement de developpement sans feu vert explicite ; fixtures locales uniquement.
-- Aucune migration appliquee en production sans validation prealable sur staging.
-- Toute dette technique identifiee doit etre documentee dans `RAG_FUTURE_IMPROVEMENTS.md`.
+- Aucun appel API externe vers les sources officielles depuis l'environnement de developpement ; utiliser les fixtures locales.
+- Aucune migration appliquee en production sans validation prealable sur le projet staging dedie `compliai-staging`.
+- Modele de parsing du corpus juridique : Claude Sonnet 4.6 exclusivement, jamais GPT-4 ou autre modele OpenAI sans validation explicite.
+- Modele d'embeddings : OpenAI `text-embedding-3-small` dimension `1536` exclusivement.
+- Migration vers Voyage-3-large possible uniquement comme chantier dedie avec migration vectorielle explicite.
+- Toute dette technique doit etre documentee dans `RAG_FUTURE_IMPROVEMENTS.md`.
+- Pas de modifications "tant qu'a faire" en parallele d'un chantier cible. Une mission = un perimetre.
 - Ne jamais committer de secrets. Les fichiers `.env*` locaux doivent rester ignores.
-- Ne jamais activer de cron planifie sans validation explicite du proprietaire du projet.
+- Ne jamais activer de cron planifie sans validation explicite.
 
-## 6. Commandes Utiles
+## 7. Commandes Utiles
 
-Scripts `package.json` :
+### Developpement Local
 
 ```bash
 npm run dev
 npm run build
 npm run start
 npm run lint
-npm run test
-npm run extract:prompts
-npm run qa:consultant
-npm run ingest
-npm run fetch:eurlex
-npm run ingest:case-law
-npm run ingest:supplementary-corpus
-npm run validate:migrations
-npm run backfill:national-corpus-eu27
-npm run reingest:national-fallbacks
-npm run corpus:refresh-all
-npm run video:upscale-hero
 ```
 
-Commandes RAG courantes :
+### Tests
 
 ```bash
+npm run test
+npx vitest
 npx vitest run lib/rag-monitoring/**/*.test.ts
 npx vitest run lib/rag-ingestion/**/*.test.ts
 npx vitest run lib/rag-production-indexer/**/*.test.ts
 npx vitest run lib/rag-quality/**/*.test.ts
+npm run qa:consultant
+```
+
+### Scripts RAG Et Maintenance
+
+```bash
+npm run validate:migrations
+npm run ingest
+npm run fetch:eurlex
+npm run ingest:case-law
+npm run ingest:supplementary-corpus
+npm run backfill:national-corpus-eu27
+npm run reingest:national-fallbacks
+npm run corpus:refresh-all
+npx tsx --env-file=.env.local scripts/cron-monitoring.ts
+npx tsx --env-file=.env.local scripts/cron-ingestion.ts
 npx tsx --env-file=.env.local scripts/generate-rag-baseline.ts
 npx tsx --env-file=.env.local scripts/diag-retrieval.ts
 npx tsx --env-file=.env.local scripts/diag-art99.ts
-npx tsx --env-file=.env.local scripts/cron-monitoring.ts
-npx tsx --env-file=.env.local scripts/cron-ingestion.ts
 npx tsx --env-file=.env.local scripts/rechunk-rgpd.ts
 npx tsx --env-file=.env.local scripts/add-rgpd-parent-chunks.ts
 ```
 
-Commandes staging RAG :
+### Staging RAG
 
 ```bash
 npx tsx --env-file=.env.staging scripts/cron-monitoring.ts
 ```
 
-Ne jamais afficher les variables d'environnement dans les logs.
+### Migrations Supabase
 
-## 7. Etat Actuel Du Chantier RAG Au 26 Juin 2026
+Supabase CLI n'est pas garantie disponible localement. Si elle est installee et configuree :
 
-- Phases 0 a 6 du chantier RAG automation terminees et validees.
-- Score golden set final connu : 12/16 OK, 0 WARNING, 4 CRITICAL.
-- Questions encore CRITICAL : Q02, Q04, Q05, Q15, liees au corpus AI Act non encore re-chunke en parent-child.
-- Couverture finale documentee : 54,8 % des articles critiques en top-3.
+```bash
+supabase --version
+supabase migration list
+supabase db push --linked
+supabase gen types typescript --project-id <project-ref> > lib/types/supabase.ts
+```
+
+Sinon, utiliser Supabase MCP pour `execute_sql`, `apply_migration`, `list_tables`, `get_logs`, `get_advisors`.
+
+### Deploiement
+
+```bash
+npm run build
+```
+
+Le deploiement applicatif cible est Vercel. Les crons RAG cibles sont des GitHub Actions scheduled workflows, pas des crons actives par defaut.
+
+## 8. Etat Actuel Du Projet Au 26 Juin 2026
+
+- Chantier RAG automation, phases 0 a 6, termine et valide.
 - Projet Supabase staging cree : `compliai-staging`, ref `gndvxidkiplskbrqydmw`.
 - Migrations RAG `032` a `042` appliquees sur staging.
 - Migration `042_rag_pipeline_monitoring_log` appliquee en production apres validation staging.
-- Production : `monitoring_log` existe, colonne `retry_count` presente, contrainte `monitoring_sources.source_type` alignee avec `curia_scraping`.
+- Production : `monitoring_log` existe, colonne `retry_count` presente, cache REST verifie.
 - Sauvegardes production pre-042 creees : `backup_monitoring_sources_20260626_pre_042` et `backup_legal_chunks_20260626_pre_042`.
 - Trois sources sures enregistrees en staging : EUR-Lex RSS, CNIL, AEPD.
-- Run staging `dryRun=false` valide sur ces 3 sources : exit code 0, 8 documents AEPD en `pending_documents`, aucune erreur silencieuse.
-- Cron monitoring planifie : non active.
-- Cron ingestion planifie : non active.
+- Run staging `dryRun=false` valide sur ces 3 sources : exit code 0, aucune erreur silencieuse, 8 documents AEPD en `pending_documents`.
+- Cron monitoring : pas encore active en planifie, ni staging ni production.
+- Cron ingestion : pas encore active en planifie, ni staging ni production.
 - Sources production : ne pas reactiver sans validation explicite.
-- EDPB throttle configure a 5000 ms, mais non teste dans le run des 3 sources sures.
+- Golden set : 12/16 OK, 4 CRITICAL.
+- Questions CRITICAL : Q02, Q04, Q05, Q15, liees au corpus AI Act non encore re-chunke en parent-child.
+- EDPB throttle configure a 5000 ms ; a tester dans une phase controlee dediee.
 
-## 8. Chantiers Prioritaires A Venir
+## 9. Chantiers Prioritaires A Venir
 
-- Finalisation de l'activation effective du RAG : validation utilisateur, activation progressive source par source en production, surveillance 24-48 h.
-- Test EDPB avec throttle 5000 ms dans une phase controlee.
-- Extension parent-child aux autres reglements : AI Act, DSA, DMA, CRA, Data Act.
-- Re-parsing parent-child complet du corpus AI Act pour resoudre Q02, Q04, Q05, Q15.
-- Regeneration des types Supabase, dette documentee dans `RAG_FUTURE_IMPROVEMENTS.md` section K.
-- Traduction anglaise de l'interface utilisateur pour la cible internationale.
-- Ajout d'autorites nationales candidates si l'usage le justifie : Pologne, Belgique.
-- Stabilisation des filtres de monitoring apres deux semaines de donnees reelles.
+1. Finalisation de l'activation effective du RAG : validation utilisateur, activation progressive source par source en production, surveillance 24-48 h.
+2. Regeneration des types Supabase, dette documentee dans `RAG_FUTURE_IMPROVEMENTS.md` section K.
+3. Extension de la strategie parent-child aux autres reglements : AI Act, DSA, DMA, CRA, Data Act.
+4. Re-parsing parent-child complet du corpus AI Act pour resoudre Q02, Q04, Q05, Q15.
+5. Traduction anglaise de l'interface utilisateur pour la cible internationale.
+6. Ajout d'autorites nationales candidates selon usage observe : Pologne, Belgique.
+7. Audit de securite : middleware admin centralise manquant, dette documentee dans `RAG_FUTURE_IMPROVEMENTS.md` section A.
+8. Migration potentielle vers Voyage-3-large pour les embeddings, a evaluer dans un chantier separe.
+9. Stabilisation des filtres de monitoring apres deux semaines de donnees reelles.
 
-## 9. Repartition Cursor / Claude Code
+## 10. Repartition Cursor / Claude Code
 
-- Cursor : developpement de fonctionnalites utilisateur, modifications visuelles, sessions interactives et arbitrages produit.
-- Claude Code : chantiers d'infrastructure repetitifs, diagnostics, operations de maintenance, batchs autonomes et verifications longues.
-- Regle d'or : ne jamais faire travailler Cursor et Claude Code en parallele sur les memes fichiers ou la meme fonctionnalite.
-- Branches Git distinctes obligatoires pour chaque agent et chaque chantier.
-- Avant tout travail, verifier `git status` et identifier les changements non lies.
+- Les deux outils sont complementaires, pas hierarchiques.
+- Cursor est privilegie pour le developpement de fonctionnalites utilisateur visibles, les modifications necessitant un rendu visuel, les sessions interactives et exploratoires, les ajustements UX et la redaction de contenu.
+- Claude Code est privilegie pour les chantiers d'infrastructure repetitifs ou suivant une procedure documentee, les diagnostics et investigations, les operations de maintenance, les batchs autonomes, les refactorisations a grande echelle, la generation de tests et l'analyse de logs.
+- Pour un meme chantier, les deux outils peuvent intervenir a des phases differentes : conception sur Cursor, industrialisation sur Claude Code, finition sur Cursor.
+- Regle d'or absolue : jamais les deux agents en parallele sur les memes fichiers ou la meme fonctionnalite.
+- Branches Git distinctes obligatoires si utilisation simultanee sur des chantiers separes.
+- Quand un agent reprend un chantier qu'un autre a commence, il doit d'abord consulter le dernier commit, la PR eventuelle et les fichiers modifies pour comprendre l'etat du travail.
+- Avant toute operation, verifier `git status` et identifier les changements non lies.
 - En fin de chantier, documenter toute anomalie ou dette dans le fichier de suivi approprie.
