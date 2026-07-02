@@ -20,7 +20,7 @@
  *
  * Usage :
  *   npx tsx --env-file=.env.staging scripts/rechunk-aiact.ts --dry-run   # staging, simulation
- *   npx tsx --env-file=.env.staging scripts/rechunk-aiact.ts              # staging, production
+ *   npx tsx --env-file=.env.local --env-file=.env.staging scripts/rechunk-aiact.ts   # staging DB + clés API prod
  *   npx tsx --env-file=.env.local   scripts/rechunk-aiact.ts --dry-run   # local, simulation
  *   npx tsx --env-file=.env.local   scripts/rechunk-aiact.ts              # production
  *   npx tsx --env-file=.env.local   scripts/rechunk-aiact.ts --resume    # reprendre après interruption
@@ -35,12 +35,9 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as crypto from "crypto";
-import * as dotenv from "dotenv";
 import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
 import { createClient } from "@supabase/supabase-js";
-
-dotenv.config({ path: path.join(process.cwd(), ".env.local") });
 
 // ─── Config ────────────────────────────────────────────────────────────────────
 
@@ -55,6 +52,10 @@ const EMBEDDING_BATCH_SIZE = 50;
 const CLAUDE_MAX_TOKENS = 16000;
 const THROTTLE_MS = 3000;  // entre appels Claude
 const CHECKPOINT_FILE = path.join(__dirname, "data/rechunk-aiact-checkpoint.json");
+const REPORT_FILE = path.join(process.cwd(), "RAG_AIACT_RECHUNK_STAGING_REPORT_2026-07-01.md");
+const ESTIMATED_COST_USD = 2.5; // ~113 articles × ~$0.02/article (ordre de grandeur pré-run)
+
+const CRITICAL_GOLDEN_IDS = ["Q02", "Q03", "Q04", "Q05", "Q15"] as const;
 
 const dryRun = process.argv.includes("--dry-run");
 const resumeMode = process.argv.includes("--resume");
@@ -188,9 +189,18 @@ function extractArticlesFromSource(text: string): AiActArticle[] {
     }
   }
 
+  // Stopper avant les annexes (sinon Art.113 capture tout le fichier)
+  let firstAnnexeLine = lines.length;
+  for (let i = 0; i < lines.length; i++) {
+    if (/^ANNEXE[\s]/.test(lines[i].trim()) || lines[i].trim() === "ANNEXE") {
+      firstAnnexeLine = i;
+      break;
+    }
+  }
+
   // Détecter les débuts d'articles (Article N ou Article premier)
   const articleStarts: { lineIdx: number; artRaw: string }[] = [];
-  for (let i = 0; i < lines.length; i++) {
+  for (let i = 0; i < firstAnnexeLine; i++) {
     const stripped = lines[i].trim();
     const mNbsp = stripped.match(/^Article[\s ](\d+)$/);
     const mPremier = stripped.match(/^Article[\s ]premier$/);
@@ -627,8 +637,15 @@ async function main() {
   console.log(`   Chunks article (parents) : ${parentRows.length}`);
 
   // 8. Génération embeddings
+  // text-embedding-3-small : limite 8192 tokens ≈ 32 000 chars.
+  // Les chunks parent (article entier) peuvent dépasser cette limite si l'article
+  // est suivi de contenu annexe dans le fichier source. On tronque à 24 000 chars
+  // pour l'embedding uniquement (le contenu complet reste en base).
+  // text-embedding-3-small max = 8192 tokens ≈ 2-3 chars/token pour le français.
+  // On tronque à 8000 chars (seuil safe absolu) uniquement pour l'embedding.
+  const MAX_EMBED_CHARS = 8_000;
   console.log("\n6. Génération des embeddings...");
-  const texts = allRows.map((r) => r.content);
+  const texts = allRows.map((r) => r.content.slice(0, MAX_EMBED_CHARS));
   const embeddings = await generateEmbeddings(openai, texts);
   const rowsWithEmb = allRows.map((r, i) => ({
     ...r,
@@ -685,6 +702,91 @@ async function main() {
   // Supprimer checkpoint si succès
   if (fs.existsSync(CHECKPOINT_FILE)) fs.unlinkSync(CHECKPOINT_FILE);
 
+  const costUsd =
+    (totalInputTokens / 1_000_000) * 3.0 + (totalOutputTokens / 1_000_000) * 15.0;
+
+  console.log("\n9. Golden set critique (Art. 5, 26, 50, 51, 53)...");
+  const { runQuestion } = await import("../lib/rag-quality/runner");
+  const { GOLDEN_SET } = await import("../lib/rag-quality/golden-set");
+  const goldenResults = [];
+  for (const qid of CRITICAL_GOLDEN_IDS) {
+    const q = GOLDEN_SET.find((item) => item.id === qid);
+    if (!q) continue;
+    const result = await runQuestion(q);
+    goldenResults.push(result);
+    const icon = result.status === "ok" ? "✓" : result.status === "warning" ? "⚠" : "✗";
+    console.log(`   ${icon} ${qid} — ${result.status.toUpperCase()} — articles: ${result.articles_cited.slice(0, 5).join(", ") || "(aucun)"}`);
+    if (result.anomalies.length > 0) {
+      for (const a of result.anomalies.slice(0, 2)) {
+        console.log(`      → ${a}`);
+      }
+    }
+  }
+
+  const goldenOk = goldenResults.filter((r) => r.status === "ok").length;
+  const anomalies: string[] = [];
+  if ((paraCount ?? 0) + (pointCount ?? 0) + (artCount ?? 0) < 300) {
+    anomalies.push(`Volume total faible : ${(paraCount ?? 0) + (pointCount ?? 0) + (artCount ?? 0)} chunks (attendu ~400-800)`);
+  }
+  for (const art of ["5", "26", "50", "51", "53"]) {
+    const { count } = await sb
+      .from("legal_chunks")
+      .select("*", { count: "exact", head: true })
+      .eq("regulation", REGULATION_NAME)
+      .eq("article_number", art);
+    if (!count || count < 2) {
+      anomalies.push(`Article ${art} : seulement ${count ?? 0} chunk(s) — parent-child probablement incomplet`);
+    }
+  }
+
+  const report = [
+    "# Rapport re-chunking AI Act — staging",
+    "",
+    `**Date** : ${new Date().toISOString()}`,
+    `**Environnement** : compliai-staging (via --env-file=.env.staging)`,
+    `**Modèle parsing** : ${CLAUDE_MODEL}`,
+    `**Statut production** : NON promu — en attente validation explicite`,
+    "",
+    "## Chunks générés",
+    "",
+    "| Granularité | Nombre |",
+    "|---|---:|",
+    `| paragraph | ${paraCount ?? 0} |`,
+    `| point | ${pointCount ?? 0} |`,
+    `| article (parents) | ${artCount ?? 0} |`,
+    `| **Total** | **${(paraCount ?? 0) + (pointCount ?? 0) + (artCount ?? 0)}** |`,
+    "",
+    "## Coût API",
+    "",
+    `| Métrique | Valeur |`,
+    `|---|---:|`,
+    `| Tokens input | ${totalInputTokens.toLocaleString()} |`,
+    `| Tokens output | ${totalOutputTokens.toLocaleString()} |`,
+    `| Coût estimé pré-run | ~$${ESTIMATED_COST_USD.toFixed(2)} USD |`,
+    `| **Coût réel mesuré** | **$${costUsd.toFixed(2)} USD** |`,
+    "",
+    "## Golden set — articles critiques (Art. 5, 26, 50, 51, 53)",
+    "",
+    `Score : **${goldenOk}/${goldenResults.length} OK**`,
+    "",
+    "| Question | Thème | Statut | Articles retrouvés |",
+    "|---|---|---|---|",
+    ...goldenResults.map((r) => {
+      const q = GOLDEN_SET.find((item) => item.id === r.question_id);
+      return `| ${r.question_id} | ${q?.theme ?? "?"} | ${r.status.toUpperCase()} | ${r.articles_cited.slice(0, 6).join(", ") || "—"} |`;
+    }),
+    "",
+    "## Anomalies",
+    "",
+    ...(anomalies.length > 0 ? anomalies.map((a) => `- ${a}`) : ["- Aucune anomalie bloquante détectée"]),
+    "",
+    "## Prochaine étape",
+    "",
+    "Validation explicite requise avant promotion production.",
+  ].join("\n");
+
+  fs.writeFileSync(REPORT_FILE, report, "utf8");
+
   console.log("\n" + "=".repeat(70));
   console.log("  RE-CHUNKING AI ACT TERMINÉ");
   console.log("=".repeat(70));
@@ -693,8 +795,13 @@ async function main() {
   console.log(`Chunks article   : ${artCount ?? 0}`);
   console.log(`Total AI Act     : ${(paraCount ?? 0) + (pointCount ?? 0) + (artCount ?? 0)}`);
   console.log(`\nTokens consommés : ${totalInputTokens.toLocaleString()} input + ${totalOutputTokens.toLocaleString()} output`);
-  console.log(`Coût API estimé  : ~$${((totalInputTokens / 1_000_000) * 3.0 + (totalOutputTokens / 1_000_000) * 15.0).toFixed(2)} USD`);
-  console.log("\nProchaine étape : npx tsx --env-file=.env.local scripts/generate-rag-baseline.ts");
+  console.log(`Coût API réel    : $${costUsd.toFixed(2)} USD (estimé ~$${ESTIMATED_COST_USD.toFixed(2)})`);
+  console.log(`Golden set       : ${goldenOk}/${goldenResults.length} OK`);
+  console.log(`Rapport écrit    : ${REPORT_FILE}`);
+  if (anomalies.length > 0) {
+    console.log("\nAnomalies :");
+    for (const a of anomalies) console.log(`  ⚠ ${a}`);
+  }
 }
 
 main().catch((err) => {
