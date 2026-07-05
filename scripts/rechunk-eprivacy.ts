@@ -380,8 +380,8 @@ async function main() {
       id,
       document_id: documentId,
       regulation: REGULATION_NAME,
-      article_number: null,
-      paragraph_number: null,
+      article_number: `considérant ${c.number}`,
+      paragraph_number: c.number,
       point_letter: null,
       article_title: null,
       chapter: null,
@@ -453,12 +453,16 @@ async function main() {
 
     for (const child of children) {
       const childId = crypto.randomUUID();
+      // Normaliser : paragraph sans numéro → "1" pour éviter la collision d'identité avec le chunk article parent
+      const paragraphNumber = child.granularity === "paragraph" && !child.paragraph_number
+        ? "1"
+        : child.paragraph_number;
       stagingChunks.push({
         id: childId,
         document_id: documentId,
         regulation: REGULATION_NAME,
         article_number: article.article_number,
-        paragraph_number: child.paragraph_number,
+        paragraph_number: paragraphNumber,
         point_letter: child.point_letter,
         article_title: article.article_title,
         chapter: null,
@@ -472,7 +476,7 @@ async function main() {
         source_url: EURLEX_URL,
         eurlex_url: EURLEX_URL,
         publication_date: VERSION_DATE,
-        chunk_hash: chunkHash(`${REGULATION_NAME}|${child.granularity}|${article.article_number}|${child.paragraph_number ?? ""}|${child.point_letter ?? ""}|${LANGUAGE}|${child.content}`),
+        chunk_hash: chunkHash(`${REGULATION_NAME}|${child.granularity}|${article.article_number}|${paragraphNumber ?? ""}|${child.point_letter ?? ""}|${LANGUAGE}|${child.content}`),
         parsed_at: now,
         validation_status: "pending",
       });
