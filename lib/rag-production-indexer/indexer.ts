@@ -157,7 +157,7 @@ export async function upsertChunk({
           granularity: stagingChunk.granularity ?? "paragraph",
           parent_chunk_id: stagingChunk.parent_chunk_id ?? null,
           eurlex_url: stagingChunk.eurlex_url,
-          publication_date: stagingChunk.publication_date,
+          version_date: stagingChunk.publication_date,
           text_type: stagingChunk.text_type,
           country: stagingChunk.country,
           pending_document_id: documentId,
