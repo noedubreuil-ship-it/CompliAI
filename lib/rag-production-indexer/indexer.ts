@@ -155,7 +155,7 @@ export async function upsertChunk({
           paragraph_number: stagingChunk.paragraph_number,
           point_letter: stagingChunk.point_letter,
           granularity: stagingChunk.granularity ?? "paragraph",
-          parent_chunk_id: stagingChunk.parent_chunk_id ?? null,
+          parent_chunk_id: null, // résolution hiérarchie legal_chunks dans chantier dédié
           eurlex_url: stagingChunk.eurlex_url,
           publication_date: stagingChunk.publication_date,
           text_type: stagingChunk.text_type,
@@ -194,7 +194,7 @@ export async function upsertChunk({
         article_title: stagingChunk.article_title,
         chapter: stagingChunk.chapter,
         granularity: stagingChunk.granularity ?? "paragraph",
-        parent_chunk_id: stagingChunk.parent_chunk_id ?? null,
+        parent_chunk_id: null, // résolution hiérarchie legal_chunks dans chantier dédié
         content: stagingChunk.content,
         embedding,
         eurlex_url: stagingChunk.eurlex_url,
