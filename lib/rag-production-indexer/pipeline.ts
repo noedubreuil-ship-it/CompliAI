@@ -115,9 +115,17 @@ export async function indexDocument(
   let skipped = 0;
   let errors = 0;
 
-  // Traiter les chunks par batch pour les embeddings
-  for (let i = 0; i < chunks.length; i += embeddingBatchSize) {
-    const batch = chunks.slice(i, i + embeddingBatchSize);
+  // ── Two-pass : articles en premier pour résoudre parent_chunk_id ────────────
+  // Pass 1 : granularity='article' (parents), Pass 2 : tous les autres (enfants)
+  const articleChunks = chunks.filter((c) => c.granularity === "article");
+  const childChunks = chunks.filter((c) => c.granularity !== "article");
+  const orderedChunks = [...articleChunks, ...childChunks];
+
+  // Map staging_chunk_id → legal_chunk_id (alimentée en pass 1, utilisée en pass 2)
+  const stagingToLegal = new Map<string, string>();
+
+  for (let i = 0; i < orderedChunks.length; i += embeddingBatchSize) {
+    const batch = orderedChunks.slice(i, i + embeddingBatchSize);
 
     // Générer les embeddings pour tout le batch en une seule requête OpenAI
     let embeddings: number[][];
@@ -143,9 +151,14 @@ export async function indexDocument(
       const chunk = batch[j];
       const embedding = embeddings[j];
 
+      // Résoudre parent_chunk_id : remplacer le staging UUID par le legal UUID
+      const resolvedParentId = chunk.parent_chunk_id
+        ? (stagingToLegal.get(chunk.parent_chunk_id) ?? null)
+        : null;
+
       const outcome = await upsertChunk({
         supabase,
-        stagingChunk: chunk,
+        stagingChunk: { ...chunk, parent_chunk_id: resolvedParentId },
         embedding,
         documentId,
         dryRun,
@@ -153,13 +166,20 @@ export async function indexDocument(
 
       details.push(outcome);
 
+      // Alimenter la map pour les enfants du prochain pass
+      if (outcome.status === "inserted" || outcome.status === "updated") {
+        if (outcome.legalChunkId) {
+          stagingToLegal.set(chunk.id, outcome.legalChunkId);
+        }
+      }
+
       if (outcome.status === "inserted") inserted++;
       else if (outcome.status === "updated") updated++;
       else if (outcome.status === "skipped") skipped++;
       else if (outcome.status === "error") errors++;
     }
 
-    if (throttleMs > 0 && i + embeddingBatchSize < chunks.length) {
+    if (throttleMs > 0 && i + embeddingBatchSize < orderedChunks.length) {
       await sleep(throttleMs);
     }
   }

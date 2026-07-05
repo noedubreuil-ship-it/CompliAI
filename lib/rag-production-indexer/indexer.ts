@@ -155,7 +155,7 @@ export async function upsertChunk({
           paragraph_number: stagingChunk.paragraph_number,
           point_letter: stagingChunk.point_letter,
           granularity: stagingChunk.granularity ?? "paragraph",
-          parent_chunk_id: null, // résolution hiérarchie legal_chunks dans chantier dédié
+          parent_chunk_id: stagingChunk.parent_chunk_id ?? null,
           eurlex_url: stagingChunk.eurlex_url,
           publication_date: stagingChunk.publication_date,
           text_type: stagingChunk.text_type,
@@ -176,6 +176,8 @@ export async function upsertChunk({
         embeddingDim: embedding.length,
         previousHash: sameArticle.chunk_hash ?? "",
         archivedId: archiveResult.archivedId,
+        legalChunkId: sameArticle.id,
+        stagingChunkId: stagingChunk.id,
       };
     }
 
@@ -184,7 +186,7 @@ export async function upsertChunk({
       return { status: "inserted", chunkHash: hash, embeddingDim: embedding.length };
     }
 
-    const { error: insertError } = await supabase
+    const { data: insertedRow, error: insertError } = await supabase
       .from("legal_chunks")
       .insert({
         regulation: stagingChunk.regulation,
@@ -194,7 +196,7 @@ export async function upsertChunk({
         article_title: stagingChunk.article_title,
         chapter: stagingChunk.chapter,
         granularity: stagingChunk.granularity ?? "paragraph",
-        parent_chunk_id: null, // résolution hiérarchie legal_chunks dans chantier dédié
+        parent_chunk_id: stagingChunk.parent_chunk_id ?? null,
         content: stagingChunk.content,
         embedding,
         eurlex_url: stagingChunk.eurlex_url,
@@ -207,7 +209,9 @@ export async function upsertChunk({
         source_method: "automated_pipeline",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      });
+      })
+      .select("id")
+      .single();
 
     if (insertError) {
       // Gérer la race condition sur chunk_hash UNIQUE
@@ -217,7 +221,13 @@ export async function upsertChunk({
       throw new Error(`insert failed: ${insertError.message}`);
     }
 
-    return { status: "inserted", chunkHash: hash, embeddingDim: embedding.length };
+    return {
+      status: "inserted",
+      chunkHash: hash,
+      embeddingDim: embedding.length,
+      legalChunkId: (insertedRow as { id: string } | null)?.id,
+      stagingChunkId: stagingChunk.id,
+    };
 
   } catch (e) {
     return {

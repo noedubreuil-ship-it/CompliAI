@@ -61,8 +61,8 @@ export interface LegalChunkRow {
 
 export type ChunkOutcome =
   | { status: "skipped";  chunkHash: string; reason: "identical_hash" }
-  | { status: "inserted"; chunkHash: string; embeddingDim: number }
-  | { status: "updated";  chunkHash: string; embeddingDim: number; previousHash: string; archivedId: string }
+  | { status: "inserted"; chunkHash: string; embeddingDim: number; legalChunkId?: string; stagingChunkId?: string }
+  | { status: "updated";  chunkHash: string; embeddingDim: number; previousHash: string; archivedId: string; legalChunkId?: string; stagingChunkId?: string }
   | { status: "error";    chunkHash: string; error: string };
 
 // ─── Résultat global du pipeline d'indexation ─────────────────────────────────
