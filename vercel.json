@@ -18,7 +18,7 @@
     },
     {
       "path": "/api/cron/national-corpus-agents",
-      "schedule": "0 * * * *"
+      "schedule": "0 4 * * *"
     },
     {
       "path": "/api/cron/case-law-seeds",
