@@ -354,7 +354,7 @@ async function main() {
         language: LANGUAGE,
         country: COUNTRY,
         source_url: EURLEX_URL,
-        status: "pending",
+        status: "staged",
         detected_at: now,
         updated_at: now,
       })
