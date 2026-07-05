@@ -422,12 +422,23 @@ async function backupExistingChunks(sb: ReturnType<typeof getSb>): Promise<numbe
   console.log(`  Archivage de ${existingChunks.length} chunks dans historical_chunks...`);
 
   // Insérer dans historical_chunks avec reason
-  const archiveRows = existingChunks.map((c) => ({
-    ...c,
-    id: undefined,
-    original_id: c.id,
+  // Note : historical_chunks a ses propres colonnes — ne pas spreader toutes les colonnes de legal_chunks
+  // pour éviter les erreurs de colonne inconnue (ex: tsvector, séquences internes).
+  // Utiliser une sélection explicite.
+  const archiveRows = existingChunks.map((c: Record<string, unknown>) => ({
+    original_chunk_id: c.id as string,
+    regulation: c.regulation as string,
+    article_number: c.article_number as string | null,
+    article_title: c.article_title as string | null,
+    granularity: c.granularity as string | null,
+    parent_chunk_id: c.parent_chunk_id as string | null,
+    content: c.content as string,
+    embedding: c.embedding,
+    chunk_hash: c.chunk_hash as string | null,
+    version_date: (c.updated_at as string | null)?.slice(0, 10) ?? null,
     archived_at: new Date().toISOString(),
-    archive_reason: "rechunk-aiact-parent-child-2026-07",
+    archive_reason: "rechunking_parent_child",
+    superseded_by: null,
   }));
 
   const BATCH = 50;
@@ -664,20 +675,22 @@ async function main() {
     process.stdout.write(`  Batch ${Math.floor(i / BATCH) + 1}/${Math.ceil(rowsWithEmb.length / BATCH)} ✓\n`);
   }
 
-  // 10. Invalidation cache Upstash
-  const upstashUrl = process.env.UPSTASH_REDIS_REST_URL;
-  const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (upstashUrl && upstashToken) {
-    console.log("\n8. Invalidation cache sémantique Upstash...");
-    try {
-      const resp = await fetch(`${upstashUrl}/flushall`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${upstashToken}` },
-      });
-      console.log(`   Cache invalidé (HTTP ${resp.status})`);
-    } catch (e) {
-      console.warn(`   ⚠️  Invalidation cache échouée : ${(e as Error).message}`);
+  // 10. Invalidation cache Upstash — cosine 0.85 (ciblée sur les chunks modifiés)
+  // Voir RAG_CACHE_INVALIDATION_FIX_2026-07-03.md pour le détail du correctif
+  console.log("\n8. Invalidation cache sémantique Upstash (cosine 0.85)...");
+  try {
+    const { invalidateSemanticCache } = await import("../lib/rag-production-indexer/cache-invalidator");
+    const embeddings = rowsWithEmb
+      .filter((r) => r.embedding && (r.embedding as number[]).length > 0)
+      .map((r) => r.embedding as number[]);
+    const cacheResult = await invalidateSemanticCache(embeddings, 0.85);
+    if (cacheResult.cacheUnavailable) {
+      console.log("   Cache Upstash non configuré — ignoré");
+    } else {
+      console.log(`   Scannées : ${cacheResult.scanned} entrées | Invalidées : ${cacheResult.invalidated}`);
     }
+  } catch (e) {
+    console.warn(`   ⚠️  Invalidation cache échouée : ${(e as Error).message}`);
   }
 
   // 11. Vérification finale
