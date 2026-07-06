@@ -121,6 +121,16 @@ const REGULATIONS: RegConfig[] = [
     text_type: "directive_ue",
     document_type: "eu_directive",
   },
+  {
+    key: "DORA",
+    file: "DORA_FR.txt",
+    name: "Règlement DORA (UE 2022/2554) — Résilience opérationnelle numérique du secteur financier",
+    celex: "32022R2554",
+    eurlex_url: "https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX:32022R2554",
+    version_date: "2022-12-27",
+    text_type: "reglement_ue",
+    document_type: "eu_regulation",
+  },
 ];
 
 const CLAUDE_MODEL = "claude-sonnet-4-6";
@@ -538,7 +548,7 @@ function getAnthropic() {
 
 void (async () => {
   if (!regKey) {
-    console.error("Usage: --reg=DSA|DMA|CRA|DATA_ACT|DGA|DSM|MACHINE|NIS2|all");
+    console.error("Usage: --reg=DSA|DMA|CRA|DATA_ACT|DGA|DSM|MACHINE|NIS2|DORA|all");
     process.exit(1);
   }
 
