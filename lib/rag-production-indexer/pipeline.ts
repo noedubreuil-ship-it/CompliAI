@@ -130,7 +130,8 @@ export async function indexDocument(
     // Générer les embeddings pour tout le batch en une seule requête OpenAI
     let embeddings: number[][];
     try {
-      embeddings = await embedBatch(batch.map((c) => c.content));
+      // Tronquer à 24 000 chars (≈6 000 tokens à 4 c/token) pour rester sous la limite 8 192 tokens OpenAI
+      embeddings = await embedBatch(batch.map((c) => (c.content ?? "").substring(0, 24000)));
     } catch (e) {
       // Si le batch échoue → on marque tous les chunks du batch en erreur
       for (const chunk of batch) {
