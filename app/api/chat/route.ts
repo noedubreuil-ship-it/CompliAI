@@ -144,6 +144,46 @@ export async function POST(request: Request) {
   let rawChunks = await searchLegalChunks(ragQuery, ragMatchCount, ragThreshold);
   mark("rag_base");
 
+  // Second pass : récupération directe des articles explicitement mentionnés dans la question.
+  // La recherche cosine peut rater des articles moins courants sémantiquement (ex: Art.47-48 RGPD).
+  // On extrait les plages d'articles (ex: "44 à 49") et on les injecte directement depuis legal_chunks.
+  if (asksMultiArticle) {
+    const rangeMatch = question.match(/articles?\s+(\d+)\s*(?:à|au|to|through)\s*(\d+)/i) ||
+                       question.match(/art\.\s*(\d+)\s*(?:à|et|to)\s*(\d+)/i);
+    if (rangeMatch) {
+      const from = parseInt(rangeMatch[1]);
+      const to = parseInt(rangeMatch[2]);
+      if (to - from <= 20) {
+        const articleNumbers = Array.from({ length: to - from + 1 }, (_, i) => String(from + i));
+        const { data: directChunks } = await supabase
+          .from("legal_chunks")
+          .select("id, regulation, article_number, article_title, content, eurlex_url, granularity")
+          .in("article_number", articleNumbers)
+          .in("granularity", ["article", "paragraph"])
+          .order("article_number");
+        if (directChunks && directChunks.length > 0) {
+          const seen = new Set(rawChunks.map((c) => c.id));
+          for (const dc of directChunks) {
+            if (!seen.has(dc.id)) {
+              rawChunks.push({
+                id: dc.id,
+                regulation: dc.regulation,
+                article_number: dc.article_number,
+                article_title: dc.article_title,
+                content: dc.content,
+                source_url: dc.eurlex_url,
+                similarity: 0.5,
+                granularity: dc.granularity,
+              } as unknown as (typeof rawChunks)[number]);
+              seen.add(dc.id);
+            }
+          }
+        }
+      }
+    }
+  }
+  mark("rag_direct_articles");
+
   if (asksLegalDeadline(question) || asksLegalDeadline(ragQuery)) {
     const deadlineChunks = await searchLegalChunks(AI_ACT_ART113_RAG_QUERY, 4, 0.52);
     const seen = new Set(rawChunks.map((c) => c.id));
