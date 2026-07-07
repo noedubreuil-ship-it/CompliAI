@@ -169,13 +169,13 @@ export async function POST(request: Request) {
     question
   );
 
-  let jpMatchEu = jurisprudenceHeavy ? 8 : 6;
-  let jpMatchNational = jurisprudenceHeavy ? 8 : 5;
-  const jpThresholdEu = jurisprudenceHeavy ? 0.46 : 0.49;
-  const jpThresholdNational = jurisprudenceHeavy ? 0.46 : 0.49;
+  let jpMatchEu = jurisprudenceHeavy ? 15 : asksMultiArticle ? 12 : 10;
+  let jpMatchNational = jurisprudenceHeavy ? 12 : asksMultiArticle ? 10 : 8;
+  const jpThresholdEu = jurisprudenceHeavy ? 0.40 : 0.46;
+  const jpThresholdNational = jurisprudenceHeavy ? 0.40 : 0.46;
   if (nationalRagCountries.length >= 23) {
-    jpMatchEu = Math.min(14, jpMatchEu + 3);
-    jpMatchNational = Math.min(14, jpMatchNational + 3);
+    jpMatchEu = Math.min(20, jpMatchEu + 3);
+    jpMatchNational = Math.min(20, jpMatchNational + 3);
   }
 
   /**
@@ -195,15 +195,15 @@ export async function POST(request: Request) {
   }
 
   const statuteMatchCount =
-    nationalRagCountries.length >= 23 ? 14
-    : nationalRagCountries.length >= 10 ? 10
-    : nationalRagCountries.length >= 1 ? 6
+    nationalRagCountries.length >= 23 ? (asksMultiArticle ? 20 : 16)
+    : nationalRagCountries.length >= 10 ? (asksMultiArticle ? 15 : 12)
+    : nationalRagCountries.length >= 1 ? (asksMultiArticle ? 10 : 8)
     : 0;
 
   const statuteThreshold =
-    nationalRagCountries.length >= 23 ? 0.5
-    : nationalRagCountries.length <= 3 ? 0.48
-    : 0.52;
+    nationalRagCountries.length >= 23 ? 0.45
+    : nationalRagCountries.length <= 3 ? 0.43
+    : 0.47;
 
   const recruitmentBoost = detectRecruitmentAiActQuestion(question);
   const dpoTransferBoost = detectDpoTransferQuestion(question);
@@ -247,12 +247,12 @@ export async function POST(request: Request) {
         })
       : Promise.resolve(),
     wantIntlRag
-      ? searchIntlStandardsTexts(question, 4, 0.52).then((r) => {
+      ? searchIntlStandardsTexts(question, asksMultiArticle ? 10 : 6, 0.46).then((r) => {
           intlStandardsChunksRaw = r;
         })
       : Promise.resolve(),
     wantUkRag
-      ? searchUkRegulatorTexts(question, 4, 0.52).then((r) => {
+      ? searchUkRegulatorTexts(question, asksMultiArticle ? 10 : 6, 0.46).then((r) => {
           ukRegulatorChunksRaw = r;
         })
       : Promise.resolve(),
