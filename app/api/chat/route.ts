@@ -139,8 +139,8 @@ export async function POST(request: Request) {
   const asksMultiArticle =
     /chapitre\s+[IVX\d]+|articles?\s+\d+\s*(à|au|et)\s*\d+|art\.\s*\d+\s*(à|et)\s*\d+/i.test(question) ||
     /chapter\s+[IVX\d]+|articles?\s+\d+\s*(to|and|through)\s*\d+/i.test(question);
-  const ragMatchCount = asksMultiArticle ? 20 : nationalRagCountries.length > 0 ? 5 : 8;
-  const ragThreshold = asksMultiArticle ? 0.3 : 0.6;
+  const ragMatchCount = asksMultiArticle ? 15 : nationalRagCountries.length > 0 ? 5 : 8;
+  const ragThreshold = 0.55;
   let rawChunks = await searchLegalChunks(ragQuery, ragMatchCount, ragThreshold);
   mark("rag_base");
 
