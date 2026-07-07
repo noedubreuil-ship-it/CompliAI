@@ -155,12 +155,32 @@ export async function POST(request: Request) {
       const to = parseInt(rangeMatch[2]);
       if (to - from <= 20) {
         const articleNumbers = Array.from({ length: to - from + 1 }, (_, i) => String(from + i));
-        const { data: directChunks } = await supabase
+        // Détecte le règlement mentionné pour filtrer précisément
+        const regulationKeywords: Array<[RegExp, string]> = [
+          [/\bRGPD\b|GDPR|2016\/679/i, "RGPD"],
+          [/\bAI Act\b|2024\/1689/i, "AI Act"],
+          [/\bDSA\b|2022\/2065/i, "DSA"],
+          [/\bDMA\b|2022\/1925/i, "DMA"],
+          [/\bCRA\b|cyber.r[eé]silience/i, "CRA"],
+          [/\beIDAS\b/i, "eIDAS"],
+          [/\bePrivacy\b/i, "ePrivacy"],
+          [/\bData Act\b|2023\/2854/i, "Data Act"],
+          [/\bNIS\s*2\b/i, "NIS2"],
+          [/\bDORA\b/i, "DORA"],
+        ];
+        let regulationFilter: string | null = null;
+        for (const [re, name] of regulationKeywords) {
+          if (re.test(question)) { regulationFilter = name; break; }
+        }
+        let directQuery = supabase
           .from("legal_chunks")
           .select("id, regulation, article_number, article_title, content, eurlex_url, granularity")
           .in("article_number", articleNumbers)
-          .in("granularity", ["article", "paragraph"])
-          .order("article_number");
+          .in("granularity", ["article", "paragraph"]);
+        if (regulationFilter) {
+          directQuery = directQuery.ilike("regulation", `%${regulationFilter}%`);
+        }
+        const { data: directChunks } = await directQuery.order("article_number");
         if (directChunks && directChunks.length > 0) {
           const seen = new Set(rawChunks.map((c) => c.id));
           for (const dc of directChunks) {
