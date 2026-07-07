@@ -38,7 +38,7 @@ function normalizeReg(s: string): string {
  */
 function chunkMatchesRef(
   chunk: ChunkResult,
-  ref: RequiredArticle | BlacklistedArticle
+  ref: { regulation: string; article_number: string | null }
 ): boolean {
   const regMatch = normalizeReg(chunk.regulation).includes(normalizeReg(ref.regulation));
   if (!regMatch) return false;
