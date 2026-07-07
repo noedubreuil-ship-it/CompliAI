@@ -134,8 +134,14 @@ export async function POST(request: Request) {
   mark("query_translate");
 
   // ── 1. RAG local (pgvector) ───────────────────────────────────────────────
-  const ragMatchCount = nationalRagCountries.length > 0 ? 5 : 3;
-  let rawChunks = await searchLegalChunks(ragQuery, ragMatchCount, 0.6);
+  // Questions couvrant un chapitre entier ou plusieurs articles explicites →
+  // on remonte plus de chunks pour ne pas tronquer la couverture.
+  const asksMultiArticle =
+    /chapitre\s+[IVX\d]+|articles?\s+\d+\s*(à|au|et)\s*\d+|art\.\s*\d+\s*(à|et)\s*\d+/i.test(question) ||
+    /chapter\s+[IVX\d]+|articles?\s+\d+\s*(to|and|through)\s*\d+/i.test(question);
+  const ragMatchCount = asksMultiArticle ? 20 : nationalRagCountries.length > 0 ? 5 : 8;
+  const ragThreshold = asksMultiArticle ? 0.3 : 0.6;
+  let rawChunks = await searchLegalChunks(ragQuery, ragMatchCount, ragThreshold);
   mark("rag_base");
 
   if (asksLegalDeadline(question) || asksLegalDeadline(ragQuery)) {
