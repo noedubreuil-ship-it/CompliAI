@@ -74,6 +74,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" className="h-full w-full">
+      <head>
+        <script
+          type="text/javascript"
+          data-cmp-ab="1"
+          src="https://cdn.consentmanager.net/delivery/autoblocking/cfe565ec0275c.js"
+          data-cmp-host="c.delivery.consentmanager.net"
+          data-cmp-cdn="cdn.consentmanager.net"
+          data-cmp-codesrc="16"
+          async
+        />
+      </head>
       <body
         className={`${inter.variable} ${ebGaramond.variable} font-sans min-h-full w-full overflow-x-hidden antialiased`}
         style={{
