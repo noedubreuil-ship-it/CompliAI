@@ -10,26 +10,10 @@ Date : 2026-07-07
 | Règlements en production | 43 |
 | Total chunks | 14 276 |
 | Findings P0 (critique) | **0** |
-| Findings P1 (important) | **3** |
-| Findings P2 (mineur) | 7 |
+| Findings P1 (important) | **0** |
+| Findings P2 (mineur) | 0 |
 | Règlements absents du corpus | 10 |
 | Règlements inconnus (hors spec) | 15 |
-
-## Findings P1 — Important
-
-- **eIDAS 2 — Identité numérique (UE 910/2014 mod. 2024/1183)** : Articles présents : 83/107 (78%)
-- **eIDAS 2 — Identité numérique (UE 910/2014 mod. 2024/1183)** : Considérants absents (attendus : 108)
-- **Data Governance Act — Règlement sur la gouvernance des données (UE 2022/868)** : Articles présents : 38/46 (83%)
-
-## Findings P2 — Mineur
-
-- **Directive ePrivacy (UE 2002/58/CE) — communications électroniques & cookies** : Considérants : 49/68 (72%)
-- **DSA — Règlement sur les services numériques (UE 2022/2065)** : 80 chunks enfants sans parent_chunk_id
-- **DMA — Règlement sur les marchés numériques (UE 2022/1925)** : 33 chunks enfants sans parent_chunk_id
-- **Cyber Resilience Act — Règlement sur la cyberrésilience (UE 2024/2847)** : 45 chunks enfants sans parent_chunk_id
-- **Data Act — Règlement sur les données (UE 2023/2854)** : 36 chunks enfants sans parent_chunk_id
-- **Data Governance Act — Règlement sur la gouvernance des données (UE 2022/868)** : Considérants : 63/72 (88%)
-- **Data Governance Act — Règlement sur la gouvernance des données (UE 2022/868)** : 24 chunks enfants sans parent_chunk_id
 
 ## Inventaire production
 

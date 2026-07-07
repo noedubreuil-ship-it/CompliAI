@@ -32,15 +32,16 @@ export const EXPECTED_CORPUS: ExpectedDoc[] = [
     // Nom exact en production (issu du rechunk ePrivacy)
     regulation: "Directive ePrivacy (UE 2002/58/CE) — communications électroniques & cookies",
     articles: 22,
-    considerants: 68,
+    considerants: 49,
     annexes: 0,
     status: "present",
   },
   {
     // Nom exact en production (issu du rechunk eIDAS2)
+    // Texte consolidé EUR-Lex — pas de préambule, pas de considérants
     regulation: "eIDAS 2 — Identité numérique (UE 910/2014 mod. 2024/1183)",
-    articles: 107,
-    considerants: 108,
+    articles: 83,
+    considerants: 0,
     annexes: 5,
     status: "present",
   },
@@ -48,7 +49,7 @@ export const EXPECTED_CORPUS: ExpectedDoc[] = [
     // Nom exact en production (issu du rechunk DSA)
     regulation: "DSA — Règlement sur les services numériques (UE 2022/2065)",
     articles: 93,
-    considerants: 150,
+    considerants: 156,
     annexes: 1,
     status: "present",
   },
@@ -56,14 +57,14 @@ export const EXPECTED_CORPUS: ExpectedDoc[] = [
     // Nom exact en production (issu du rechunk DMA)
     regulation: "DMA — Règlement sur les marchés numériques (UE 2022/1925)",
     articles: 54,
-    considerants: 100,
+    considerants: 109,
     annexes: 1,
     status: "present",
   },
   {
     regulation: "Directive NIS 2 (UE 2022/2555)",
     articles: 46,
-    considerants: 145,
+    considerants: 144,
     annexes: 11,
     status: "present",
   },
@@ -71,7 +72,7 @@ export const EXPECTED_CORPUS: ExpectedDoc[] = [
     // Nom exact en production (issu du rechunk CRA)
     regulation: "Cyber Resilience Act — Règlement sur la cyberrésilience (UE 2024/2847)",
     articles: 71,
-    considerants: 122,
+    considerants: 130,
     annexes: 6,
     status: "present",
   },
@@ -79,7 +80,7 @@ export const EXPECTED_CORPUS: ExpectedDoc[] = [
     // Nom exact en production (issu du rechunk Data Act)
     regulation: "Data Act — Règlement sur les données (UE 2023/2854)",
     articles: 50,
-    considerants: 117,
+    considerants: 119,
     annexes: 1,
     status: "present",
   },
@@ -93,8 +94,8 @@ export const EXPECTED_CORPUS: ExpectedDoc[] = [
   {
     // Nom exact en production (issu du rechunk DGA)
     regulation: "Data Governance Act — Règlement sur la gouvernance des données (UE 2022/868)",
-    articles: 46,
-    considerants: 72,
+    articles: 38,
+    considerants: 63,
     annexes: 0,
     status: "present",
   },
