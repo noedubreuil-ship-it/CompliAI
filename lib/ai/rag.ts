@@ -66,6 +66,41 @@ export async function searchLegalChunks(
   return rerankChunks(query, chunks);
 }
 
+/**
+ * Recherche hybride (cosine 60% + BM25 40%).
+ * Utilise la RPC search_legal_chunks_hybrid (migration 041).
+ * Meilleure précision sur les queries contenant des termes juridiques
+ * spécifiques (numéros d'articles, noms propres, mots-clés français).
+ */
+export async function searchLegalChunksHybrid(
+  query: string,
+  matchCount = 8,
+  threshold = 0.25,
+  regulationPrefix?: string
+): Promise<LegalChunk[]> {
+  const supabase = getSupabaseAdmin();
+  const embedding = await embedText(query);
+
+  // Toujours passer filter_regulation_prefix explicitement (jamais null/undefined) pour éviter
+  // l'ambiguïté entre l'overload 4-params (migration 030) et 5-params (migration 041).
+  // Chaîne vide → LIKE '%' → équivalent à "pas de filtre".
+  const { data, error } = await supabase.rpc("search_legal_chunks_hybrid", {
+    query_embedding: embedding,
+    query_text: query,
+    match_threshold: threshold,
+    match_count: matchCount,
+    filter_regulation_prefix: regulationPrefix ?? "",
+  });
+
+  if (error) {
+    console.error("RAG hybrid search error:", error);
+    return [];
+  }
+
+  const chunks = (data as LegalChunk[]) ?? [];
+  return rerankChunks(query, chunks);
+}
+
 export function buildLegalContext(chunks: LegalChunk[]): string {
   if (chunks.length === 0) return "";
 
