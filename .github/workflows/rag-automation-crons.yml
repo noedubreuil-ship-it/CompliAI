@@ -1,0 +1,52 @@
+name: RAG Automation Crons
+
+on:
+  schedule:
+    # Monitoring quotidien à 06:00 UTC
+    - cron: "0 6 * * *"
+    # Ingestion toutes les 6 heures
+    - cron: "15 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "Job à exécuter"
+        required: true
+        default: "monitoring"
+        type: choice
+        options:
+          - monitoring
+          - ingestion
+
+jobs:
+  monitoring:
+    if: github.event_name == 'schedule' || inputs.job == 'monitoring'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: npx tsx scripts/cron-monitoring.ts
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+  ingestion:
+    if: github.event_name == 'schedule' || inputs.job == 'ingestion'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: npx tsx scripts/cron-ingestion.ts
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          RAG_INGESTION_BATCH_SIZE: "20"
+          RAG_INGESTION_THROTTLE_MS: "1500"
