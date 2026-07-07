@@ -1,7 +1,8 @@
 #!/usr/bin/env tsx
 /**
  * backfill-orphelins.ts — Résoudre les parent_chunk_id NULL
- * pour NIS2, DSM et Machines (151 orphelins identifiés au 2026-07-07)
+ * Vague 1 (2026-07-07) : NIS2, DSM, Machines — 151 orphelins
+ * Vague 2 (2026-07-07) : DSA, DMA, CRA, Data Act, DGA — ~218 orphelins
  *
  * Usage :
  *   npx tsx --env-file=.env.local scripts/backfill-orphelins.ts --dry-run
@@ -20,6 +21,11 @@ const TARGET_REGS = [
   "Directive NIS 2 (UE 2022/2555)",
   "Directive DSM (UE 2019/790) — droit d'auteur marché unique numérique",
   "Règlement Machines (UE 2023/1230) — produits IA intégrés",
+  "DSA — Règlement sur les services numériques (UE 2022/2065)",
+  "DMA — Règlement sur les marchés numériques (UE 2022/1925)",
+  "Cyber Resilience Act — Règlement sur la cyberrésilience (UE 2024/2847)",
+  "Data Act — Règlement sur les données (UE 2023/2854)",
+  "Data Governance Act — Règlement sur la gouvernance des données (UE 2022/868)",
 ];
 
 async function countOrphelins(reg: string): Promise<number> {
