@@ -45,10 +45,22 @@ interface AuditFinding {
 
 async function fetchRegulationStats(regulation: string): Promise<RegulationStats> {
   // Chunks par granularité
-  const { data: granData } = await supabase
-    .from("legal_chunks")
-    .select("granularity, article_number, paragraph_number, parent_chunk_id, embedding")
-    .eq("regulation", regulation);
+  // Paginer pour contourner la limite 1000 lignes
+  const allRows: Record<string, unknown>[] = [];
+  let fromIdx = 0;
+  const pageSize = 1000;
+  while (true) {
+    const { data: page } = await supabase
+      .from("legal_chunks")
+      .select("granularity, article_number, paragraph_number, parent_chunk_id, embedding")
+      .eq("regulation", regulation)
+      .range(fromIdx, fromIdx + pageSize - 1);
+    if (!page || page.length === 0) break;
+    allRows.push(...page);
+    if (page.length < pageSize) break;
+    fromIdx += pageSize;
+  }
+  const granData = allRows;
 
   const rows = granData ?? [];
   const totalChunks = rows.length;
@@ -100,12 +112,25 @@ async function fetchRegulationStats(regulation: string): Promise<RegulationStats
 }
 
 async function fetchAllRegulations(): Promise<string[]> {
-  const { data } = await supabase
-    .from("legal_chunks")
-    .select("regulation")
-    .limit(10000);
+  // Paginer pour contourner la limite Supabase de 1000 lignes
+  const regs = new Set<string>();
+  let from = 0;
+  const pageSize = 1000;
 
-  const regs = new Set((data ?? []).map(r => r.regulation as string));
+  while (true) {
+    const { data, error } = await supabase
+      .from("legal_chunks")
+      .select("regulation")
+      .range(from, from + pageSize - 1);
+
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+
+    for (const r of data) regs.add(r.regulation as string);
+    if (data.length < pageSize) break;
+    from += pageSize;
+  }
+
   return [...regs].sort();
 }
 
