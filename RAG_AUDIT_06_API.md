@@ -1,172 +1,194 @@
 # Audit 06 — API et Routes
 
 **Date :** 2026-07-08  
-**Périmètre :** Lecture seule — app/api/**
+**Périmètre :** Lecture seule — inventaire `app/api/**`
 
 ---
 
-## 6.1 Inventaire Complet des Routes API
+## 6.1 Résumé
 
-97 routes identifiées. Classées par domaine :
+| Métrique | Valeur |
+|---|---|
+| Total routes `route.ts` | 97 |
+| Routes admin | 8 |
+| Routes cron | 8 |
+| Routes Stripe | 6 |
+| Routes API v1 (publique) | 3 |
+| Routes generate/* | 26 |
 
-### Routes Admin
+---
 
-| Route | Méthode | Auth | Rate Limit | Validation Zod | Notes |
-|---|---|---|---|---|---|
-| `/api/admin/ai-logs` | GET | isAdmin() | Non | Non | Dashboard logs IA |
-| `/api/admin/credits` | GET, POST | isAdmin() | Non | Oui (AdjustSchema) | Gestion crédits admin |
-| `/api/admin/credits/metrics` | GET | À vérifier | Non | Non | Métriques crédits |
-| `/api/admin/ingest-supplementary-corpus` | POST | À vérifier | Non | Non | Ingestion manuelle |
-| `/api/admin/rag-validation/documents` | GET | isAdmin() | Non | Non | Liste documents staging |
-| `/api/admin/rag-validation/documents/[id]/chunks` | GET | À vérifier | Non | Non | Chunks par document |
-| `/api/admin/rag-validation/stats` | GET | isAdmin() | Non | Non | Stats validation |
-| `/api/admin/rag-validation/validate` | POST | isAdmin() | Non | Non | Valider/rejeter chunks |
+## 6.2 Inventaire Complet par Domaine
 
-### Routes Chat et IA
+### Admin (8 routes — protégées isAdmin)
 
-| Route | Méthode | Auth | Rate Limit | Validation Zod | Notes |
-|---|---|---|---|---|---|
-| `/api/chat` | POST | Supabase Auth | Oui (distribué) | Non | **Principale route consultant RAG** — streaming SSE |
-| `/api/chat/sessions` | GET, POST, DELETE | Supabase Auth | Non | Non | Sessions de chat |
-| `/api/ai` | POST | Auth + crédits | Oui | Oui | Route IA générique |
-| `/api/ai/credits` | GET | Auth | Non | Non | Solde crédits |
-| `/api/brain/chat` | POST | Auth | Non | Non | Chat Brain personnel |
-| `/api/arrets-guide` | POST | Auth | Non | Non | Guide jurisprudence |
+| Route | Méthodes | Auth | Note |
+|---|---|---|---|
+| `/api/admin/ai-logs` | GET | isAdmin | Dashboard interactions IA |
+| `/api/admin/credits` | GET, POST | isAdmin | Gestion crédits utilisateurs |
+| `/api/admin/credits/metrics` | GET | isAdmin | Métriques crédits 30j |
+| `/api/admin/ingest-supplementary-corpus` | POST | isAdmin | Déclenchement ingestion manuelle |
+| `/api/admin/rag-validation/documents` | GET | isAdmin | Liste documents staging |
+| `/api/admin/rag-validation/documents/[id]/chunks` | GET | isAdmin | Chunks d'un document |
+| `/api/admin/rag-validation/stats` | GET | isAdmin | Stats validation RAG |
+| `/api/admin/rag-validation/validate` | POST | isAdmin | Approuver/rejeter chunk |
 
-### Routes Génération Documents
+### Cron (8 routes — protégées CRON_SECRET)
 
-| Route | Méthode | Auth | Rate Limit | Validation | Notes |
-|---|---|---|---|---|---|
-| `/api/generate/scanner` | POST | Auth + crédits | Non | Non | Scanner conformité |
-| `/api/generate/checklist` | POST | Auth + crédits | Non | Non | Checklist AI Act |
-| `/api/generate/classifier` | POST | Auth + crédits | Non | Oui | Classificateur IA |
-| `/api/generate/dpia` | POST | Auth + crédits | Non | Non | DPIA Art. 35 |
-| `/api/generate/dpia/pdf` | POST | Auth | Non | Non | Export PDF DPIA |
-| `/api/generate/fria` | POST | Auth + crédits | Non | Non | FRIA AI Act |
-| `/api/generate/fria/pdf` | POST | Auth | Non | Non | Export PDF FRIA |
-| `/api/generate/ropa` | POST | Auth + crédits | Non | Non | Registre RGPD |
-| `/api/generate/ropa/pdf` | POST | Auth | Non | Non | Export PDF ROPA |
-| `/api/generate/art11` | POST | Auth + crédits | Non | Non | Documentation Art. 11 |
-| `/api/generate/policy` | POST | Auth + crédits | Non | Non | Politique IA |
-| `/api/generate/contract` | POST | Auth + crédits | Non | Non | Contrat IA |
-| `/api/generate/clauses-contrat` | POST | Auth + crédits | Non | Non | Clauses contractuelles |
-| `/api/generate/memoire-conformite` | POST | Auth + crédits | Non | Non | Mémoire conformité |
-| `/api/generate/plan-memoire` | POST | Auth + crédits | Non | Non | Plan mémoire |
-| `/api/generate/explication-article` | POST | Auth + crédits | Non | Non | Explication article |
-| `/api/generate/jurisprudence` | POST | Auth + crédits | Non | Non | Recherche jurisprudentielle |
-| `/api/generate/resume-arret` | POST | Auth + crédits | Non | Non | Résumé arrêt |
-| `/api/generate/simulateur` | POST | Auth + crédits | Non | Non | Simulateur obligations |
-| `/api/generate/comparateur` | POST | Auth + crédits | Non | Non | Comparateur réglements |
-| `/api/generate/quiz` | POST | Auth + crédits | Non | Non | Quiz conformité |
-| `/api/generate/investor-report` | POST | Auth + crédits | Non | Non | Rapport investisseur |
-| `/api/generate/audit-qr` | POST | Auth + crédits | Non | Non | Audit QR |
-| `/api/generate/analyse-decision` | POST | Auth + crédits | Non | Non | Analyse décision DPA |
-| `/api/generate/certificate` | POST | Auth | Non | Non | Certificat conformité |
-| `/api/generate/recherche-jurisprudentielle` | POST | Auth + crédits | Non | Non | Recherche jurisprudentielle avancée |
-| `/api/generate/export-pdf` | POST | Auth | Non | Non | Export PDF générique |
-| `/api/consultant/export-pdf` | POST | Auth | Non | Non | Export PDF consultant |
+| Route | Schedule Vercel | Auth |
+|---|---|---|
+| `/api/cron/benchmark-aggregation` | 03:00 UTC quotidien | Bearer CRON_SECRET |
+| `/api/cron/case-law-seeds` | 04:15 UTC quotidien | Bearer CRON_SECRET |
+| `/api/cron/deadline-alerts` | 08:00 UTC quotidien | Bearer CRON_SECRET |
+| `/api/cron/deadline-reminders` | 08:30 UTC quotidien | Bearer CRON_SECRET |
+| `/api/cron/low-credits` | 09:00 UTC quotidien | Bearer CRON_SECRET |
+| `/api/cron/national-corpus-agents` | 04:00 UTC quotidien | Bearer CRON_SECRET |
+| `/api/cron/national-corpus-agents/[country]` | — | Bearer CRON_SECRET |
+| `/api/cron/regulatory-watch` | 08:00 UTC quotidien | Bearer CRON_SECRET |
+| `/api/cron/supplementary-corpus` | 04:30 UTC dimanche | Bearer CRON_SECRET |
 
-### Routes Projets et Audits
+### Stripe (6 routes)
 
-| Route | Méthode | Auth | Rate Limit | Notes |
+| Route | Méthodes | Auth | Note |
+|---|---|---|---|
+| `/api/stripe/checkout` | POST | user auth | Création session checkout |
+| `/api/stripe/checkout-credits` | POST | user auth | Achat pack crédits |
+| `/api/stripe/confirm-credit-pack` | POST | user auth | Confirmation achat |
+| `/api/stripe/portal` | POST | user auth | Portail client Stripe |
+| `/api/stripe/webhook` | POST | signature Stripe | Webhook events |
+| `/api/stripe/auto-recharge` | POST | user auth | Config recharge auto |
+| `/api/stripe/setup-payment-method` | POST | user auth | Setup PM |
+
+### Chat et IA
+
+| Route | Méthodes | Auth | Rate limit | Streaming |
 |---|---|---|---|---|
-| `/api/audit` | GET, POST | Auth | Non | Création/liste audits |
-| `/api/audits-list` | GET | Auth | Non | Liste audits |
-| `/api/audits/share` | POST | Auth | Non | Partage audit |
-| `/api/audit-trail/export` | GET | Auth | Non | Export audit trail |
-| `/api/pdf/[auditId]` | GET | Auth | Non | PDF audit |
-| `/api/projects/[id]/issues/[issueId]` | PATCH, DELETE | Auth | Non | Gestion issues |
+| `/api/chat` | POST | user auth | ✅ rateLimitUser | ✅ SSE |
+| `/api/ai` | POST | user auth | — | — |
+| `/api/ai/credits` | GET | user auth | — | — |
+| `/api/arrets-guide` | POST | user auth | — | ✅ SSE |
+| `/api/generate/consultant/export-pdf` | POST | user auth | — | — |
 
-### Routes Stripe
+### Génération Documents (26 routes)
 
-| Route | Méthode | Auth | Notes |
+| Route | Méthodes | Auth | Validation |
 |---|---|---|---|
-| `/api/stripe/checkout` | POST | Auth | Checkout abonnement |
-| `/api/stripe/checkout-credits` | POST | Auth | Achat crédits |
-| `/api/stripe/portal` | POST | Auth | Portail client Stripe |
-| `/api/stripe/webhook` | POST | Signature HMAC | **Webhook Stripe — sécurisé** |
-| `/api/stripe/confirm-credit-pack` | POST | Auth | Confirmation achat crédits |
-| `/api/stripe/auto-recharge` | GET, POST, DELETE | Auth | Rechargement auto |
-| `/api/stripe/setup-payment-method` | POST | Auth | Setup méthode paiement |
+| `/api/generate/analyse-decision` | POST | user auth | — |
+| `/api/generate/art11` | POST | user auth | — |
+| `/api/generate/art11/pdf` | POST | user auth | — |
+| `/api/generate/audit-qr` | POST | user auth | — |
+| `/api/generate/certificate` | POST | user auth | — |
+| `/api/generate/checklist` | POST | user auth | — |
+| `/api/generate/classifier` | POST | user auth | — |
+| `/api/generate/clauses-contrat` | POST | user auth | — |
+| `/api/generate/comparateur` | POST | user auth | — |
+| `/api/generate/contract` | POST | user auth | — |
+| `/api/generate/contract/pdf` | POST | user auth | — |
+| `/api/generate/dpia` | POST | user auth | — |
+| `/api/generate/dpia/pdf` | POST | user auth | — |
+| `/api/generate/explication-article` | POST | user auth | — |
+| `/api/generate/export-pdf` | POST | user auth | — |
+| `/api/generate/fria` | POST | user auth | — |
+| `/api/generate/fria/pdf` | POST | user auth | — |
+| `/api/generate/investor-report` | POST | user auth | — |
+| `/api/generate/jurisprudence` | POST | user auth | — |
+| `/api/generate/memoire-conformite` | POST | user auth | — |
+| `/api/generate/plan-memoire` | POST | user auth | — |
+| `/api/generate/policy` | POST | user auth | — |
+| `/api/generate/policy/pdf` | POST | user auth | — |
+| `/api/generate/quiz` | POST | user auth | — |
+| `/api/generate/recherche-jurisprudentielle` | POST | user auth | — |
+| `/api/generate/resume-arret` | POST | user auth | — |
+| `/api/generate/ropa` | POST | user auth | — |
+| `/api/generate/ropa/pdf` | POST | user auth | — |
+| `/api/generate/scanner` | POST | user auth | Zod `parseQuestionnaire()` |
+| `/api/generate/simulateur` | POST | user auth | — |
 
-### Routes Cron
+### API Publique v1 (clé API)
 
-| Route | Méthode | Auth | Notes |
-|---|---|---|---|
-| `/api/cron/benchmark-aggregation` | GET | Secret header ? | Agrégation benchmarks |
-| `/api/cron/case-law-seeds` | GET | Secret header ? | Seeds jurisprudence |
-| `/api/cron/deadline-alerts` | GET | Secret header ? | Alertes deadlines |
-| `/api/cron/deadline-reminders` | GET | Secret header ? | Rappels deadlines |
-| `/api/cron/low-credits` | GET | Secret header ? | Alertes crédits bas |
-| `/api/cron/national-corpus-agents` | GET | Secret header ? | Agents corpus national |
-| `/api/cron/national-corpus-agents/[country]` | GET | Secret header ? | Agent par pays |
-| `/api/cron/regulatory-watch` | GET | Secret header ? | Veille réglementaire |
-| `/api/cron/supplementary-corpus` | GET | Secret header ? | Corpus supplémentaire |
-
-**Attention :** Les routes cron doivent être protégées par un header secret (ex: `CRON_SECRET`). À vérifier que chaque handler valide bien ce header — non visible dans l'inventaire ci-dessus.
+| Route | Méthodes | Auth |
+|---|---|---|
+| `/api/v1/me` | GET | Bearer API key |
+| `/api/v1/audits` | GET | Bearer API key |
+| `/api/v1/projects` | GET | Bearer API key |
 
 ### Autres Routes
 
-| Route | Méthode | Auth | Notes |
+| Route | Méthodes | Auth | Note |
 |---|---|---|---|
-| `/api/v1/audits` | GET | API Key | API publique v1 |
-| `/api/v1/me` | GET | API Key | API publique v1 |
-| `/api/v1/projects` | GET | API Key | API publique v1 |
-| `/api/search` | GET | Auth | Recherche sémantique |
-| `/api/documents/search` | GET | Auth | Recherche documents |
-| `/api/documents/index-semantic` | POST | Auth | Indexation sémantique |
-| `/api/documents/share` | POST | Auth | Partage document |
-| `/api/brain` | GET, POST | Auth | Brain nodes |
-| `/api/brain/[id]` | GET, PATCH, DELETE | Auth | Node spécifique |
-| `/api/brain/notes` | GET, POST | Auth | Notes brain |
-| `/api/brain/notes/[id]` | PATCH, DELETE | Auth | Note spécifique |
-| `/api/brain/graph` | GET | Auth | Graphe brain |
-| `/api/journal` | GET, POST | Auth | Journal réglementaire (1326 lignes) |
-| `/api/alerts/preferences` | GET, POST | Auth | Préférences alertes |
-| `/api/alerts/seed` | POST | Admin ? | Seed alertes |
-| `/api/notifications` | GET, POST | Auth | Notifications |
-| `/api/organizations` | GET, POST | Auth | Organisations |
-| `/api/organizations/[orgId]/members` | GET, POST, DELETE | Auth | Membres org |
-| `/api/organizations/join` | POST | Auth | Rejoindre org |
-| `/api/profile/product-funnel` | POST | Auth | Funnel produit |
-| `/api/register` | GET, POST | Auth | Registre traitements |
-| `/api/register/[id]` | GET, PATCH, DELETE | Auth | Entrée registre |
-| `/api/register-list` | GET | Auth | Liste registres |
-| `/api/scan/site` | POST | Auth | Scan site web |
-| `/api/slack/commands` | POST | Slack signing | Commandes Slack |
-| `/api/test-slack` | POST | Admin ? | Test Slack |
-| `/api/user/api-keys` | GET, POST, DELETE | Auth | Gestion clés API |
-| `/api/templates` | GET | Auth | Templates documents |
-| `/api/legal-tools` | GET | Auth | Outils juridiques |
-| `/api/webhooks` | GET, POST, DELETE | Auth | Webhooks externes |
-| `/api/auth/request-reset` | POST | Non | Reset mot de passe |
-| `/api/feedback` | POST | Auth | Feedback utilisateur |
-| `/api/lawyers/listing-request` | POST | Auth | Demande avocat |
+| `/api/audit` | POST | user auth | Audit IA Act |
+| `/api/audit-trail/export` | GET | user auth | Export historique |
+| `/api/audits-list` | GET | user auth | — |
+| `/api/audits/share` | POST | user auth | Partage audit |
+| `/api/alerts/preferences` | GET, POST | user auth | Préférences alertes |
+| `/api/alerts/seed` | POST | user auth | Seed alertes |
+| `/api/brain` | GET, POST | user auth | Cerveau IA |
+| `/api/brain/[id]` | GET, PUT, DELETE | user auth | — |
+| `/api/brain/chat` | POST | user auth | Chat Brain |
+| `/api/brain/graph` | GET | user auth | Graphe Brain |
+| `/api/brain/notes` | GET, POST | user auth | Notes |
+| `/api/brain/notes/[id]` | GET, PUT, DELETE | user auth | — |
+| `/api/documents/index-semantic` | POST | user auth | Indexation docs |
+| `/api/documents/search` | GET | user auth | Recherche docs |
+| `/api/documents/share` | POST | user auth | Partage docs |
+| `/api/feedback` | POST | user auth | Feedback |
+| `/api/journal` | GET, POST | user auth | Journal réglementaire |
+| `/api/lawyers/listing-request` | POST | user auth | Demande mise en relation |
+| `/api/legal-tools` | GET | user auth | — |
+| `/api/notifications` | GET, POST | user auth | — |
+| `/api/organizations` | GET, POST | user auth | — |
+| `/api/organizations/[orgId]/members` | GET, POST | user auth | — |
+| `/api/organizations/join` | POST | user auth | — |
+| `/api/pdf/[auditId]` | GET | user auth | Génération PDF |
+| `/api/profile/product-funnel` | POST | user auth | — |
+| `/api/projects/[id]/issues/[issueId]` | GET, PUT | user auth | — |
+| `/api/register` | GET, POST | user auth | Registre AI Act |
+| `/api/register-list` | GET | user auth | — |
+| `/api/register/[id]` | GET, PUT, DELETE | user auth | — |
+| `/api/scan/site` | POST | user auth | Scanner site web |
+| `/api/search` | GET | user auth | Recherche globale |
+| `/api/slack/commands` | POST | Slack signature | Commandes Slack |
+| `/api/templates` | GET, POST | user auth | Templates |
+| `/api/test-slack` | POST | user auth | Test Slack |
+| `/api/user/api-keys` | GET, POST, DELETE | user auth | Clés API |
+| `/api/webhooks` | GET, POST | user auth | Webhooks |
+| `/api/auth/request-reset` | POST | public | Réinitialisation mdp |
 
 ---
 
-## 6.2 Routes Streaming (SSE)
+## 6.3 Observations et Anomalies
 
-- `/api/chat` — streaming Claude via `streamClaude()`
-- `/api/generate/*` — la majorité des générateurs streament la réponse
+### Validation Input (Zod)
+- La majorité des routes `generate/*` n'utilisent pas de schéma Zod explicite — elles récupèrent `req.json()` sans validation formelle.
+- `app/api/generate/scanner/route.ts` a une fonction `parseQuestionnaire()` avec validation interne.
+- `app/api/chat/route.ts` parse les paramètres sans Zod.
+- **Recommandation :** Systématiser Zod sur toutes les routes `generate/*`.
+
+### Rate Limiting
+- Rate limiting appliqué : `/api/chat`, `/api/audit` (via `rateLimitUser()`)
+- Absent sur : la plupart des routes `generate/*`
+- **Risque :** Les outils de génération coûteux (FRIA, Art11, DPIA) n'ont pas de rate limit individuel.
+
+### Routes Streaming SSE
+- `/api/chat` : ✅ SSE avec `ReadableStream`
+- `/api/arrets-guide` : ✅ SSE
+- Autres routes generate : réponse JSON synchrone (pas de streaming)
+
+### Route Journal (1326 lignes)
+- `app/api/journal/route.ts` est la route la plus longue du projet (1326L)
+- Contient la logique de filtres DPA, sources nationales, et construction du journal réglementaire
+- À VÉRIFIER : séparation en sous-modules
 
 ---
 
-## 6.3 Observations Critiques
+## 6.4 Verdict API
 
-| Observation | Sévérité |
-|---|---|
-| Validation Zod absente sur la majorité des routes POST | **HIGH** |
-| Rate limiting absent sur les routes `/api/generate/*` (consomment des crédits mais pas de rate limit HTTP) | **MEDIUM** |
-| Routes cron non vérifiées pour la présence d'un secret de protection | **HIGH** |
-| `/api/test-slack` présente en production | **LOW** |
-| Routes admin sans check isAdmin() sur certaines (ingest-supplementary-corpus, credits/metrics) | **MEDIUM** |
+**Score : 7/10**
 
----
-
-## 6.4 Points Forts
-
-- Route `/api/chat` : authentification + rate limit distribué + gestion crédits + guardrails + logging structuré
-- Route `/api/stripe/webhook` : vérification signature HMAC + idempotence
-- Routes `/api/admin/*` documentées et protégées (pour la majorité)
-- API v1 publique avec gestion de clés API distincte
+| Aspect | Score | Commentaire |
+|---|---|---|
+| Auth coverage | 9/10 | Quasi-toutes les routes protégées |
+| Validation input | 5/10 | Zod absent sur la majorité des routes generate |
+| Rate limiting | 6/10 | Présent sur chat/audit, absent sur generate |
+| Sécurité webhook | 10/10 | Signature Stripe vérifiée |
+| Cohérence | 7/10 | Structure consistante mais routes monolithiques |
