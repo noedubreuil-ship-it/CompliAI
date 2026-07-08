@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Send, Loader2, Shield, ExternalLink,
   Mic, MicOff, Plus, MessageSquare, Trash2, PanelLeftClose, PanelLeftOpen,
-  Copy, Check, FileDown,
+  Copy, Check, FileDown, Bot,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -926,6 +926,17 @@ export default function ChatInterface() {
             <Plus className="h-3.5 w-3.5 mr-1" />
             Nouveau
           </Button>
+          {/* Art. 50 AI Act — badge IA générative permanent */}
+          <a
+            href="/transparence-ia"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 transition-colors"
+            title="Cet outil est une intelligence artificielle — voir la page de transparence"
+          >
+            <Bot className="h-3 w-3" />
+            IA générative
+          </a>
         </div>
 
       {/* Messages */}
@@ -943,6 +954,18 @@ export default function ChatInterface() {
               Consultant RGPD, AI Act et droit national UE-27 — réponses sourcées à partir du corpus indexé.
               Information juridique, pas un conseil personnalisé.
             </p>
+            {/* Art. 50 AI Act — déclaration transparence IA obligatoire depuis août 2025 */}
+            <div className="mt-5 flex max-w-md items-start gap-2 rounded-xl border border-blue-100 bg-blue-50/70 px-4 py-3 text-left text-xs text-blue-800">
+              <Bot className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
+              <p className="leading-relaxed">
+                Vous interagissez avec <strong>CompliAI</strong>, une intelligence artificielle basée sur Claude Sonnet&nbsp;4.6.
+                Les réponses sont générées par IA à partir de sources juridiques officielles.
+                Elles ne constituent pas un avis juridique professionnel et doivent être vérifiées avant utilisation.{" "}
+                <a href="/transparence-ia" target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-900">
+                  En savoir plus
+                </a>
+              </p>
+            </div>
           </div>
         )}
 
