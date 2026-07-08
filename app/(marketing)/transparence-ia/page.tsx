@@ -47,10 +47,10 @@ export default function TransparenceIAPage() {
 
       <h2>2. Nature des réponses générées</h2>
       <p>
-        Les réponses fournies par le consultant IA de CompliAI sont générées automatiquement à partir de
-        sources juridiques officielles. Elles constituent une <strong>information juridique</strong> et non
-        un <strong>avis juridique professionnel</strong> au sens des réglementations sur les professions
-        réglementées.
+        Les réponses fournies par le consultant IA de CompliAI constituent un <strong>support à la décision
+        juridique</strong> généré automatiquement à partir de sources officielles européennes. Elles ne
+        constituent pas un <strong>avis juridique professionnel</strong> au sens des réglementations sur les
+        professions réglementées et doivent être validées par un professionnel avant application définitive.
       </p>
       <p>
         Elles ne se substituent pas à la consultation d&apos;un avocat, d&apos;un juriste qualifié ou d&apos;un
@@ -89,12 +89,13 @@ export default function TransparenceIAPage() {
           d&apos;être accessible à l&apos;assistant.
         </li>
         <li>
-          Un système de golden set (ensemble de questions de référence) est utilisé pour évaluer
-          régulièrement la qualité des réponses.
+          <strong>Batterie de tests de qualité (golden set) :</strong> 16 questions représentatives validées
+          par nos experts juridiques et testées après chaque mise à jour du corpus.
         </li>
         <li>
-          Les réponses générées sont accompagnées de citations sourcées permettant à l&apos;utilisateur
-          de vérifier chaque affirmation dans le texte juridique d&apos;origine.
+          <strong>Citations sourcées :</strong> chaque réponse cite les articles précis et fournit les liens
+          vers les sources officielles, permettant à l&apos;utilisateur de vérifier chaque affirmation dans le
+          texte juridique d&apos;origine.
         </li>
       </ul>
 
@@ -107,10 +108,14 @@ export default function TransparenceIAPage() {
         <li>
           <strong>Anthropic PBC</strong> (USA) — traitement des questions pour générer les réponses.
           Transfert encadré par les Clauses Contractuelles Types (CCT) de la Commission européenne.
+          Politique de rétention par défaut : jusqu&apos;à 30 jours à des fins de sécurité et de prévention
+          des abus. Les données ne sont pas utilisées pour entraîner les modèles d&apos;Anthropic.
         </li>
         <li>
           <strong>OpenAI, Inc.</strong> (USA) — vectorisation sémantique des questions pour la recherche
-          dans le corpus. Transfert encadré par les CCT.
+          dans le corpus. Transfert encadré par les CCT. Politique de rétention par défaut : jusqu&apos;à
+          30 jours à des fins de surveillance des abus. Les données ne sont pas utilisées pour entraîner
+          les modèles d&apos;OpenAI.
         </li>
       </ul>
       <p>
@@ -118,11 +123,18 @@ export default function TransparenceIAPage() {
         <a href="/legal/privacy">politique de confidentialité</a>.
       </p>
 
-      <h2>6. Base légale AI Act</h2>
+      <h2>6. Classification AI Act</h2>
       <p>
-        CompliAI est un système IA à risque limité au sens de l&apos;article 50 de l&apos;AI Act. À ce titre, il
-        est soumis aux obligations de transparence envers les utilisateurs finals. Cette page constitue
-        la mise en œuvre de cette obligation.
+        <strong>Classification en cours d&apos;évaluation.</strong> A priori, CompliAI relève de la catégorie
+        des systèmes IA à risque limité au sens de l&apos;article 50 du Règlement (UE) 2024/1689, soumis aux
+        obligations de transparence envers les utilisateurs finals. Cette page constitue la mise en œuvre
+        de cette obligation.
+      </p>
+      <p>
+        Une évaluation approfondie de la classification est prévue avec conseil juridique externe, notamment
+        pour vérifier l&apos;applicabilité de l&apos;Annexe III (systèmes utilisés dans l&apos;administration de la
+        justice et les processus démocratiques). Dans l&apos;intervalle, CompliAI applique par précaution les
+        obligations de transparence de l&apos;article 50.
       </p>
       <p>
         Contact pour toute question relative à cette déclaration :{" "}

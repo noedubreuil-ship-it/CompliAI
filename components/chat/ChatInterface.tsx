@@ -959,8 +959,8 @@ export default function ChatInterface() {
               <Bot className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
               <p className="leading-relaxed">
                 Vous interagissez avec <strong>CompliAI</strong>, une intelligence artificielle basée sur Claude Sonnet&nbsp;4.6.
-                Les réponses sont générées par IA à partir de sources juridiques officielles.
-                Elles ne constituent pas un avis juridique professionnel et doivent être vérifiées avant utilisation.{" "}
+                Les réponses sont générées par IA à partir de sources juridiques officielles européennes (EUR-Lex, EDPB, CJUE, autorités nationales de protection des données).
+                Elles constituent un support à la décision juridique et doivent être validées par un professionnel avant application définitive.{" "}
                 <a href="/transparence-ia" target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-900">
                   En savoir plus
                 </a>
