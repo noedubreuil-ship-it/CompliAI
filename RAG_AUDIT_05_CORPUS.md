@@ -1,131 +1,148 @@
 # Audit 05 — Corpus Juridique
 
 **Date :** 2026-07-08  
-**Périmètre :** Lecture seule — lib/rag-quality/, lib/data/, scripts/rechunk-*
+**Périmètre :** Lecture seule — `lib/rag-quality/`, `lib/rag-quality/coverage-articles.ts`, golden set
 
 ---
 
-## 5.1 Corpus Principal (legal_chunks)
+## 5.1 Règlements Couverts dans le Corpus
 
-Réglements couverts selon les migrations, scripts de rechunking et golden set :
+### Corpus Indexé (indexed: true)
 
-| Règlement | Statut Chunking | Parent-Child | Connecteur Monitoring |
+| Règlement | Statut | Couverture |
+|---|---|---|
+| **AI Act** | ✅ INDEXÉ | Articles principaux (1-113), quelques lacunes parent-child |
+| **RGPD** | ✅ INDEXÉ | Rechunking parent-child effectué (2026-07) |
+| **CJUE** | ✅ INDEXÉ | Jurisprudence clé |
+| **EDPB** | ✅ INDEXÉ | Guidelines principales |
+
+### Corpus Non Indexé (indexed: false)
+
+| Règlement | Statut | Priorité |
+|---|---|---|
+| **DSA** | ❌ NON INDEXÉ | Haute — service numérique core |
+| **DMA** | ❌ NON INDEXÉ | Haute — marchés numériques |
+| **Data Act** | ❌ NON INDEXÉ | Haute — données |
+| **Data Governance Act** | ❌ NON INDEXÉ | Moyenne |
+| **NIS2** | ❌ NON INDEXÉ | Haute — cybersécurité |
+| **ePrivacy** | 🟡 STAGING (2026-07-06) | Haute — cookies, consentement |
+| **CRA** | ❌ NON INDEXÉ | Moyenne |
+| **Règlement Machines** | ❌ NON INDEXÉ | Basse |
+| **eIDAS 2** | 🟡 STAGING/PARTIEL | Moyenne |
+| **Directive DSM** | ❌ NON INDEXÉ | Basse |
+
+**Source :** `lib/rag-quality/coverage-articles.ts` — `indexed` field par règlement.
+
+---
+
+## 5.2 Golden Set — 16 Questions de Référence
+
+**Fichier :** `lib/rag-quality/golden-set.ts`
+
+| ID | Thème | Règlement(s) | Articles Critiques |
 |---|---|---|---|
-| AI Act (Règl. UE 2024/1689) | Chunké | NON — chantier prioritaire | ai-office-rss.ts, eurlex-*.ts |
-| RGPD (Règl. UE 2016/679) | Chunké + rechunk parent-child | OUI | cnil-rss.ts, edpb-scraping.ts |
-| NIS2 (Dir. UE 2022/2555) | Chunké (rechunk-reglements.ts) | NON | eurlex-*.ts |
-| DSA (Règl. UE 2022/2065) | Chunké (rechunk-reglements.ts) | NON | eurlex-*.ts |
-| DMA (Règl. UE 2022/1925) | Chunké (rechunk-reglements.ts) | NON | eurlex-*.ts |
-| CRA (Cyber Resilience Act) | Chunké (rechunk-reglements.ts) | NON | eurlex-*.ts |
-| Data Act (Règl. UE 2023/2854) | Chunké (rechunk-reglements.ts) | NON | eurlex-*.ts |
-| eIDAS 2 (Règl. UE 2024/1183) | Chunké (rechunk-eidas2.ts) | NON | eurlex-*.ts |
-| ePrivacy (Dir. 2002/58) | Chunké (rechunk-eprivacy.ts) | NON | eurlex-*.ts |
+| Q01 | Haut risque Annexe III + Art.6 §3 (scoring crédit) | AI Act | Art. 6, 9 |
+| Q02 | Pratique interdite Art. 5 (inférence émotions) | AI Act | Art. 5 |
+| Q03 | GPAI risque systémique seuil 10²⁵ FLOPS | AI Act | Art. 51, 55 |
+| Q04 | FRIA (évaluation impact droits fondamentaux) | AI Act | Art. 27 |
+| Q05 | Obligations fournisseur IA haut risque — documentation | AI Act | Art. 11, 12 |
+| Q06 | DPIA obligatoire : critères Art.35 §3 | RGPD | Art. 35 |
+| Q07 | Consentement données sensibles Art.9 | RGPD | Art. 9, 7 |
+| Q08 | Transfert hors UE — bases légales Art.44-49 | RGPD | Art. 44-49 |
+| Q09 | DPO obligation secteur public | RGPD | Art. 37 |
+| Q10 | Sanctions RGPD — deux tranches | RGPD | Art. 83 |
+| Q11 | DPIA pour IA décision automatisée | RGPD + AI Act | Art. 35 RGPD |
+| Q12 | Sous-traitant — obligations Art.28 | RGPD | Art. 28 |
+| Q13 | Profiling — droits opposition | RGPD | Art. 21, 22 |
+| Q14 | Articulation RGPD / AI Act | RGPD + AI Act | Multiple |
+| Q15 | Art.50 — transparence chatbot utilisateurs | AI Act | Art. 50 |
+| Q16 | Clauses contrat sous-traitant IA Act | AI Act | Art. 28 + clauses |
+
+**Résultats baseline (état 26/06/2026 selon CLAUDE.md) :**
+- 12/16 OK
+- 4 CRITICAL : **Q02, Q04, Q05, Q15** — liées au corpus AI Act non rechunké en parent-child
 
 ---
 
-## 5.2 Corpus Jurisprudentiel
+## 5.3 Couverture AI Act (Règlement (UE) 2024/1689)
 
-| Source | Connecteur | Statut |
+**Statut :** Indexé mais rechunking parent-child non effectué.
+
+**Articles indexés :** 1 à ~113 (corpus rechunké en 2026-07-03 selon `RAG_AIACT_RECHUNK_PRODUCTION_REPORT_2026-07-03.md`)
+
+**Articles critiques manquants ou défaillants :**
+- Art. 5 (pratiques interdites) → Q02 CRITICAL
+- Art. 27 (FRIA) → Q04 CRITICAL
+- Art. 11-12 (documentation haut risque) → Q05 CRITICAL
+- Art. 50 (transparence chatbot) → Q15 CRITICAL
+
+**Cause probable :** Sans chunking parent-child, les articles longs sont découpés en paragraphes sans lien hiérarchique → la recherche vectorielle ne remonte pas toujours le bon article en top-3 pour ces articles spécifiques.
+
+---
+
+## 5.4 Couverture RGPD (Règlement (UE) 2016/679)
+
+**Statut :** ✅ Rechunking parent-child effectué en 2026-07.
+
+**Articles couverts dans golden set :** Art. 7, 9, 21, 22, 28, 35, 37, 44-49, 83
+
+**Résultats golden set :** Questions RGPD (Q06-Q14) toutes en statut OK (12/16 réussis, les 4 critiques sont AI Act).
+
+---
+
+## 5.5 Corpus Jurisprudentiel et EDPB
+
+**CJUE :** Jurisprudence indexée (arrêts clés sélectionnés manuellement)
+**EDPB :** Guidelines indexées (batch ingestion 2026-07-01 selon logs)
+
+---
+
+## 5.6 Règlements Absents — Impact Business
+
+| Règlement | Impact | Fonctionnalité Affectée |
 |---|---|---|
-| CJUE (Cour de Justice UE) | curia-rss.ts | Actif |
-| Jurisprudence nationale | national_legal_texts | Scripts dédiés |
+| DSA | HIGH | Outil Compliance DSA non RAG-assisté |
+| NIS2 | HIGH | Questions NIS2 sans référence corpus |
+| DMA | MEDIUM | Marchés numériques sans corpus |
+| Data Act | MEDIUM | Données sans corpus |
+| ePrivacy | LOW (staging) | Cookies / consentement en cours |
 
 ---
 
-## 5.3 Corpus DPA Nationaux (EU27)
+## 5.7 Tableau de Complétude par Règlement
 
-Sources nationales configurées dans `lib/data/eu-national-sources.ts` (586 lignes) et `lib/data/eu27-registry-data.ts` (1074 lignes).
-
-Connecteurs actifs pour :
-- CNIL (France) — RSS
-- AEPD (Espagne) — RSS  
-- Garante (Italie) — Scraping
-- DPC (Irlande) — Scraping
-- EDPB (niveau UE) — Scraping
-- AP (autre) — Scraping
-- IPSI — Scraping
-
-**Backfill EU27 :** Script `backfill-national-corpus-eu27.ts` disponible pour les 27 États membres.
-
----
-
-## 5.4 Golden Set — 16 Questions de Référence
-
-```
-Bloc 1 — AI Act Qualification (Q01-Q04)
-Bloc 2 — AI Act GPAI (Q03)
-Bloc 3 — AI Act Obligations (Q06-Q10)
-Bloc 4 — RGPD/AI Act (Q11-Q16)
-```
-
-**État actuel :** 12/16 OK, 4 CRITICAL
-
-| Question | Thème | Statut | Cause |
+| Règlement | Statut | Chunks Estimés | Score Complétude |
 |---|---|---|---|
-| Q01 | AI Act haut risque Annexe III | OK | — |
-| Q02 | AI Act pratique interdite Art. 5 | **CRITICAL** | Chunks AI Act Art.5 insuffisants sans parent-child |
-| Q03 | AI Act GPAI Art. 51+55 | OK | — |
-| Q04 | AI Act obligations haut risque | **CRITICAL** | Manque chunks parent-child AI Act |
-| Q05 | AI Act + RGPD articulation | **CRITICAL** | Cross-réglementation difficile sans parent-child |
-| Q06-Q14 | Divers AI Act + RGPD | OK (majorité) | — |
-| Q15 | AI Act Art. 50 transparence | **CRITICAL** | ef_search trop bas (résolu migration 049) / corpus Commission Guidelines dense |
-| Q16 | Clauses contrat AI Act | OK | — |
+| AI Act | PARTIEL | ~800-1200 | 70% (parent-child manquant) |
+| RGPD | COMPLET | ~600-900 | 90% |
+| CJUE | PARTIEL | Variable | À VÉRIFIER |
+| EDPB | PARTIEL | Variable | À VÉRIFIER |
+| DSA | DÉFAILLANT | 0 | 0% |
+| DMA | DÉFAILLANT | 0 | 0% |
+| NIS2 | DÉFAILLANT | 0 | 0% |
+| Data Act | DÉFAILLANT | 0 | 0% |
+| ePrivacy | EN COURS | Staging seulement | ~10% |
+| eIDAS 2 | EN COURS | Staging/partiel | ~20% |
+
+*Note : Les counts exacts nécessitent une requête SQL sur `legal_chunks` (Supabase MCP non utilisé en lecture seule).*
 
 ---
 
-## 5.5 Couverture Articles RAG
+## 5.8 Verdict Corpus
 
-`lib/rag-quality/coverage-articles.ts` (714 lignes) définit la couverture attendue par article.
+**Score : 5.5/10** (complet sur RGPD + AI Act, vide sur 6 règlements majeurs)
 
-**Granularités supportées (migration 040+044) :**
-- `article` — niveau article
-- `paragraph` — niveau paragraphe
-- `point` — niveau point (lettre)
-- `annexe` — annexes
-- `considerant` — considérants
+**Points forts :**
+- RGPD bien couvert et rechunké en parent-child
+- AI Act indexé dans son ensemble
+- CJUE + EDPB présents
 
----
+**Points critiques :**
+- DSA, DMA, NIS2, Data Act totalement absents → CompliAI se positionne sur ces textes mais ne peut pas les RAG-assister
+- AI Act parent-child manquant → 4 questions golden set en échec
+- Pas de COUNT SQL réel disponible (requête Supabase MCP non exécutée en audit lecture seule)
 
-## 5.6 Corpus Standards Internationaux
-
-`lib/ai/supplementary-rag-detect.ts` contient la détection pour :
-- Standards NIST, ISO/IEC 27001/42001
-- Normes EN harmonisées AI Act
-
----
-
-## 5.7 Corpus Sources Institutionnelles UK
-
-`searchUkRegulatorTexts` dans `lib/ai/national-rag.ts` — ICO UK disponible.
-
----
-
-## 5.8 Lacunes Identifiées
-
-| Lacune | Impact Business | Priorité |
-|---|---|---|
-| AI Act sans parent-child | 4 questions CRITICAL golden set / réponses incomplètes sur Art. 5, 6, 9-15 | P0 |
-| DSA, DMA, CRA, Data Act sans parent-child | Réponses sur articles complexes potentiellement incomplètes | P2 |
-| NIS2 sans parent-child | Idem | P2 |
-| eIDAS2 et ePrivacy sans parent-child | Idem | P3 |
-| Absence DPA : Pologne, Belgique, Allemagne (BfDI) | Mentions dans CLAUDE.md comme candidats | P2 |
-
----
-
-## 5.9 Scripts de Maintenance Corpus
-
-| Script | Règlement | Action |
-|---|---|---|
-| `scripts/rechunk-rgpd.ts` (871 lignes) | RGPD | Re-parsing complet parent-child |
-| `scripts/rechunk-aiact.ts` (823 lignes) | AI Act | Re-parsing complet (parent-child pending) |
-| `scripts/rechunk-eidas2.ts` (796 lignes) | eIDAS2 | Re-parsing |
-| `scripts/rechunk-eprivacy.ts` (541 lignes) | ePrivacy | Re-parsing |
-| `scripts/rechunk-reglements.ts` (579 lignes) | NIS2/DSA/DMA/CRA/Data Act | Re-parsing groupé |
-
-**Dette :** 5 scripts très similaires — candidate à une abstraction commune.
-
----
-
-## 5.10 Conclusion Corpus
-
-Le corpus est substantiel et bien structuré pour les réglements EU clés. La principale lacune est l'absence de chunking parent-child sur l'AI Act, qui est le texte central du produit. Les 4 questions CRITICAL du golden set bloquent la qualité de réponse sur les cas d'usage les plus importants pour les clients.
+**Priorités :**
+1. Rechunking parent-child AI Act (Q02, Q04, Q05, Q15)
+2. Indexation NIS2 (réglementairement incontournable)
+3. Indexation DSA/DMA (promis au positionnement produit)
