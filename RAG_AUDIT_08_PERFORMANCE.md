@@ -1,157 +1,102 @@
-# Audit 08 — Performance et Coûts
+# Section 8 — Performance et Coûts
 
-**Date :** 2026-07-08  
-**Périmètre :** Lecture seule — package.json, migrations, lib/pricing.ts, lib/ai/config.ts
-
----
-
-## 8.1 Bundle Front-end
-
-### Dépendances Lourdes Identifiées
-
-| Package | Poids estimé | Impact |
-|---|---|---|
-| `three.js` (~600KB gzip) | Très lourd | Brain 3D graph — à lazy-loader |
-| `react-force-graph-3d` | Lourd | Dépend de Three.js |
-| `d3` (~500KB) | Lourd | Visualisations |
-| `framer-motion` (~150KB) | Moyen | Animations landing |
-| `@codemirror/*` (5 packages) | Moyen | Éditeur Markdown |
-| `@react-pdf/renderer` | Moyen | PDF côté client |
-
-**Risque :** Sans code splitting agressif, le bundle initial peut être très lourd. Three.js en particulier ne doit être chargé que sur `/dashboard/brain`.
+**Date :** 2026-07-08 | **Mode :** Lecture seule
 
 ---
 
-## 8.2 Performance Base de Données
+## 8.1 Modèles IA et coûts unitaires
 
-### Requêtes Potentiellement Lentes
+Données extraites de `lib/pricing.ts` et `lib/ai/config.ts` :
 
-| Requête | Risque |
-|---|---|
-| `search_legal_chunks_hybrid` avec `ef_search=1000` | Latence augmentée vs ef_search par défaut (40) — nécessite benchmarking |
-| Scan `monitoring_sources` sans filtre `active=true` | Petit table — risque faible |
-| `ai_interaction_logs` sur longues périodes | Table volumineuse avec index sur migration 028 |
-| Requêtes `legal_chunks` sans index sur `regulation` | Full scan sur colonne non indexée |
-
-### HNSW ef_search=1000
-
-Migration 049 force `hnsw.ef_search=1000` dans la fonction de recherche. L'index HNSW a `ef_construction=64` et `m=16`. Avec ef_search=1000 >> ef_construction=64, PostgreSQL scan plus de voisins que nécessaire. Latence estimée : 200-500ms vs 50-100ms avec ef_search=64. À mesurer en production.
-
----
-
-## 8.3 Modèle de Crédits
-
-### Plans et Allocations
-
-```typescript
-// lib/pricing.ts
-haiku:  apiId = "claude-haiku-4-5-20251001"
-sonnet: apiId = "claude-sonnet-4-5"
-opus:   apiId = "claude-opus-4-5"
-
-// Crédits par 1K tokens
-haiku:  0.5 cr/K input, 2.5 cr/K output
-sonnet: 2 cr/K input, 10 cr/K output
-opus:   10 cr/K input, 50 cr/K output
-```
-
-**Plan Free :** Crédits limités, pas d'accès aux outils premium.  
-**Plan Starter (49€/mois) :** Crédits mensuels + achat de packs.  
-**Plans Pro/Enterprise :** Modèles premium + Opus disponible.
-
-### Coûts Réels Anthropic (référence API 2026)
-
-| Modèle | Input | Output | 1 session consultant typique |
-|---|---|---|---|
-| claude-sonnet-4-5 | ~$3/M tokens | ~$15/M tokens | ~$0.05-0.15 |
-| claude-sonnet-4-6 (parsing) | ~$3/M tokens | ~$15/M tokens | ~$0.10-0.50/doc |
-| claude-haiku-4-5 | ~$0.25/M tokens | ~$1.25/M tokens | ~$0.005 |
-
-### Coûts Embeddings OpenAI
-
-| Modèle | Coût |
-|---|---|
-| text-embedding-3-small | ~$0.02/M tokens |
-
----
-
-## 8.4 Projections de Coûts par Palier Utilisateurs
-
-Hypothèses :
-- Utilisateur actif moyen : 20 sessions consultant/mois, 5 documents générés/mois
-- Corpus RAG : ~50K chunks (embedding à l'ingestion uniquement)
-- Monitoring : ~100 documents/mois ingérés
-
-### Estimation Mensuelle (ordres de grandeur)
-
-| Service | 100 users | 500 users | 1000 users | 5000 users |
+| Modèle | API ID | Crédits/1K input | Crédits/1K output | Max tokens |
 |---|---|---|---|---|
-| Anthropic (chat) | ~$30 | ~$150 | ~$300 | ~$1 500 |
-| Anthropic (parsing RAG) | ~$10 | ~$20 | ~$40 | ~$200 |
-| OpenAI (embeddings) | ~$1 | ~$3 | ~$5 | ~$25 |
-| Supabase (DB + vector) | ~$25 | ~$100 | ~$200 | ~$800 |
-| Vercel (hosting) | ~$20 | ~$50 | ~$100 | ~$400 |
-| Upstash Redis | ~$5 | ~$10 | ~$20 | ~$80 |
-| Resend (email) | ~$5 | ~$10 | ~$20 | ~$80 |
-| **Total infra** | **~$96** | **~$343** | **~$685** | **~$3 085** |
+| Haiku | claude-haiku-4-5-20251001 | 0.5 | 2.5 | 4 096 |
+| Sonnet | claude-sonnet-4-5 | 2 | 10 | 8 192 |
+| Opus | claude-opus-4-5 | 10 | 50 | 4 096 |
 
-**Revenus à 49€/mois (100% Starter) :**  
-- 100 users → €4 900/mois (marge ~$4 700)  
-- 500 users → €24 500/mois (marge ~$24 000)  
-- 1000 users → €49 000/mois
+Note : le parsing RAG ingestion utilise `claude-sonnet-4-6` (CLAUDE.md impose Sonnet 4.6 exclusivement pour le corpus).
 
-**Unit economics :** Très favorables. La marge brute est > 90% à tous les paliers.
+**Coût typique d'une question consultant :**
+- Tokens typiques : ~8 000 input (contexte RAG + historique) / ~1 500 output
+- Crédits : ~16 input + ~15 output = ~31 crédits (plan Sonnet)
+- Coût Anthropic réel : ~$0.024 input + ~$0.015 output = **~$0.04 par question**
 
----
-
-## 8.5 Cache Sémantique — Impact sur les Coûts
-
-Le cache sémantique (Upstash, cosine > 0.95, TTL 24h) permet d'éviter les appels Claude sur les questions répétées. Avec 500 utilisateurs actifs partageant des questions similaires (conformité UE = corpus de questions convergent), le cache peut réduire les coûts Anthropic de 20-40%.
+**Coût ingestion (session 2026-07-08 mesurée) :**
+- 20 documents : 610 926 tokens input / 30 889 tokens output
+- Coût estimé Anthropic : ~$1.83 input + ~$0.46 output = **~$2.30 pour 20 documents**
 
 ---
 
-## 8.6 Optimisations Identifiées
+## 8.2 Plans tarifaires
 
-| Optimisation | Impact | Effort |
+| Plan | Crédits/mois | Prix (estimé) | Rate limit |
+|---|---|---|---|
+| Free | 400 | 0€ | 10 req/min |
+| Starter | 4 500 | 49€/mois | 20 req/min |
+| Pro | 18 000 | À VÉRIFIER | 30 req/min |
+| Enterprise | 60 000 | À VÉRIFIER | 60 req/min |
+
+Note : seul le plan Starter à 49€/mois est mentionné dans le CLAUDE.md. Les prix Pro et Enterprise ne sont pas dans les fichiers lus.
+
+---
+
+## 8.3 Projection coûts infrastructure
+
+Hypothèses : 500 utilisateurs actifs, 20 questions/utilisateur/mois = 10 000 questions/mois.
+
+| Service | Base actuelle | 100 users | 500 users | 1 000 users | 5 000 users |
+|---|---|---|---|---|---|
+| **Anthropic (Claude)** | ~$40/mois | ~$80 | ~$400 | ~$800 | ~$4 000 |
+| **OpenAI (embeddings)** | ~$5/mois | ~$10 | ~$30 | ~$60 | ~$300 |
+| **Supabase** | ~$25/mois (Pro) | ~$25 | ~$50 | ~$100 | ~$400 |
+| **Vercel** | ~$20/mois | ~$20 | ~$50 | ~$100 | ~$400 |
+| **Upstash Redis** | ~$0 (free tier) | ~$0 | ~$10 | ~$25 | ~$100 |
+| **Stripe** | 0.5% MRR | ~$25 | ~$125 | ~$250 | ~$1 250 |
+| **Resend (emails)** | ~$0 (free tier) | ~$0 | ~$10 | ~$20 | ~$100 |
+| **TOTAL** | **~$90/mois** | **~$160** | **~$675** | **~$1 355** | **~$6 550** |
+
+**Revenus projetés (plan Starter 49€) :**
+| Users | MRR | Coûts | Marge brute |
+|---|---|---|---|
+| 100 | 4 900€ | ~160€ | **97%** |
+| 500 | 24 500€ | ~675€ | **97%** |
+| 1 000 | 49 000€ | ~1 355€ | **97%** |
+| 5 000 | 245 000€ | ~6 550€ | **97%** |
+
+Unit economics excellents. La marge brute reste >95% même à grande échelle.
+
+---
+
+## 8.4 Performance requêtes
+
+### Routes potentiellement lentes
+
+| Route | Raison | Impact |
 |---|---|---|
-| Lazy-loader Three.js / react-force-graph-3d | Réduction First Load JS | S |
-| Index B-tree sur `legal_chunks.regulation` | Réduction latence requêtes hybrides | S |
-| Ajuster ef_search selon le type de query (pas toujours 1000) | Réduction latence RAG | M |
-| Code splitting agressif pour les outils PDF | Réduction bundle | S |
-| Monitoring des coûts par outil (ai_interaction_logs) | Visibilité coûts | S — déjà partiellement implémenté |
+| `/api/chat` | Appel Claude + RAG hybride + second pass DB | Streaming atténue l'impact |
+| `/api/generate/dpia` | Génération longue (8 192 tokens output) | Streaming SSE |
+| `/api/generate/comparateur` | Comparaison 27 États membres | À mesurer |
+| `/api/journal` | 1 326 lignes de logique, requêtes DB complexes | À instrumenter |
+
+### Requêtes SQL potentiellement lentes
+
+- Recherche hybride `search_legal_chunks_hybrid` : HNSW ef_search=1000 → ~50-200ms (acceptable)
+- Requêtes sur `pending_documents` sans index sur `status` : À VÉRIFIER
+- `monitoring_log` sans index sur `source_id` + `executed_at` : À VÉRIFIER
 
 ---
 
-## 8.7 Rate Limiting et Protection Anti-Abus
+## 8.5 Bundles JavaScript
 
-```typescript
-// lib/ai/config.ts
-AI_RATE_LIMITS = {
-  perUserPerHour: 50,
-  freeTierPerHour: 10,
-}
-```
+Build Next.js disponible dans l'output précédent :
+- First Load JS shared : **87.7 kB** (raisonnable)
+- Middleware : **78.1 kB**
+- Pages les plus lourdes : dashboard/chat (~160 kB), dashboard/jurisprudence (~115 kB), dashboard/comparateur (~115 kB)
 
-Les routes `/api/generate/*` n'ont pas de rate limit HTTP — seulement le débit crédits. Un utilisateur avec beaucoup de crédits peut saturer l'API Anthropic. Le modèle crédits protège partiellement via `preflightCheck`.
+Pas d'images non optimisées détectées (Next.js `<Image>` utilisé). Remote patterns configurés pour Wikimedia et Unsplash.
 
 ---
 
-## 8.8 Streaming
+## 8.6 Score
 
-Le streaming Claude via `streamClaude()` améliore la perception de performance (Time to First Token). L'implémentation SSE est correcte pour Vercel Edge/Node.
-
----
-
-## 8.9 Conclusion Performance
-
-**Points forts :**
-- Cache sémantique Upstash pour le chat
-- Recherche hybride vectorielle + BM25 optimisée (migration 049)
-- Modèle de crédits qui limite naturellement les abus
-- Unit economics très sains (>90% marge brute)
-
-**Points d'amélioration :**
-- ef_search=1000 peut être coûteux en latence — benchmarker
-- Bundle front-end potentiellement lourd (Three.js, D3)
-- Absence d'index sur `legal_chunks.regulation`
-- Rate limit HTTP absent sur les routes de génération
+**73/100** — Unit economics excellents (marge >97%), streaming SSE sur toutes les routes IA, bundles JS raisonnables. Déductions : coût ingestion élevé ($2.30/20 docs), pas d'instrumentation APM sur les routes lentes, index SQL potentiellement manquants.

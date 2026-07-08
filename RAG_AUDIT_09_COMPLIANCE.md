@@ -1,138 +1,107 @@
-# Audit 09 — Conformité et Légal
+# Section 9 — Conformité et Légal (méta-audit)
 
-**Date :** 2026-07-08  
-**Périmètre :** Lecture seule — pages légales, RGPD, AI Act, sous-traitants
+**Date :** 2026-07-08 | **Mode :** Lecture seule
+
+*CompliAI est un outil de conformité. Est-il lui-même conforme ?*
 
 ---
 
-## 9.1 Pages Légales Présentes
+## 9.1 Documents légaux présents
 
-| Page | URL | Présente |
+| Document | Fichier | Statut |
 |---|---|---|
-| Conditions Générales d'Utilisation | `/legal/cgu` | OUI |
-| Politique de confidentialité | `/legal/privacy` | OUI |
-| Mentions légales | `/legal/mentions-legales` | OUI |
-| Avertissement légal | `/legal/disclaimer` | OUI |
+| Politique de confidentialité | `app/(marketing)/legal/privacy/page.tsx` | ✓ Présent |
+| CGU | `app/(marketing)/legal/cgu/page.tsx` | ✓ Présent |
+| Mentions légales | `app/(marketing)/legal/mentions-legales/page.tsx` | ✓ Présent |
+| Disclaimer | `app/(marketing)/legal/disclaimer/page.tsx` | ✓ Présent |
 
-**Bonne pratique :** Les 4 pages légales obligatoires pour un SaaS français opérant dans l'UE sont présentes.
-
----
-
-## 9.2 Transparence Chatbot — Art. 50 AI Act
-
-L'article 50 de l'AI Act impose que les systèmes d'IA qui interagissent avec des personnes physiques indiquent clairement qu'il s'agit d'une IA.
-
-**Analyse :**
-- Le consultant IA (`/dashboard/chat`) est un chatbot textuel
-- La question Q15 du golden set porte précisément sur Art. 50 — elle était CRITICAL avant la migration 049
-- L'interface Chat existe dans `components/chat/ChatInterface.tsx`
-
-**À vérifier dans l'implémentation :**
-- Un message d'introduction indiquant clairement "vous interagissez avec une IA" est-il affiché ?
-- Le terme "consultant" peut être ambigu — à distinguer d'un humain
-
-**Risque :** Sans divulgation explicite conforme Art. 50, CompliAI (un outil de conformité AI Act) serait lui-même non conforme à l'AI Act sur ce point.
+Contenu exact non audité (fichiers non lus intégralement). À VÉRIFIER que les sous-traitants (Supabase, Anthropic, OpenAI, Vercel, Stripe, Resend) sont listés avec localisation des données.
 
 ---
 
-## 9.3 Droits RGPD Utilisateurs
+## 9.2 Cookies et consentement (ePrivacy)
 
-### Droits Théoriquement Couverts
+**CMP consentmanager intégré** dans `app/layout.tsx` :
+```tsx
+src="https://cdn.consentmanager.net/delivery/autoblocking/cfe565ec0275c.js"
+```
+Ajouté le 2026-07-07. ✓
 
-| Droit RGPD | Mécanisme Identifié |
-|---|---|
-| Art. 13/14 — Information | `/legal/privacy` présente |
-| Art. 15 — Accès | `/dashboard/settings` — export données ? |
-| Art. 16 — Rectification | `/dashboard/settings` — modification profil |
-| Art. 17 — Effacement | Suppression compte via Supabase Auth (ON DELETE CASCADE) |
-| Art. 20 — Portabilité | Export CSV/PDF via `/api/audit-trail/export` et `/api/generate/export-pdf` |
-| Art. 21 — Opposition | Non vérifié |
-| Art. 22 — Décision automatisée | CompliAI génère des analyses — voir section 9.5 |
-
-**Suppression en cascade :** Les migrations SQL utilisent `ON DELETE CASCADE` sur les tables liées à `auth.users` — la suppression d'un compte supprime toutes les données associées.
+Analytics détectés : Sentry (monitoring erreurs). Pas de Google Analytics, Mixpanel, PostHog détectés dans le code applicatif. Le scanner de site CompliAI lui-même détecte les trackers — cohérent avec l'absence de trackers invasifs.
 
 ---
 
-## 9.4 Cookies et Tracking
+## 9.3 Art. 50 AI Act — Transparence chatbot IA
 
-`find app -name "*.tsx" | xargs grep -l "privacy\|cookies\|cgu\|mentions"` → trouve les pages légales.
+L'Art. 50 §1 du Règlement (UE) 2024/1689 impose d'informer les utilisateurs qu'ils interagissent avec un système IA lorsqu'il n'est pas évident de le distinguer d'un humain.
 
-**Pas de bandeau cookies identifié** dans les composants marketing. Supabase Auth utilise des cookies de session — ils peuvent être considérés comme "strictly necessary" (exemptés de consentement RGPD). À vérifier si d'autres cookies analytiques sont utilisés.
+**État :** Le chat consultant se présente implicitement comme un outil IA (interface produit "CompliAI"), mais aucune mention explicite "Vous interagissez avec un assistant IA" n'a été détectée dans le code de l'interface chat. Le prompt système interdit au modèle de se signer "CompliAI" — ce qui est une bonne pratique pour éviter la confusion de marque, mais ne suffit pas à satisfaire l'obligation de transparence Art. 50.
 
-**Sentry** (`@sentry/nextjs`) : collecte des données d'erreur incluant potentiellement des informations utilisateur. Doit être mentionné dans la politique de confidentialité.
-
----
-
-## 9.5 DPIA Interne
-
-CompliAI traite des données personnelles de ses utilisateurs et génère des analyses de conformité. Une DPIA interne est recommandée (Art. 35 RGPD) compte tenu du profil des traitements :
-- Données professionnelles sensibles (stratégie IA des entreprises clientes)
-- Traitement automatisé avec scoring/classification
-- Logs d'interactions IA (ai_interaction_logs)
+**Risque :** L'Art. 50 est applicable depuis le 2 août 2025 (GPAI et obligations de transparence). Sanction potentielle : art. 99 §4 → jusqu'à 15M€ ou 3% du CA.
 
 ---
 
-## 9.6 Sous-Traitants (Art. 28 RGPD)
+## 9.4 Localisation des données
 
-Sous-traitants identifiés par l'analyse du code :
+| Service | Région | Transfert hors UE |
+|---|---|---|
+| Supabase (DB + pgvector) | À VÉRIFIER (probablement EU-West) | Possible (société US) |
+| Anthropic (Claude) | USA | ✓ Transfert vers USA |
+| OpenAI (embeddings) | USA | ✓ Transfert vers USA |
+| Vercel (hosting) | Edge mondial | Possible hors UE |
+| Stripe | USA/EU | DPA disponible |
+| Resend (email) | À VÉRIFIER | Possible |
 
-| Sous-traitant | Service | Données transmises | Base légale |
-|---|---|---|---|
-| **Anthropic** | LLM (Claude) | Questions utilisateurs, contexte juridique | Art. 28 RGPD — DPA à vérifier |
-| **OpenAI** | Embeddings | Extraits de documents utilisateurs | Art. 28 RGPD — DPA à vérifier |
-| **Supabase** | Base de données | Toutes données utilisateurs | Art. 28 RGPD — basé en UE ? |
-| **Vercel** | Hébergement | Logs requêtes, headers | Art. 28 RGPD — US company |
-| **Stripe** | Paiements | Données financières | Art. 28 RGPD — certifié |
-| **Resend** | Emails transactionnels | Email utilisateurs | Art. 28 RGPD |
-| **Upstash** | Cache Redis | Questions utilisateurs (cache sémantique) | Art. 28 RGPD |
-| **Sentry** | Monitoring erreurs | Données techniques + identifiants | Art. 28 RGPD |
-
-**Points de vigilance :**
-- Anthropic et OpenAI sont des entreprises américaines — transferts Art. 44-49 RGPD nécessaires (SCCs ou équivalent)
-- Vercel est une entreprise américaine — idem
-- Le cache sémantique Upstash stocke des questions utilisateurs dans Redis — données potentiellement sensibles
+Les transferts vers Anthropic et OpenAI constituent des transferts de données personnelles vers les USA (si les questions des utilisateurs contiennent des données personnelles — probable dans un contexte conformité RGPD). Mécanisme de transfert (SCCs) à vérifier dans les DPA de chaque sous-traitant.
 
 ---
 
-## 9.7 Archivage et Rétention
+## 9.5 Droits des personnes (RGPD Art. 15-17)
 
-| Donnée | Durée de rétention identifiée |
-|---|---|
-| `ai_interaction_logs` | Non définie dans les migrations |
-| `auth_rate_limits` | Cleanup automatique après 24h (migration 024) |
-| `legal_chunks` (historical) | Archivage dans historical_chunks sans durée limite |
-| `processed_stripe_events` | Non définie |
+| Droit | Implémenté | Preuve |
+|---|---|---|
+| Accès (Art. 15) | À VÉRIFIER | Pas de `/api/user/data-export` détectée |
+| Rectification (Art. 16) | Partiel | Profil utilisateur modifiable dans settings |
+| Effacement (Art. 17) | À VÉRIFIER | `grep delete app/api/` trouve des suppressions de documents mais pas de suppression de compte complète |
+| Portabilité (Art. 20) | À VÉRIFIER | Pas d'export RGPD détecté |
+| Opposition (Art. 21) | À VÉRIFIER | |
 
-**Lacune :** Pas de politique de rétention formalisée dans le code pour la majorité des données.
-
----
-
-## 9.8 DPIA Produit — Outil d'Analyse IA
-
-CompliAI inclut une fonctionnalité DPIA (`/dashboard/tools/dpia`) et FRIA (`/dashboard/tools/fria`). Ces outils génèrent des analyses sur les systèmes IA des clients. Il convient que :
-- Les analyses générées ne soient pas considérées comme des décisions juridiques automatisées au sens Art. 22 RGPD
-- Les avertissements légaux appropriés soient présents (voir `/legal/disclaimer`)
+**Risque :** L'absence d'un endpoint d'effacement complet du compte est une non-conformité RGPD. Un utilisateur doit pouvoir demander la suppression de toutes ses données.
 
 ---
 
-## 9.9 NIS2 et Cybersécurité
+## 9.6 Registre des traitements (Art. 30 RGPD)
 
-CompliAI traite et stocke des données stratégiques sur les systèmes IA de ses clients. Si CompliAI est qualifié de "fournisseur de services numériques" au sens NIS2, des obligations de sécurité supplémentaires s'appliquent (notification incidents, mesures techniques).
+Pas de registre des traitements dans le code (pas attendu — c'est un document organisationnel). À maintenir hors code. À VÉRIFIER existence d'un document RoPA interne.
 
 ---
 
-## 9.10 Verdict Conformité
+## 9.7 AI Act — CompliAI comme système IA
 
-**Points forts :**
-- Pages légales complètes (CGU, privacy, mentions, disclaimer)
-- Suppression en cascade RGPD
-- Stripe certifié PCI-DSS
-- Webhook Stripe sécurisé (HMAC)
+CompliAI fournit des analyses juridiques automatisées. Question : est-ce un système IA à haut risque ?
 
-**Lacunes à adresser :**
-- Conformité Art. 50 AI Act du chatbot lui-même (transparence IA)
-- Transferts internationaux Anthropic/OpenAI/Vercel (SCCs à documenter)
-- Politique de rétention des données (ai_interaction_logs)
-- Bandeau cookies à auditer
-- DPIA interne recommandée
-- DPA (Data Processing Agreements) avec Anthropic et OpenAI à vérifier
+- **Art. 6 + Annexe III** : la liste des systèmes haut risque inclut notamment les systèmes utilisés dans l'administration de la justice (point 8). Un outil d'aide à la conformité juridique n'y figure pas explicitement.
+- **Qualification probable :** système IA à usage général (GPAI) ou système IA à risque limité (Art. 50)
+- **Obligations applicables :** Art. 50 (transparence) ✓ à compléter, Art. 53 §1 (obligations fournisseur GPAI) À VÉRIFIER selon classification finale
+
+---
+
+## 9.8 Problèmes identifiés
+
+### P1 — Art. 50 AI Act non respecté (depuis août 2025)
+Pas de mention explicite "assistant IA" dans l'interface chat. Sanction potentielle 15M€.
+
+### P1 — Droit à l'effacement non complet (RGPD Art. 17)
+Pas d'endpoint de suppression complète du compte utilisateur détecté.
+
+### P2 — Transferts USA non documentés
+Anthropic et OpenAI reçoivent les questions des utilisateurs. Mécanisme de transfert (SCCs) à documenter et mentionner dans la politique de confidentialité.
+
+### P2 — Sous-traitants à lister
+Politique de confidentialité à vérifier pour la liste complète : Supabase, Anthropic, OpenAI, Vercel, Stripe, Resend, Upstash, Sentry.
+
+---
+
+## 9.9 Score
+
+**60/100** — CMP consentmanager intégré, pages légales présentes, Sentry pour monitoring. Déductions : Art. 50 AI Act non respecté (applicable depuis août 2025), droit à l'effacement incomplet, transferts USA à documenter.

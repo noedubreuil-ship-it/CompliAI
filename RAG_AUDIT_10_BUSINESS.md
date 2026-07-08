@@ -1,205 +1,123 @@
-# Audit 10 — Business et Produit
+# Section 10 — Business et Produit
 
-**Date :** 2026-07-08  
-**Périmètre :** Lecture seule — Stripe, emails, features, onboarding, analytics
-
----
-
-## 10.1 Intégration Stripe
-
-### Plans et Tarification
-
-```typescript
-// lib/pricing.ts
-Plans : free | starter | pro | enterprise
-Prix annoncé : 49€/mois (plan Starter)
-```
-
-**Routes Stripe identifiées :**
-- `POST /api/stripe/checkout` — Checkout abonnement
-- `POST /api/stripe/checkout-credits` — Achat pack crédits one-time
-- `POST /api/stripe/portal` — Portail client Stripe (gestion abonnement)
-- `POST /api/stripe/webhook` — Webhook Stripe
-- `POST /api/stripe/confirm-credit-pack` — Confirmation achat crédits
-- `GET/POST/DELETE /api/stripe/auto-recharge` — Rechargement automatique
-- `POST /api/stripe/setup-payment-method` — Setup PaymentIntent (Stripe Elements)
-
-**Fonctionnalités Stripe implémentées :**
-- Abonnements récurrents (checkout mode=subscription)
-- Packs de crédits one-time (checkout mode=payment)
-- Portail client (annulation, changement de plan)
-- Rechargement automatique quand les crédits sont bas
-- Setup de méthode de paiement pour rechargement auto
-- Idempotence webhook via `processed_stripe_events`
-- Attribution des crédits post-paiement
-
-**Robustesse :** Le webhook est correctement sécurisé (HMAC). L'idempotence est implémentée. La logique de mappage prix → plan est dans `lib/stripe/plan-mapping.ts`.
+**Date :** 2026-07-08 | **Mode :** Lecture seule
 
 ---
 
-## 10.2 Système de Crédits
+## 10.1 Modèle de facturation
 
-```typescript
-// lib/pricing.ts
-CONSULTANT_CREDITS_TYPICAL = { min: 35, typical: 110, max: 220 }
-CONSULTANT_MIN_CREDITS = { brief: 18, detailed: 42 }
-```
+**Modèle hybride :** abonnement mensuel + packs de crédits.
 
-**Modèle :**
-- Crédits alloués mensuellement selon le plan
-- Crédits supplémentaires achetables en packs
-- Rechargement automatique configurable
-- `preflightCheck()` avant chaque appel IA
-- `billAiCall()` après chaque appel IA (débit en post)
-- Alerte email quand les crédits sont bas
+| Plan | Crédits/mois | Prix affiché | Cible |
+|---|---|---|---|
+| Free | 400 | 0€ | Découverte |
+| Starter | 4 500 | **49€/mois** | PME, DPO solo |
+| Pro | 18 000 | À VÉRIFIER | Équipes conformité |
+| Enterprise | 60 000 | À VÉRIFIER | Grands comptes |
 
----
+**Packs crédits** disponibles séparément (achat one-shot via `/api/stripe/checkout-credits`).
 
-## 10.3 Emails Transactionnels
-
-**Infrastructure :** Resend (lib/email.ts)  
-**From :** `alerts@compliai.eu`
-
-**Emails identifiés dans le code :**
-- Alerte crédits bas (`sendLowCreditsAlert` dans lib/credits.ts)
-- Rapport d'indexation RAG (`notifier.ts` dans lib/rag-production-indexer)
-- Alertes deadlines réglementaires (`/api/cron/deadline-alerts`)
-- Rappels deadlines (`/api/cron/deadline-reminders`)
-
-**Template HTML :** Design branded avec header bleu (#003399) CompliAI.
-
-**Lacune :** Pas d'email de bienvenue/onboarding identifié dans le code. L'email de confirmation Supabase Auth est géré par Supabase directement.
+**Rechargement automatique** configurable (`/api/stripe/auto-recharge`).
 
 ---
 
-## 10.4 Analytics
+## 10.2 Intégration Stripe
 
-**Sentry :** Monitoring erreurs front+back (`@sentry/nextjs`)
+| Fonctionnalité | Statut |
+|---|---|
+| Abonnements récurrents | ✓ (`/api/stripe/checkout`) |
+| Portail client (gestion abonnement) | ✓ (`/api/stripe/portal`) |
+| Packs crédits one-shot | ✓ (`/api/stripe/checkout-credits`) |
+| Rechargement automatique | ✓ (`/api/stripe/auto-recharge`) |
+| Enregistrement méthode paiement | ✓ (`/api/stripe/setup-payment-method`) |
+| Webhook Stripe signé | ✓ (`/api/stripe/webhook` — vérification signature) |
+| Idempotence webhook | ✓ (`/api/stripe/confirm-credit-pack`) |
 
-**`ai_interaction_logs` :** Table dédiée aux logs d'interactions IA avec :
-- Hash de la question (pour questions répétées)
-- Latence
-- Nombre de tokens
-- Warnings guardrails
-- Feedback utilisateur (positif/négatif)
-- Version du prompt
-
-**Dashboard admin AI Logs :** `/dashboard/admin/ai-logs` avec agrégats par outil, top questions, latences p50/p95.
-
-**`/dashboard/analytics`** : Page analytics utilisateur — contenu non audité en détail.
-
-**Pas d'analytics marketing** (pas de Mixpanel, Amplitude, PostHog, Plausible identifiés) — à confirmer.
+Intégration Stripe complète et robuste. Tous les cas d'usage couverts.
 
 ---
 
-## 10.5 Onboarding Utilisateur
+## 10.3 Fonctionnalités implémentées
 
-**Implémenté :**
-- Table `onboarding_steps` (migration 003)
-- Route `POST /api/profile/product-funnel` — tracking funnel produit
-- Crédits offerts à l'inscription (migration 021 : `free_credits_on_signup`)
+20+ outils métier confirmés dans le code :
 
-**Non identifié :**
-- Email de bienvenue
-- Guided tour des fonctionnalités
-- Checklist d'onboarding dans l'UI
-
----
-
-## 10.6 Fonctionnalités Implémentées
-
-### Core Conformité (Opérationnel)
-- Scanner de conformité
-- Classificateur système IA
-- Checklist AI Act
-- DPIA Art. 35 RGPD
-- FRIA Art. 9 AI Act
-- ROPA (Registre des traitements)
-- Documentation Art. 11 AI Act
-- Politique IA
-- Contrats et clauses IA
-- Mémoire de conformité
-
-### Recherche Juridique
-- Consultant RAG (Claude + legal_chunks)
-- Jurisprudence CJUE
-- Résumé d'arrêt
-- Analyse décision DPA
-- Explication d'article
-- Recherche jurisprudentielle avancée
-
-### Outils Business
-- Simulateur obligations
-- Comparateur réglements
-- Quiz conformité
-- Rapport investisseur
-- Audit questionnaire rapide (QR)
-
-### Veille et Monitoring
-- Journal réglementaire
-- Calendrier réglementaire
-- Alertes réglementaires
-- Sources officielles (12 connecteurs)
-
-### Collaboration
-- Organisations multi-utilisateurs
-- Partage de documents et audits
-- API v1 publique (audits, projets, me)
-- Intégrations Slack
-- Webhooks
-
-### Cognitif
-- Brain (graphe de connaissances personnel avec embeddings)
-- Templates de documents
-- Registre des traitements
+| Outil | Route | Statut |
+|---|---|---|
+| Consultant IA (chat) | `/api/chat` | ✓ Production |
+| Classifier AI Act | `/api/generate/classifier` | ✓ Production |
+| DPIA Art.35 | `/api/generate/dpia` | ✓ Production |
+| FRIA Art.27 | `/api/generate/fria` | ✓ Production |
+| Documentation Art.11 + Annexe IV | `/api/generate/art11` | ✓ Production |
+| ROPA (Registre traitements) | `/api/generate/ropa` | ✓ Production |
+| Checklist AI Act | `/api/generate/checklist` | ✓ Production |
+| Comparateur 27 États membres | `/api/generate/comparateur` | ✓ Production |
+| Générateur contrats IA | `/api/generate/contract` | ✓ Production |
+| Générateur politique IA | `/api/generate/policy` | ✓ Production |
+| Clauses contractuelles | `/api/generate/clauses-contrat` | ✓ Production |
+| Mémoire de conformité | `/api/generate/memoire-conformite` | ✓ Production |
+| Investor report | `/api/generate/investor-report` | ✓ Production |
+| Simulateur cas pratique | `/api/generate/simulateur` | ✓ Production |
+| Recherche jurisprudentielle | `/api/generate/recherche-jurisprudentielle` | ✓ Production |
+| Résumé arrêts | `/api/generate/resume-arret` | ✓ Production |
+| Analyse décisions autorités | `/api/generate/analyse-decision` | ✓ Production |
+| Guide arrêts (stream) | `/api/arrets-guide` | ✓ Production |
+| Scanner site web | `/api/generate/scanner` | ✓ Production (bêta) |
+| Cerveau (KM personnel) | `/api/brain/**` | ✓ Production |
+| Journal réglementaire | `/api/journal` | ✓ Production |
+| Calendrier deadlines | `/dashboard/calendar` | ✓ Production |
+| Alertes veille | `/dashboard/alerts` | ✓ Production |
+| Quiz EU | `/api/generate/quiz` | ✓ Production |
+| API publique v1 | `/api/v1/**` | ✓ Production |
+| Intégration Slack | `/api/slack/commands` | ✓ Production |
 
 ---
 
-## 10.7 Fonctionnalités Annoncées vs Implémentées
+## 10.4 Emails transactionnels
 
-D'après le CLAUDE.md (500+ utilisateurs actifs, SaaS en production) et l'analyse du code, toutes les fonctionnalités core semblent implémentées.
-
-**Roadmap V2 identifiée (`V2_ROADMAP.md`) :**
-- Chantiers déjà réalisés : RAG automation (phases 0-6)
-- En cours : parent-child AI Act, internationalisation, DPA supplémentaires
-
----
-
-## 10.8 Intégration Slack
-
-```
-/api/slack/commands — POST (Slack signing vérification ?)
-/api/test-slack — POST (route de debug en production)
-/dashboard/integrations — page d'intégration
-```
-
-**Attention :** `/api/test-slack` est une route de test présente en production. À sécuriser ou supprimer.
+`lib/email.ts` gère les emails via Resend. Types détectés :
+- Bienvenue nouvel utilisateur
+- Alertes crédits bas
+- Alertes deadlines réglementaires
+- Veille réglementaire (regulatory-watch)
+- Notifications équipes
 
 ---
 
-## 10.9 API Publique v1
+## 10.5 Analytics
 
-Trois endpoints documentés :
-- `GET /api/v1/me` — profil utilisateur
-- `GET /api/v1/audits` — liste des audits
-- `GET /api/v1/projects` — liste des projets
+**Aucun outil d'analytics produit détecté** (pas de PostHog, Mixpanel, Amplitude, Plausible, Google Analytics dans le code applicatif).
 
-**Usage :** Accès via API Key (`/dashboard/api-keys`). Permet l'intégration dans les systèmes des clients enterprise.
+Seul Sentry est présent pour le monitoring d'erreurs.
+
+**Impact :** Impossible de mesurer MRR, churn, feature adoption, funnel d'onboarding, NPS. Décisions produit prises à l'aveugle.
 
 ---
 
-## 10.10 Verdict Business
+## 10.6 Onboarding
 
-**Points forts :**
-- Richesse fonctionnelle très élevée pour un produit à 49€/mois
-- Intégration Stripe robuste (abonnements + crédits + portail + rechargement auto)
-- Logs d'interactions IA exploitables pour l'amélioration produit
-- API publique pour les cas enterprise
-- Modèle crédits flexible (mensuel + packs)
+`app/api/profile/product-funnel/route.ts` suggère un funnel d'onboarding. Interface `/dashboard/overview` comme page d'accueil post-connexion. Pas d'onboarding guidé étape-par-étape détecté dans le code.
 
-**Lacunes :**
-- Interface uniquement en français (frein à l'internationalisation)
-- Pas d'email de bienvenue
-- Pas d'analytics produit tiers (Mixpanel/Amplitude)
-- Route de test Slack en production
-- Onboarding utilisateur minimal
+---
+
+## 10.7 Problèmes identifiés
+
+### P1 — Absence totale d'analytics produit
+Impossible de suivre MRR, churn, activation, rétention. Risque de prendre de mauvaises décisions produit.
+
+### P1 — Interface uniquement en français
+Frein majeur à la croissance internationale (cible : entreprises déployant en UE, toutes nationalités).
+
+### P2 — Prix Pro et Enterprise non trouvés dans le code
+À VÉRIFIER dans Stripe dashboard. La grille tarifaire complète n'est pas documentée dans le code.
+
+### P2 — Pas d'onboarding guidé
+Un SaaS B2B complexe (20+ outils) sans onboarding structuré génère du churn à l'activation.
+
+### P3 — Route test-slack en production
+`/api/test-slack/route.ts` ne devrait pas être en production.
+
+---
+
+## 10.8 Score
+
+**77/100** — Intégration Stripe complète et robuste, 20+ outils couvrant le cycle conformité complet, emails transactionnels, API publique v1, Slack. Déductions : absence d'analytics produit, interface FR uniquement, onboarding non guidé.

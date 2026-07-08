@@ -1,175 +1,101 @@
-# Audit 01 — Architecture et Structure du Code
+# Section 1 — Architecture et structure du code
 
-**Date :** 2026-07-08  
-**Périmètre :** Lecture seule — aucune modification  
-**Répertoire :** `/Users/noedubreuil/projects/compliai`
+**Date :** 2026-07-08 | **Mode :** Lecture seule
 
 ---
 
-## 1.1 Métriques Globales
+## 1.1 Métriques codebase
 
 | Métrique | Valeur |
 |---|---|
-| Fichiers TypeScript/TSX (hors node_modules, .next) | 696 |
-| Lignes totales (TS/TSX) | ~104 339 |
-| Migrations SQL | 49 (001 → 049) |
-| Routes API | 97 fichiers `route.ts` |
-| Pages (`page.tsx`) | 72 |
-| Composants React | 57 |
+| Fichiers TypeScript (`.ts`) | 466 |
+| Fichiers React (`.tsx`) | 230 |
+| Fichiers SQL (`.sql`) | 52 |
+| Fichiers Markdown (`.md`) | 97 |
+| **Total LOC TS/TSX** | **104 339** |
+| Fichiers de tests | 62 |
+| Dépendances production | 44 |
+| Dépendances dev | 11 |
 
 ---
 
-## 1.2 Structure Principale
-
-```
-compliai/
-├── app/
-│   ├── (app)/dashboard/**      # Interface authentifiée (50+ pages)
-│   │   ├── admin/              # Pages admin (ai-logs, credits, rag-validation)
-│   │   └── tools/              # Outils métier (20+ outils)
-│   ├── (auth)/auth/**          # Login, reset password
-│   ├── (marketing)/**          # Landing, blog, legal, pricing
-│   ├── (public)/share/**       # Pages partageables (audit, token)
-│   └── api/**                  # 97 routes API
-├── components/
-│   ├── ui/                     # Primitives design system
-│   ├── chat/                   # ChatInterface.tsx (1064 lignes)
-│   ├── audit/, brain/, tools/  # Composants métier
-│   └── dashboard/, marketing/
-├── lib/
-│   ├── ai/                     # Client Claude, RAG, guardrails, config
-│   ├── rag-ingestion/          # Pipeline staging
-│   ├── rag-monitoring/         # Sources officielles (12 connecteurs)
-│   ├── rag-production-indexer/ # Promotion staging→prod
-│   ├── rag-quality/            # Golden set, coverage, drift
-│   ├── data/                   # Données statiques (eu27, calendar, sources)
-│   ├── stripe/                 # Client Stripe, webhooks
-│   ├── email.ts                # Resend (unique fichier)
-│   └── credits.ts, pricing.ts, rate-limit*.ts
-├── scripts/                    # Scripts CLI/cron (30+ scripts)
-├── supabase/migrations/        # 49 migrations SQL
-├── tests/fixtures/             # Fixtures locales pour tests
-└── .github/workflows/          # ci.yml + rag-automation-crons.yml
-```
-
----
-
-## 1.3 Top 10 Fichiers les Plus Volumineux
+## 1.2 Top 15 fichiers les plus volumineux
 
 | Rang | Fichier | Lignes | Rôle |
 |---|---|---|---|
-| 1 | `lib/ai/generators.ts` | 1882 | Générateurs de documents IA (20+ outils) |
-| 2 | `app/api/journal/route.ts` | 1326 | Journal réglementaire (sources + DPA filters) |
-| 3 | `app/(app)/dashboard/tools/checklist/page.tsx` | 1147 | Checklist conformité AI Act |
-| 4 | `lib/data/eu27-registry-data.ts` | 1074 | Données statiques registre EU27 |
-| 5 | `components/chat/ChatInterface.tsx` | 1064 | Interface chat principal |
-| 6 | `app/(app)/dashboard/tools/jurisprudence/page.tsx` | 1027 | Outil jurisprudence |
-| 7 | `app/api/chat/route.ts` | 867 | Route chat consultant RAG |
-| 8 | `app/(marketing)/page.tsx` | 762 | Landing page |
-| 9 | `app/(app)/dashboard/tools/resume-arret/page.tsx` | 733 | Résumé d'arrêt |
-| 10 | `lib/rag-quality/coverage-articles.ts` | 714 | Coverage articles RAG |
+| 1 | `lib/ai/generators.ts` | 1 882 | Tous les générateurs IA — monolithe |
+| 2 | `app/api/journal/route.ts` | 1 326 | Route journal réglementaire |
+| 3 | `app/(app)/dashboard/tools/checklist/page.tsx` | 1 147 | Page checklist AI Act |
+| 4 | `lib/data/eu27-registry-data.ts` | 1 074 | Données registre EU27 statiques |
+| 5 | `components/chat/ChatInterface.tsx` | 1 064 | Interface chat principale |
+| 6 | `app/(app)/dashboard/tools/jurisprudence/page.tsx` | 1 027 | Page jurisprudence |
+| 7 | `scripts/rechunk-rgpd.ts` | 871 | Script re-chunking RGPD |
+| 8 | `app/api/chat/route.ts` | 867 | Route chat IA principale |
+| 9 | `scripts/rechunk-aiact.ts` | 823 | Script re-chunking AI Act |
+| 10 | `scripts/rechunk-eidas2.ts` | 796 | Script re-chunking eIDAS2 |
+| 11 | `app/(marketing)/page.tsx` | 762 | Landing page |
+| 12 | `app/(app)/dashboard/tools/resume-arret/page.tsx` | 733 | Page résumé arrêts |
+| 13 | `lib/rag-quality/coverage-articles.ts` | 714 | Couverture articles RAG |
+| 14 | `app/(app)/dashboard/tools/ropa/page.tsx` | 660 | Page ROPA |
+| 15 | `app/(app)/dashboard/brain/page.tsx` | 632 | Page Cerveau (KM) |
 
-**Problème identifié :** `lib/ai/generators.ts` (1882 lignes) est un fichier monolithique rassemblant tous les générateurs IA. Cela constitue une dette technique notable — le fichier devrait être découpé par domaine (AI Act, RGPD, NIS2, etc.).
-
----
-
-## 1.4 Fichiers > 500 Lignes (Hors Top 10)
-
-- `app/(app)/dashboard/tools/ropa/page.tsx` — 660 lignes  
-- `app/(app)/dashboard/brain/page.tsx` — 632 lignes  
-- `lib/blog/articles.ts` — 596 lignes  
-- `lib/data/eu-national-sources.ts` — 586 lignes  
-- `lib/data/legal-sources.ts` — 559 lignes  
-- `app/(app)/dashboard/admin/rag-validation/RagValidationClient.tsx` — 563 lignes  
-- `scripts/rechunk-rgpd.ts` — 871 lignes  
-- `scripts/rechunk-aiact.ts` — 823 lignes  
-- `scripts/rechunk-eidas2.ts` — 796 lignes  
+Autres fichiers > 500 lignes : `lib/blog/articles.ts` (596), `lib/data/eu-national-sources.ts` (586), `lib/data/legal-sources.ts` (559), `lib/rag-ingestion/pipeline.ts` (503).
 
 ---
 
-## 1.5 Stack Technique Effectif
+## 1.3 Structure du projet
 
-| Couche | Version Effective |
-|---|---|
-| Framework | Next.js 14.2.18 (App Router) |
-| React | 18.3.1 |
-| TypeScript | ^5 |
-| Supabase JS | ^2.45.4 |
-| Anthropic SDK | ^0.90.0 |
-| OpenAI SDK | ^4.68.0 |
-| Stripe | ^17.3.1 |
-| Resend | ^4.0.1 |
-| Framer Motion | ^12.38.0 |
-| Sentry | ^10.51.0 |
-| Zod | ^3.23.8 |
-| Zustand | ^5.0.12 |
-| Vitest | ^3.0.5 |
+```
+compliai/
+├── app/                         # Next.js App Router
+│   ├── (app)/dashboard/         # Interface authentifiée (25+ pages)
+│   ├── (marketing)/             # Pages publiques, blog, legal
+│   ├── (auth)/                  # Auth callback
+│   └── api/                     # 100 routes API
+├── components/                  # 57 composants React
+│   ├── ui/                      # Primitives design system (Radix UI)
+│   └── chat/                    # Interface chat
+├── lib/                         # Modules métier (~300 fichiers)
+│   ├── ai/                      # Clients IA, prompts, RAG (~80 fichiers)
+│   ├── rag-monitoring/          # Connecteurs sources (12 sources)
+│   ├── rag-ingestion/           # Pipeline ingestion Claude
+│   ├── rag-production-indexer/  # Promotion staging → production
+│   ├── rag-quality/             # Golden set, couverture, drift
+│   ├── stripe/                  # Facturation et plans
+│   └── data/                    # Données statiques EU27, blog
+├── scripts/                     # Scripts maintenance RAG (~30 fichiers)
+├── supabase/migrations/         # 52 migrations SQL versionnées avec ROLLBACK
+├── tests/fixtures/              # Fixtures locales sources officielles
+└── .github/workflows/           # 1 workflow GitHub Actions (crons RAG)
+```
 
-**Modèles IA effectifs :**
-- Chat/consultant : `claude-sonnet-4-5` (config.ts default, surchargeble via `AI_DEFAULT_MODEL`)
-- Parsing RAG : `claude-sonnet-4-6` (types.ts, figé)
-- Embeddings : `text-embedding-3-small` 1536d (OpenAI, figé)
-- Modèle routing premium : Opus disponible pour plan Pro (`claude-opus-4-5`)
+**Conventions :** kebab-case pour fichiers/dossiers ✓, PascalCase pour composants et types exportés ✓, camelCase pour variables/fonctions ✓. Cohérence globale satisfaisante.
 
-**Attention :** `AI_CONFIG.model` pointe sur `claude-sonnet-4-5` alors que le CLAUDE.md mentionne `claude-sonnet-4-6`. Le modèle de chat n'est pas Sonnet 4.6 par défaut — c'est Sonnet 4.5 sauf si `AI_DEFAULT_MODEL` est surchargé en env.
-
----
-
-## 1.6 Conventions de Nommage
-
-**Observées :**
-- Fichiers/dossiers : kebab-case (conforme)
-- Composants React : PascalCase (conforme)
-- Variables/fonctions : camelCase (conforme)
-- Types/interfaces exportés : PascalCase (conforme)
-- Routes API : `app/api/<domaine>/route.ts` (conforme)
-- Migrations : `<NNN>_<description>.sql` (conforme)
+**Séparation des responsabilités :** correcte. `lib/` contient la logique métier, `app/api/` les endpoints, `components/` l'UI. Pas de logique métier dans les composants.
 
 ---
 
-## 1.7 Duplication et Dette Technique Identifiées
+## 1.4 Problèmes identifiés
 
-| Dette | Localisation | Impact |
-|---|---|---|
-| `generators.ts` monolithique (1882 lignes) | `lib/ai/generators.ts` | Maintenabilité difficile |
-| Rate limiter in-memory (non distribué) | `lib/rate-limit.ts` | Multi-instance Vercel → state perdu |
-| Rate limiter distribué existe mais non actif partout | `lib/rate-limit-distributed.ts` | Incohérence |
-| Scripts rechunk dupliqués (rgpd/aiact/eidas2/reglements/eprivacy) | `scripts/rechunk-*.ts` | 5 fichiers très similaires |
-| `createClient` avec service_role répété dans chaque route API | Multiple routes admin | Absence d'abstraction centralisée |
-| Worktree `.claude/worktrees/` contient du code dupliqué | `.claude/worktrees/` | 987 lignes en doublon |
+### P2 — lib/ai/generators.ts (1 882 lignes) — Monolithe
+Tous les générateurs IA (DPIA, ROPA, checklist, classifier, Art.11, FRIA, contrats, mémoire, investor report…) dans un seul fichier. Devrait être découpé par domaine : `generators/dpia.ts`, `generators/checklist.ts`, etc.
+**Impact :** Diffs difficiles à lire, conflits Git fréquents, impossibilité de tester unitairement chaque générateur.
 
----
+### P2 — app/api/journal/route.ts (1 326 lignes) — Route monolithique
+Une route API de 1 326 lignes mélange logique métier, accès DB et formatage de réponse.
+**Impact :** Maintenabilité dégradée, difficile à déboguer.
 
-## 1.8 Organisation des Tests
+### P3 — Worktree résiduel dans .claude/
+Le dossier `.claude/worktrees/romantic-ellis-8353c8/` contient des copies de fichiers de production et pollue les grep/wc. À supprimer.
 
-- Tests unitaires : colocaux (`*.test.ts` à côté du code source)
-- Fixtures : `tests/fixtures/`
-- Couverture : pipeline RAG (`lib/rag-ingestion/`, `lib/rag-production-indexer/`, `lib/rag-quality/`), monitoring sources (12 fichiers `.test.ts`)
-- Absence notable : tests sur les routes API (`app/api/**`) et les composants UI
+### P3 — Couverture tests < 15% sur API et UI
+62 fichiers de tests concentrés sur `lib/ai/` et `lib/rag-*/`. Aucun test sur les 100 routes API ni sur les 57 composants React.
 
----
-
-## 1.9 GitHub Actions
-
-Deux workflows actifs :
-1. **`ci.yml`** : CI de validation
-2. **`rag-automation-crons.yml`** : Monitoring quotidien 06:00 UTC + Ingestion toutes les 6h
-
-**Attention :** Le workflow RAG est planifié (`schedule`) mais le CLAUDE.md indique que les crons ne sont pas encore activés en production (état au 26/06/2026). À vérifier si le workflow est réellement actif.
+### P3 — Coexistence lib/ai/prompts.ts et lib/ai/prompts/
+Un fichier `lib/ai/prompts.ts` à la racine de `lib/ai/` coexiste avec le dossier `lib/ai/prompts/`. Vérifier si le fichier racine est encore utilisé ou s'il est un reliquat.
 
 ---
 
-## 1.10 Verdict Architecture
+## 1.5 Score
 
-**Points forts :**
-- Structure Next.js App Router propre avec route groups logiques
-- Séparation claire lib/app/components
-- Pipeline RAG bien découpé en modules (monitoring → ingestion → staging → indexer → quality)
-- TypeScript strict appliqué
-- Migrations SQL versionnées séquentiellement avec blocs ROLLBACK
-
-**Points à améliorer :**
-- `generators.ts` doit être découpé
-- Rate limiter in-memory inadapté à Vercel multi-instance
-- Absence de tests API routes
-- Modèle par défaut (`claude-sonnet-4-5`) diverge de la documentation (`claude-sonnet-4-6`)
+**72/100** — Architecture Next.js App Router propre, conventions cohérentes, bonne séparation des responsabilités. Déductions : monolithe generators.ts, route journal trop volumineuse, couverture tests insuffisante sur API/UI.
