@@ -93,4 +93,5 @@ export const RATE_LIMITS = {
   generate: { limit: 10, windowSec: 60 },        // 10 generations/min
   pdf: { limit: 20, windowSec: 60 },             // 20 PDF downloads/min
   search: { limit: 30, windowSec: 60 },          // 30 searches/min
+  admin: { limit: 30, windowSec: 60 },           // 30 req/min pour les routes admin
 };

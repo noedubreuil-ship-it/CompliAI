@@ -1,15 +1,19 @@
 import { NextResponse } from "next/server";
 
-import { isAdmin } from "@/lib/admin";
+import { isAdmin, getAuthUser } from "@/lib/admin";
 import { ingestSupplementaryCorpusSeeds } from "@/lib/ingest/supplementary-corpus-ingest";
+import { rateLimitUser, RATE_LIMITS } from "@/lib/rate-limit";
 
 export const maxDuration = 180;
 
 /** Déclenche l’indexation du corpus complémentaire (admin uniquement). */
 export async function POST() {
-  if (!(await isAdmin())) {
+  const user = await getAuthUser();
+  if (!user || !(await isAdmin())) {
     return NextResponse.json({ error: "Accès réservé aux administrateurs" }, { status: 403 });
   }
+  const limited = await rateLimitUser(user.id, "admin", RATE_LIMITS.admin);
+  if (limited) return limited;
 
   try {
     const report = await ingestSupplementaryCorpusSeeds();

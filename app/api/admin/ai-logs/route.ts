@@ -10,8 +10,9 @@
  * - Distribution des versions de prompt
  */
 import { NextResponse } from "next/server";
-import { isAdmin } from "@/lib/admin";
+import { isAdmin, getAuthUser } from "@/lib/admin";
 import { createClient } from "@supabase/supabase-js";
+import { rateLimitUser, RATE_LIMITS } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -29,9 +30,12 @@ function percentile(sorted: number[], p: number): number {
 }
 
 export async function GET(request: Request) {
-  if (!(await isAdmin())) {
+  const user = await getAuthUser();
+  if (!user || !(await isAdmin())) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
+  const limited = await rateLimitUser(user.id, "admin", RATE_LIMITS.admin);
+  if (limited) return limited;
 
   const url = new URL(request.url);
   const days = Math.min(parseInt(url.searchParams.get("days") ?? "7"), 90);

@@ -1,14 +1,18 @@
 import { NextResponse } from "next/server";
 import { isAdmin, listUsersWithCredits, adminAdjustCredits, getAuthUser } from "@/lib/admin";
 import { z } from "zod";
+import { rateLimitUser, RATE_LIMITS } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
 // GET /api/admin/credits?page=1&pageSize=50&search=...
 export async function GET(request: Request) {
-  if (!(await isAdmin())) {
+  const user = await getAuthUser();
+  if (!user || !(await isAdmin())) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
+  const limited = await rateLimitUser(user.id, "admin", RATE_LIMITS.admin);
+  if (limited) return limited;
 
   const url = new URL(request.url);
   const page = parseInt(url.searchParams.get("page") ?? "1");
@@ -35,6 +39,8 @@ export async function POST(request: Request) {
   if (!adminUser || !(await isAdmin())) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
+  const limited = await rateLimitUser(adminUser.id, "admin", RATE_LIMITS.admin);
+  if (limited) return limited;
 
   const body = await request.json();
   const parsed = AdjustSchema.safeParse(body);

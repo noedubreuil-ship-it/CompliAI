@@ -4,6 +4,7 @@ import { createClient as createAdmin } from "@supabase/supabase-js";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { createElement } from "react";
 import { CertificatePDF } from "@/lib/pdf/certificate";
+import { rateLimitUser, RATE_LIMITS } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -16,6 +17,9 @@ export async function GET(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+
+  const limited = await rateLimitUser(user.id, "certificate", RATE_LIMITS.generate);
+  if (limited) return limited;
 
   const url = new URL(request.url);
   const auditId = url.searchParams.get("auditId");
