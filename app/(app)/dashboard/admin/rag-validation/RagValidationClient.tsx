@@ -120,7 +120,37 @@ export function RagValidationClient() {
       const res = await fetch(`/api/admin/rag-validation/documents?${params}`);
       if (res.ok) {
         const data = await res.json();
-        setDocuments(data.documents ?? []);
+        const docs: DocumentWithStats[] = data.documents ?? [];
+        setDocuments(docs);
+
+        // Traduction en arrière-plan des titres non-français
+        const toTranslate = docs.filter(
+          (d) => d.title && !["fr", "FR", "fra"].includes(d.language)
+        );
+        if (toTranslate.length > 0) {
+          fetch("/api/admin/translate-titles", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              documents: toTranslate.map((d) => ({
+                id: d.id,
+                title: d.title,
+                language: d.language,
+              })),
+            }),
+          })
+            .then((r) => r.ok ? r.json() : null)
+            .then((data: { translations?: { id: string; title_fr: string }[] } | null) => {
+              if (!data?.translations) return;
+              const map = new Map(data.translations.map((t) => [t.id, t.title_fr]));
+              setDocuments((prev) =>
+                prev.map((d) =>
+                  map.has(d.id) ? { ...d, title_fr: map.get(d.id) } : d
+                )
+              );
+            })
+            .catch(() => {});
+        }
       }
     } finally {
       setLoadingDocs(false);
