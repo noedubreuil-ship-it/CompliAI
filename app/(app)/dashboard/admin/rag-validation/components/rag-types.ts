@@ -5,6 +5,7 @@
 export interface DocumentWithStats {
   id: string;
   title: string | null;
+  title_fr?: string | null;
   document_type: string;
   celex: string | null;
   ecli: string | null;

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, FileText, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { ChevronRight, CheckCircle2, XCircle, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DocumentWithStats,
@@ -65,10 +65,19 @@ export function DocumentCard({ doc, isSelected, onSelect, onApproveAll, onReject
             {" "}{typeLabel}
           </span>
 
-          {/* Title */}
+          {/* Title — traduit en français si disponible */}
           <p className="mt-1 text-sm font-medium text-neutral-900 dark:text-neutral-100 line-clamp-2 leading-snug">
-            {doc.title ?? identifier}
+            {doc.title_fr ?? doc.title ?? identifier}
           </p>
+          {/* Titre original + badge langue si traduction disponible */}
+          {doc.title_fr && doc.title && doc.title_fr !== doc.title && (
+            <p className="mt-0.5 text-[10px] text-neutral-400 dark:text-neutral-500 line-clamp-1 italic">
+              <span className="inline-block mr-1 rounded bg-neutral-100 dark:bg-white/10 px-1 py-px font-mono not-italic text-neutral-500 dark:text-neutral-400">
+                {doc.language.toUpperCase()}
+              </span>
+              {doc.title}
+            </p>
+          )}
 
           {/* Identifier */}
           {doc.title && (
