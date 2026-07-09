@@ -20,6 +20,9 @@ import {
   HelpCircle,
   Key,
   Lock,
+  Database,
+  Users,
+  Activity,
 } from "lucide-react";
 import { useTheme } from "@/components/ui/dark-mode-provider";
 import { cn } from "@/lib/utils";
@@ -60,6 +63,7 @@ interface DashboardNavbarProps {
   userEmail: string;
   userName: string;
   tier: string;
+  isAdmin?: boolean;
 }
 
 function NavDropdownPanel({
@@ -159,7 +163,7 @@ function MobileNavLink({
   );
 }
 
-export function DashboardNavbar({ userEmail, userName, tier }: DashboardNavbarProps) {
+export function DashboardNavbar({ userEmail, userName, tier, isAdmin = false }: DashboardNavbarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
@@ -335,6 +339,26 @@ export function DashboardNavbar({ userEmail, userName, tier }: DashboardNavbarPr
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
+
+              {isAdmin && (
+                <div className="mt-4 space-y-1 border-t border-neutral-100 dark:border-white/10 px-1 pt-4">
+                  <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Admin</p>
+                  {[
+                    { href: "/dashboard/admin/rag-validation", icon: Database, label: "Validation RAG" },
+                    { href: "/dashboard/admin/credits", icon: Users, label: "Crédits utilisateurs" },
+                    { href: "/dashboard/admin/ai-logs", icon: Activity, label: "Logs IA" },
+                  ].map(({ href, icon: Icon, label }) => (
+                    <Link
+                      key={href}
+                      href={href}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:text-amber-900 dark:hover:text-amber-200"
+                    >
+                      <Icon className="h-4 w-4 text-amber-500 dark:text-amber-400" />
+                      {label}
+                    </Link>
+                  ))}
+                </div>
+              )}
 
               <div className="mt-4 space-y-1 border-t border-neutral-100 dark:border-white/10 px-1 pt-4">
                 <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Compte</p>

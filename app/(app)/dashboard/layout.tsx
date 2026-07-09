@@ -23,7 +23,7 @@ export default async function DashboardLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, subscription_tier")
+    .select("full_name, subscription_tier, role")
     .eq("id", user.id)
     .single();
 
@@ -36,6 +36,7 @@ export default async function DashboardLayout({
           userEmail={user.email ?? ""}
           userName={profile?.full_name ?? ""}
           tier={profile?.subscription_tier ?? "free"}
+          isAdmin={profile?.role === "admin"}
         />
 
         <main className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
