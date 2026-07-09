@@ -81,12 +81,14 @@ export async function runQuestion(q: GoldenQuestion): Promise<QuestionResult> {
     similarity: c.similarity ?? 0,
   }));
 
-  // Second pass : si des articles critiques manquent après la passe principale,
+  // Second pass : si des articles critiques ou importants manquent après la passe principale,
   // certaines sources polluantes (ex: Commission Guidelines en anglais) peuvent
   // monopoliser les slots. On réinterroge avec un filtre par règlement.
+  // Étendu aux articles "important" (2026-07-09) : Q05 Art.51, Q09 Art.44, Q15 Art.26
+  // ne remontaient pas car la passe de secours ne couvrait que "critical".
   const criticalRegsMissing = new Set(
     q.required_articles
-      .filter(ra => ra.severity === "critical" && !returnedChunks.some(c => chunkMatchesRef(c, ra)))
+      .filter(ra => !returnedChunks.some(c => chunkMatchesRef(c, ra)))
       .map(ra => ra.regulation)
   );
   for (const reg of criticalRegsMissing) {
