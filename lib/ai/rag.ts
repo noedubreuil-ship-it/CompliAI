@@ -14,6 +14,12 @@ function getSupabaseAdmin() {
 /**
  * Score a chunk against the query by counting keyword matches.
  * Combined with vector similarity, this gives a better overall ranking.
+ *
+ * Scoring breakdown :
+ *  - 60 % body overlap  : mots de la requête présents dans regulation + article_title + content
+ *  - 40 % article boost : numéros d'articles explicitement cités dans la requête (ex: "art. 44", "article 26")
+ *    → évite que des articles contextuels ("important" severity) soient enterrés sous des chunks
+ *    sémantiquement proches mais traitant d'un autre article.
  */
 function keywordScore(query: string, chunk: LegalChunk): number {
   const words = query
@@ -22,16 +28,31 @@ function keywordScore(query: string, chunk: LegalChunk): number {
     .split(/\s+/)
     .filter((w) => w.length > 3);
 
-  if (words.length === 0) return 0;
+  const bodyScore = (() => {
+    if (words.length === 0) return 0;
+    const target = `${chunk.regulation ?? ""} ${chunk.article_title ?? ""} ${chunk.content}`.toLowerCase();
+    const matches = words.filter((w) => target.includes(w)).length;
+    return matches / words.length;
+  })();
 
-  const target = `${chunk.regulation ?? ""} ${chunk.article_title ?? ""} ${chunk.content}`.toLowerCase();
-  const matches = words.filter((w) => target.includes(w)).length;
-  return matches / words.length;
+  // Boost si la requête mentionne explicitement le numéro d'article du chunk
+  const articleBoost = (() => {
+    const artNum = chunk.article_number?.trim();
+    if (!artNum) return 0;
+    // Cherche "art. 44", "article 44", "Art.44", "44 RGPD", etc.
+    const artPattern = new RegExp(`\\bart\\.?\\s*${artNum}\\b|\\barticle\\s+${artNum}\\b`, "i");
+    return artPattern.test(query) ? 0.4 : 0;
+  })();
+
+  return bodyScore * 0.6 + articleBoost;
 }
 
 /**
  * Re-rank chunks by combining vector similarity score with keyword overlap.
  * Chunks with matching keywords are pushed to the top.
+ *
+ * Poids : cosine 70 % + keyword 30 %.
+ * Le keyword score intègre lui-même un boost article (voir keywordScore).
  */
 function rerankChunks(query: string, chunks: LegalChunk[]): LegalChunk[] {
   return chunks
@@ -41,6 +62,22 @@ function rerankChunks(query: string, chunks: LegalChunk[]): LegalChunk[] {
     }))
     .sort((a, b) => b.score - a.score)
     .map(({ chunk }) => chunk);
+}
+
+/**
+ * Recherche hybride optimisée pour le chat production.
+ * Paramètres plus agressifs que la version de base :
+ *  - seuil plus bas (0.20 vs 0.25) pour ne pas filtrer les articles courts
+ *  - matchCount configurable (défaut 10)
+ * Utilisé par app/api/chat/route.ts depuis la migration vers hybrid search (2026-07-09).
+ */
+export async function searchLegalChunksHybridChat(
+  query: string,
+  matchCount = 10,
+  threshold = 0.20,
+  regulationPrefix?: string
+): Promise<LegalChunk[]> {
+  return searchLegalChunksHybrid(query, matchCount, threshold, regulationPrefix);
 }
 
 export async function searchLegalChunks(

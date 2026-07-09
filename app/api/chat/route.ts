@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { searchLegalChunks, buildLegalContext } from "@/lib/ai/rag";
+import { searchLegalChunks, searchLegalChunksHybridChat, buildLegalContext } from "@/lib/ai/rag";
 import {
   resolveNationalStatuteChunksForChat,
   searchEuCaseLawTexts,
@@ -139,9 +139,13 @@ export async function POST(request: Request) {
   const asksMultiArticle =
     /chapitre\s+[IVX\d]+|articles?\s+\d+\s*(à|au|et)\s*\d+|art\.\s*\d+\s*(à|et)\s*\d+/i.test(question) ||
     /chapter\s+[IVX\d]+|articles?\s+\d+\s*(to|and|through)\s*\d+/i.test(question);
-  const ragMatchCount = asksMultiArticle ? 15 : nationalRagCountries.length > 0 ? 5 : 8;
-  const ragThreshold = 0.55;
-  let rawChunks = await searchLegalChunks(ragQuery, ragMatchCount, ragThreshold);
+  const ragMatchCount = asksMultiArticle ? 15 : nationalRagCountries.length > 0 ? 5 : 10;
+  // Hybrid search (cosine 60% + BM25 40%) remplace le cosine seul (2026-07-09).
+  // Seuil 0.20 (vs 0.55 cosine seul) : BM25 peut scorer des chunks à cosine faible
+  // mais pertinents par leurs termes (ex: Art.44 "interdiction principe" sur query "transferts").
+  // matchCount +2 (10 vs 8) : compense le fait que BM25 peut ramener des chunks moins denses.
+  const ragThreshold = 0.20;
+  let rawChunks = await searchLegalChunksHybridChat(ragQuery, ragMatchCount, ragThreshold);
   mark("rag_base");
 
   // Second pass : récupération directe des articles explicitement mentionnés dans la question.
