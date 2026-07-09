@@ -50,6 +50,7 @@ export function ChunkPanel({
 }: ChunkPanelProps) {
   const [jsonExpanded, setJsonExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copiedContent, setCopiedContent] = useState(false);
 
   const chunk = chunks[currentIndex];
   if (!chunk) {
@@ -189,8 +190,22 @@ export function ChunkPanel({
           </div>
 
           {/* Contenu textuel */}
-          <div className="text-sm text-neutral-900 dark:text-neutral-100 leading-relaxed whitespace-pre-wrap font-sans">
-            {chunk.content}
+          <div className="relative group">
+            <button
+              onClick={async () => {
+                await navigator.clipboard.writeText(chunk.content);
+                setCopiedContent(true);
+                setTimeout(() => setCopiedContent(false), 2000);
+              }}
+              className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center gap-1 rounded bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-white/15 px-1.5 py-0.5 text-[10px] font-medium text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-white shadow-sm"
+              title="Copier le texte"
+            >
+              {copiedContent ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+              {copiedContent ? "Copié" : "Copier"}
+            </button>
+            <div className="text-sm text-neutral-900 dark:text-neutral-100 leading-relaxed whitespace-pre-wrap font-sans select-text pr-16">
+              {chunk.content}
+            </div>
           </div>
 
           {chunk.rejection_reason && (
