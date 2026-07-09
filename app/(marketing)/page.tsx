@@ -6,6 +6,7 @@ import { EUFlagSVG } from "@/components/EUFlag";
 import { HeroBackground } from "@/components/marketing/HeroBackground";
 import { MarketingSiteFooter } from "@/components/marketing/MarketingSiteFooter";
 import { loginRedirectHref } from "@/lib/marketing/site-links";
+import { cn } from "@/lib/utils";
 import {
   Shield, CheckCircle2, ArrowRight, FileSearch, MessageSquare,
   Bell, BookOpen, AlertTriangle, Menu, X, Star, Lock, FileText,
@@ -29,6 +30,11 @@ const REGULATIONS = [
   { name: "DSA", ref: "UE 2022/2065", year: "2022" },
   { name: "DMA", ref: "UE 2022/1925", year: "2022" },
   { name: "Data Act", ref: "UE 2023/2854", year: "2023" },
+  { name: "DORA", ref: "UE 2022/2554", year: "2022" },
+  { name: "NIS2", ref: "UE 2022/2555", year: "2022" },
+  { name: "CRA", ref: "UE 2024/2847", year: "2024" },
+  { name: "eIDAS 2", ref: "UE 2024/1183", year: "2024" },
+  { name: "DGA", ref: "UE 2022/868", year: "2022" },
 ];
 
 const TOOLS = [
@@ -178,6 +184,79 @@ function Nav() {
   );
 }
 
+/* ─── Aperçu produit ────────────────────────────────────────────────────────
+   Affiche public/product-preview.png si présent, sinon un mock du consultant.
+   Pour remplacer : déposer une capture d'écran de l'app dans public/product-preview.png
+   (idéalement le consultant juridique avec une réponse sourcée), ou une vidéo plus tard.
+────────────────────────────────────────────────────────────────────────────── */
+
+function ProductPreview() {
+  // Le mock s'affiche par défaut ; si public/product-preview.png existe et se
+  // charge, on bascule sur la vraie capture. Robuste sans dépendre de onError.
+  const [imgOk, setImgOk] = useState(false);
+
+  useEffect(() => {
+    const probe = new Image();
+    probe.onload = () => { if (probe.naturalWidth > 0) setImgOk(true); };
+    probe.src = "/product-preview.png";
+  }, []);
+
+  return (
+    <div className="rounded-3xl border border-black/[0.08] bg-[#F5F5F7] shadow-[0_20px_80px_rgba(0,0,0,0.12)] overflow-hidden">
+      {/* Barre fenêtre */}
+      <div className="flex items-center gap-1.5 px-4 py-3 border-b border-black/[0.06] bg-white/60">
+        <span className="w-2.5 h-2.5 rounded-full bg-[#FF5F57]" />
+        <span className="w-2.5 h-2.5 rounded-full bg-[#FEBC2E]" />
+        <span className="w-2.5 h-2.5 rounded-full bg-[#28C840]" />
+        <span className="ml-3 text-[11px] text-[#6E6E73] font-medium">app.compliai.eu · Consultant juridique</span>
+      </div>
+
+      {imgOk ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src="/product-preview.png"
+          alt="Aperçu du consultant juridique CompliAI : question posée et réponse sourcée"
+          className="block w-full h-auto"
+          onError={() => setImgOk(false)}
+        />
+      ) : (
+        <div className="p-6 md:p-8 space-y-4 bg-white">
+          {/* Question utilisateur */}
+          <div className="flex justify-end">
+            <div className="max-w-[80%] bg-[#003399] text-white text-sm rounded-2xl rounded-br-md px-4 py-2.5 leading-relaxed">
+              Mon chatbot doit-il informer l&apos;utilisateur qu&apos;il parle à une IA ?
+            </div>
+          </div>
+          {/* Réponse assistant */}
+          <div className="flex gap-3">
+            <div className="w-8 h-8 rounded-full bg-[#003399] flex items-center justify-center shrink-0">
+              <Shield className="h-4 w-4 text-white" />
+            </div>
+            <div className="flex-1 space-y-3">
+              <div className="bg-[#F5F5F7] rounded-2xl rounded-tl-md px-4 py-3 text-sm text-[#1D1D1F] leading-relaxed">
+                Oui. L&apos;<strong>article 50 §1 de l&apos;AI Act</strong> impose une obligation de transparence :
+                les systèmes d&apos;IA destinés à interagir avec des personnes physiques doivent les informer
+                qu&apos;elles communiquent avec une IA, sauf si cela est manifeste au vu du contexte.
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { t: "AI Act · Art. 50 §1", c: "bg-indigo-100 text-indigo-800" },
+                  { t: "AI Act · considérant 132", c: "bg-indigo-100 text-indigo-800" },
+                  { t: "EUR-Lex", c: "bg-blue-100 text-blue-800" },
+                ].map((s) => (
+                  <span key={s.t} className={cn("inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded", s.c)}>
+                    <BookOpen className="h-3 w-3" /> {s.t}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── Page ──────────────────────────────────────────────────────────────────── */
 
 export default function LandingPage() {
@@ -254,10 +333,10 @@ export default function LandingPage() {
         <div className="max-w-[980px] mx-auto px-5 py-14">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
-              { val: "5 min", sub: "Pour un audit complet" },
+              { val: "43", sub: "Règlements & textes EU" },
+              { val: "14 276", sub: "Extraits officiels indexés" },
+              { val: "Quotidienne", sub: "Mise à jour automatique" },
               { val: "16", sub: "Outils juridiques IA" },
-              { val: "5", sub: "Règlements EU couverts" },
-              { val: "33", sub: "Sources de veille" },
             ].map(({ val, sub }) => (
               <div key={sub}>
                 <p className="font-bold tracking-[-0.03em] text-[#1D1D1F] mb-1"
@@ -265,6 +344,63 @@ export default function LandingPage() {
                   {val}
                 </p>
                 <p className="text-xs text-[#6E6E73] leading-snug">{sub}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          APERÇU PRODUIT — capture d'écran (remplaçable par vidéo)
+      ══════════════════════════════════════════════════════════════════════ */}
+      <section className="bg-white pt-20 pb-8">
+        <div className="max-w-[980px] mx-auto px-5 text-center">
+          <p className="text-xs font-semibold text-[#003399] tracking-widest uppercase mb-4">Aperçu produit</p>
+          <h2 className="font-bold tracking-[-0.03em] text-[#1D1D1F] mb-3"
+            style={{ fontSize: "clamp(1.8rem, 4vw, 2.8rem)" }}>
+            Le consultant juridique, en action.
+          </h2>
+          <p className="text-[#6E6E73] text-sm max-w-[520px] mx-auto mb-10">
+            Posez votre question en langage naturel. CompliAI répond avec les articles, considérants
+            et décisions exacts — chaque source est citée et vérifiable.
+          </p>
+        </div>
+        <div className="max-w-[900px] mx-auto px-5">
+          <ProductPreview />
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          MÉTHODOLOGIE / CRÉDIBILITÉ
+      ══════════════════════════════════════════════════════════════════════ */}
+      <section className="bg-white py-16 border-b border-black/[0.06]">
+        <div className="max-w-[980px] mx-auto px-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              {
+                icon: Zap,
+                title: "Mise à jour quotidienne",
+                desc: "Le corpus est actualisé automatiquement chaque jour depuis les sources officielles. Votre conformité reste à jour sans effort.",
+              },
+              {
+                icon: BookOpen,
+                title: "Sources officielles citées",
+                desc: "Chaque réponse renvoie aux textes exacts : EUR-Lex, CJUE, EDPB et autorités nationales. Rien n'est inventé, tout est vérifiable.",
+              },
+              {
+                icon: Scale,
+                title: "43 règlements, 14 276 extraits",
+                desc: "AI Act, RGPD, DSA, DMA, DORA, NIS2, Data Act, jurisprudence CJUE, lignes directrices EDPB — un corpus juridique structuré et vectorisé.",
+              },
+            ].map(({ icon: Icon, title, desc }) => (
+              <div key={title} className="bg-[#F5F5F7] rounded-3xl p-7">
+                <div className="w-11 h-11 rounded-2xl bg-white flex items-center justify-center mb-5 shadow-sm">
+                  <Icon className="h-5 w-5 text-[#003399]" />
+                </div>
+                <h3 className="font-semibold text-[#1D1D1F] mb-2 tracking-[-0.02em]" style={{ fontSize: "1.05rem" }}>
+                  {title}
+                </h3>
+                <p className="text-[#6E6E73] text-sm leading-relaxed">{desc}</p>
               </div>
             ))}
           </div>
@@ -640,10 +776,11 @@ export default function LandingPage() {
           </div>
           <h2 className="font-bold tracking-[-0.03em] text-[#1D1D1F] mb-3"
             style={{ fontSize: "clamp(1.8rem, 4vw, 2.8rem)" }}>
-            5 règlements européens.<br />1 seule plateforme.
+            43 règlements européens.<br />1 seule plateforme.
           </h2>
-          <p className="text-[#6E6E73] text-sm mb-12">
-            Tous les textes indexés depuis EUR-Lex, vectorisés pour une recherche sémantique précise.
+          <p className="text-[#6E6E73] text-sm mb-12 max-w-[560px] mx-auto">
+            14 276 extraits officiels indexés depuis EUR-Lex, CJUE et les autorités de protection des données,
+            vectorisés pour une recherche sémantique précise.
           </p>
 
           <div className="flex flex-wrap justify-center gap-3">
@@ -657,6 +794,10 @@ export default function LandingPage() {
                 <p className="text-[10px] text-[#003399] font-semibold mt-1">{reg.year}</p>
               </div>
             ))}
+            <div className="bg-[#003399] rounded-2xl px-6 py-4 text-center min-w-[120px] flex flex-col items-center justify-center cursor-default">
+              <p className="font-bold text-white tracking-[-0.02em] text-lg">+33</p>
+              <p className="text-[10px] text-white/70 mt-1 leading-snug">autres textes,<br />directives & JP</p>
+            </div>
           </div>
 
           <a href="https://eur-lex.europa.eu" target="_blank" rel="noopener noreferrer"
