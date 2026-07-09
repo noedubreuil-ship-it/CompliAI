@@ -1,0 +1,47 @@
+RÈGLEMENT (UE) 2024/1689 DU PARLEMENT EUROPÉEN ET DU CONSEIL
+du 13 juin 2024
+établissant des règles harmonisées concernant l'intelligence artificielle
+et modifiant certains actes législatifs de l'Union européenne
+(règlement sur l'intelligence artificielle)
+(Texte présentant de l'intérêt pour l'EEE)
+
+CHAPITRE I
+DISPOSITIONS GÉNÉRALES
+
+Article premier
+Objet
+
+1. L'objectif du présent règlement est d'améliorer le fonctionnement du marché intérieur et de promouvoir l'adoption d'une intelligence artificielle (ci-après l'«IA») axée sur l'humain et digne de confiance, tout en garantissant un niveau élevé de protection de la santé, de la sécurité, des droits fondamentaux consacrés par la Charte des droits fondamentaux de l'Union européenne, y compris la démocratie, l'état de droit et la protection de l'environnement, contre les effets néfastes des systèmes d'IA dans l'Union, et de soutenir l'innovation.
+
+2. Le présent règlement établit:
+a) des règles harmonisées pour la mise sur le marché, la mise en service et l'utilisation des systèmes d'IA dans l'Union;
+b) des interdictions relatives à certaines pratiques en matière d'IA;
+c) des exigences spécifiques applicables aux systèmes d'IA à haut risque et des obligations pour les opérateurs de tels systèmes;
+d) des règles de transparence harmonisées pour certains systèmes d'IA;
+e) des règles harmonisées pour la mise sur le marché des modèles d'IA à usage général;
+f) des règles relatives à la surveillance des marchés, à la gouvernance des marchés et à l'exécution;
+g) des mesures en faveur de l'innovation, notamment pour les PME, y compris les jeunes pousses.
+
+Article 2
+Champ d'application
+
+1. Le présent règlement s'applique:
+a) aux fournisseurs qui mettent sur le marché ou mettent en service des systèmes d'IA ou des modèles d'IA à usage général dans l'Union, que ces fournisseurs soient établis ou situés dans l'Union ou dans un pays tiers;
+b) aux déployeurs de systèmes d'IA qui sont établis ou situés dans l'Union;
+c) aux fournisseurs et aux déployeurs de systèmes d'IA qui sont établis ou situés dans un pays tiers, lorsque les sorties produites par le système d'IA sont utilisées dans l'Union;
+d) aux importateurs et aux distributeurs de systèmes d'IA;
+e) aux fabricants de produits qui mettent sur le marché ou en service un système d'IA avec leur produit et sous leur propre nom ou marque;
+f) aux représentants autorisés de fournisseurs non établis dans l'Union;
+g) aux personnes concernées situées dans l'Union.
+
+CHAPITRE II
+PRATIQUES EN MATIÈRE D'IA INTERDITES
+
+Article 5
+Pratiques en matière d'IA interdites
+
+1. Sont interdits:
+a) la mise sur le marché, la mise en service ou l'utilisation d'un système d'IA qui déploie des techniques subliminales agissant à l'insu d'une personne ou des techniques délibérément manipulatrices ou trompeuses, en ayant recours à des éléments subliminaux ou en exploitant les vulnérabilités d'une personne liées à son âge, à son handicap ou à sa situation sociale ou économique, afin d'influencer de manière substantielle le comportement d'une personne de telle façon que cette dernière en subisse ou en soit susceptible de subir un préjudice notable;
+b) la mise sur le marché, la mise en service ou l'utilisation d'un système d'IA pour l'évaluation ou la classification des personnes physiques sur une certaine période sur la base de leur comportement social ou de caractéristiques personnelles ou de personnalité connues ou prédites, dont le score social aboutit à l'un ou aux deux résultats suivants:
+i) un traitement préjudiciable ou défavorable de certaines personnes physiques ou de groupes de celles-ci dans des contextes sociaux qui ne sont pas liés aux contextes dans lesquels les données ont été initialement générées ou collectées;
+ii) un traitement préjudiciable ou défavorable de certaines personnes physiques ou de groupes de celles-ci qui n'est pas justifié ou proportionné à leur comportement social ou à sa gravité.

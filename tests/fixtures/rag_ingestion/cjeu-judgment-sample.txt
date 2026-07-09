@@ -1,0 +1,49 @@
+ARRÊT DE LA COUR (Grande chambre)
+21 septembre 2023 (*)
+
+« Renvoi préjudiciel – Règlement (UE) 2016/679 – Article 82, paragraphe 1 – Responsabilité – Réparation du préjudice immatériel – Violation des dispositions de ce règlement – Condition relative à l'existence d'un préjudice – Préjudice immatériel – Peur d'un usage abusif des données »
+
+Dans l'affaire C‑300/21,
+ayant pour objet une demande de décision préjudicielle au titre de l'article 267 TFUE, introduite par l'Oberster Gerichtshof (Cour suprême, Autriche), par décision du 15 avril 2021, parvenue à la Cour le 12 mai 2021, dans la procédure
+Österreichische Post AG
+contre
+Mag. UI,
+
+LA COUR (Grande chambre),
+composée de M. K. Lenaerts, président, [...]
+
+1. La présente demande de décision préjudicielle porte sur l'interprétation de l'article 82, paragraphe 1, du règlement (UE) 2016/679 du Parlement européen et du Conseil, du 27 avril 2016, relatif à la protection des personnes physiques à l'égard du traitement des données à caractère personnel et à la libre circulation de ces données, et abrogeant la directive 95/46/CE (règlement général sur la protection des données) (JO 2016, L 119, p. 1, ci-après le « RGPD »).
+
+2. Cette demande a été présentée dans le cadre d'un litige opposant Österreichische Post AG (ci-après « Österreichische Post ») à Mag. UI au sujet d'une demande en indemnisation, fondée sur l'article 82, paragraphe 1, du RGPD, pour le préjudice immatériel prétendument subi par cette dernière du fait du traitement de ses données à caractère personnel par Österreichische Post en violation de ce règlement.
+
+Le cadre juridique
+
+3. Les considérants 85 et 146 du RGPD énoncent ce qui suit :
+« (85) Une violation de la protection des données à caractère personnel pourrait, si l'on n'y remédie pas de manière adéquate et en temps utile, engendrer des préjudices physiques, matériels ou moraux à des personnes physiques, comme la perte de contrôle de leurs données à caractère personnel ou la restriction de leurs droits, la discrimination, le vol d'identité ou la fraude [...]
+(146) Le responsable du traitement ou le sous-traitant devrait réparer tout dommage qu'une personne peut subir du fait d'un traitement effectué en violation du présent règlement. »
+
+Les antécédents du litige
+
+4. Österreichische Post a collecté des données relatives aux affinités politiques de la population autrichienne et les a traitées à partir de l'année 2017 à des fins de marketing ciblé. Elle a inféré, à partir d'un algorithme, des « adresses de groupe cible » relatives à l'orientation politique de certaines personnes.
+
+5. Mag. UI a appris qu'Österreichische Post détenait sur elle une donnée relative à une forte affinité présumée envers un certain parti politique.
+
+6. Mag. UI a éprouvé une grande contrariété suite à cette prise de connaissance et a présenté une demande d'indemnisation de 1 000 euros au titre de l'article 82 du RGPD pour le préjudice immatériel subi.
+
+L'appréciation de la Cour
+
+45. Par sa première question, la juridiction de renvoi demande, en substance, si l'article 82, paragraphe 1, du RGPD doit être interprété en ce sens qu'une violation de ce règlement suffit, à elle seule, pour conférer à la personne concernée un droit à réparation, alors même que cette personne n'a subi aucun préjudice matériel ou immatériel substantiel.
+
+46. À titre liminaire, il convient de rappeler que le RGPD prévoit, à son article 82, paragraphe 1, que « toute personne ayant subi un dommage matériel ou immatériel du fait d'une violation du présent règlement a le droit d'obtenir du responsable du traitement ou du sous-traitant réparation du préjudice subi ».
+
+47. Il ressort du libellé même de cette disposition que le droit à réparation qu'elle prévoit est subordonné à trois conditions cumulatives : premièrement, l'existence d'une violation du RGPD ; deuxièmement, l'existence d'un dommage matériel ou immatériel résultant de cette violation ; troisièmement, un lien de causalité entre le dommage et la violation.
+
+48. La Cour conclut donc que la seule violation du RGPD ne suffit pas à ouvrir un droit à réparation. L'existence d'un préjudice est une condition autonome de la responsabilité.
+
+78. Par ces motifs, la Cour dit pour droit :
+
+1) L'article 82, paragraphe 1, du règlement (UE) 2016/679 du Parlement européen et du Conseil, du 27 avril 2016, relatif à la protection des personnes physiques à l'égard du traitement des données à caractère personnel et à la libre circulation de ces données, et abrogeant la directive 95/46/CE (règlement général sur la protection des données) doit être interprété en ce sens que la simple violation des dispositions de ce règlement ne suffit pas, à elle seule, pour conférer un droit à réparation prévu à cet article.
+
+2) L'article 82, paragraphe 1, du RGPD doit être interprété en ce sens que cette disposition s'oppose à une règle nationale selon laquelle la réparation d'un préjudice immatériel est subordonnée à la condition que ce préjudice ait atteint un certain seuil de gravité.
+
+Signatures

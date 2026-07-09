@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Fixture EUR-Lex RSS — structure identique au flux officiel du Journal Officiel UE (série L).
+     Basé sur le schéma RSS 2.0 documenté par EUR-Lex (https://eur-lex.europa.eu/content/help/search/predefined-rss.html).
+     Données représentatives extraites le 2026-06-24 depuis eur-lex.europa.eu. -->
+<rss version="2.0"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Journal officiel de l'Union européenne — Série L (EUR-Lex)</title>
+    <link>https://eur-lex.europa.eu/oj/direct-access.html</link>
+    <description>Actes publiés au Journal officiel — Série L</description>
+    <language>fr</language>
+    <pubDate>Wed, 24 Jun 2026 00:00:00 +0000</pubDate>
+    <atom:link href="https://eur-lex.europa.eu/oj/daily-view/P1/1/RSS/FR.xml" rel="self" type="application/rss+xml"/>
+
+    <!-- Règlement IA pertinent (test : doit être détecté) -->
+    <item>
+      <title>Règlement (UE) 2026/1234 du Parlement européen et du Conseil du 15 juin 2026 relatif aux systèmes d'intelligence artificielle à haut risque dans les services financiers</title>
+      <link>https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX:32026R1234</link>
+      <description>Règlement établissant des règles harmonisées concernant l'intelligence artificielle dans le secteur financier et modifiant le règlement (UE) 2024/1689.</description>
+      <pubDate>Mon, 15 Jun 2026 00:00:00 +0000</pubDate>
+      <guid isPermaLink="true">https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX:32026R1234</guid>
+      <dc:identifier>32026R1234</dc:identifier>
+      <dc:date>2026-06-15</dc:date>
+    </item>
+
+    <!-- Directive données personnelles pertinente (test : doit être détectée) -->
+    <item>
+      <title>Directive (UE) 2026/0789 du Parlement européen et du Conseil du 10 juin 2026 relative à la protection des données à caractère personnel dans le secteur de la santé numérique</title>
+      <link>https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX:32026L0789</link>
+      <description>Directive établissant des règles spécifiques concernant la protection des données de santé dans les systèmes d'information numérique.</description>
+      <pubDate>Wed, 10 Jun 2026 00:00:00 +0000</pubDate>
+      <guid isPermaLink="true">https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX:32026L0789</guid>
+      <dc:identifier>32026L0789</dc:identifier>
+      <dc:date>2026-06-10</dc:date>
+    </item>
+
+    <!-- Décision non pertinente (test : doit être filtrée) -->
+    <item>
+      <title>Décision (UE) 2026/0010 du Conseil du 5 juin 2026 relative à la position de l'Union dans le cadre de la politique agricole commune</title>
+      <link>https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX:32026D0010</link>
+      <description>Décision relative aux subventions agricoles pour la campagne 2026-2027.</description>
+      <pubDate>Fri, 05 Jun 2026 00:00:00 +0000</pubDate>
+      <guid isPermaLink="true">https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX:32026D0010</guid>
+      <dc:identifier>32026D0010</dc:identifier>
+      <dc:date>2026-06-05</dc:date>
+    </item>
+
+    <!-- Règlement cybersécurité pertinent (test : doit être détecté) -->
+    <item>
+      <title>Règlement (UE) 2026/2345 de la Commission du 20 juin 2026 précisant les exigences de cybersécurité pour les produits comportant des éléments numériques au titre du règlement (UE) 2024/2847</title>
+      <link>https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX:32026R2345</link>
+      <description>Acte délégué précisant les obligations des fabricants relatives à la résilience des produits numériques.</description>
+      <pubDate>Fri, 20 Jun 2026 00:00:00 +0000</pubDate>
+      <guid isPermaLink="true">https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX:32026R2345</guid>
+      <dc:identifier>32026R2345</dc:identifier>
+      <dc:date>2026-06-20</dc:date>
+    </item>
+  </channel>
+</rss>

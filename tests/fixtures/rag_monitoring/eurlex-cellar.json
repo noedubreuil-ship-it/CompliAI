@@ -1,0 +1,58 @@
+{
+  "_comment": "Fixture EUR-Lex CELLAR SPARQL — structure identique à la réponse de l'endpoint https://publications.europa.eu/webapi/rdf/sparql. Données représentatives basées sur la documentation CELLAR (CDM ontology).",
+  "results": {
+    "bindings": [
+      {
+        "celex": { "type": "literal", "value": "32026R1234" },
+        "title": {
+          "type": "literal",
+          "xml:lang": "fr",
+          "value": "Règlement (UE) 2026/1234 du Parlement européen et du Conseil du 15 juin 2026 relatif aux systèmes d'intelligence artificielle à haut risque dans les services financiers"
+        },
+        "date": { "type": "literal", "value": "2026-06-15" },
+        "docUrl": {
+          "type": "uri",
+          "value": "https://eur-lex.europa.eu/legal-content/FR/TXT/HTML/?uri=CELEX:32026R1234"
+        },
+        "resourceType": {
+          "type": "uri",
+          "value": "http://publications.europa.eu/resource/authority/resource-type/REG"
+        }
+      },
+      {
+        "celex": { "type": "literal", "value": "32026L0789" },
+        "title": {
+          "type": "literal",
+          "xml:lang": "fr",
+          "value": "Directive (UE) 2026/0789 du Parlement européen et du Conseil du 10 juin 2026 relative à la protection des données à caractère personnel dans le secteur de la santé numérique"
+        },
+        "date": { "type": "literal", "value": "2026-06-10" },
+        "docUrl": {
+          "type": "uri",
+          "value": "https://eur-lex.europa.eu/legal-content/FR/TXT/HTML/?uri=CELEX:32026L0789"
+        },
+        "resourceType": {
+          "type": "uri",
+          "value": "http://publications.europa.eu/resource/authority/resource-type/DIR"
+        }
+      },
+      {
+        "celex": { "type": "literal", "value": "02024R1689-20260601" },
+        "title": {
+          "type": "literal",
+          "xml:lang": "fr",
+          "value": "Règlement (UE) 2024/1689 du Parlement européen et du Conseil du 13 juin 2024 — version consolidée au 1er juin 2026"
+        },
+        "date": { "type": "literal", "value": "2026-06-01" },
+        "docUrl": {
+          "type": "uri",
+          "value": "https://eur-lex.europa.eu/legal-content/FR/TXT/HTML/?uri=CELEX:02024R1689-20260601"
+        },
+        "resourceType": {
+          "type": "uri",
+          "value": "http://publications.europa.eu/resource/authority/resource-type/REG_IMPL"
+        }
+      }
+    ]
+  }
+}

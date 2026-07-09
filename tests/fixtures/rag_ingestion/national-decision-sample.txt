@@ -1,0 +1,33 @@
+DÉLIBÉRATION SAN-2024-009 du 27 juin 2024
+
+La Commission nationale de l'informatique et des libertés, réunie en sa formation restreinte composée de Mme Marie-Laure Denis, présidente, [...]
+
+Vu le règlement (UE) 2016/679 du Parlement européen et du Conseil du 27 avril 2016 relatif à la protection des personnes physiques à l'égard du traitement des données à caractère personnel et à la libre circulation de ces données (ci-après « le RGPD ») ;
+
+I – FAITS ET PROCÉDURE
+
+1. La société CLEARVIEW AI INC. (ci-après « Clearview AI » ou « la société »), dont le siège social est situé à New York (États-Unis d'Amérique), propose un moteur de recherche de visages accessible principalement aux services de police et aux entités privées actifs dans le domaine de la sécurité.
+
+2. En novembre 2021, la CNIL a reçu deux plaintes de particuliers indiquant que la société Clearview AI collectait, à leur insu, leurs photographies publiées sur Internet ainsi que d'autres données personnelles (notamment leurs noms), et les exploitait à des fins commerciales.
+
+3. À la suite d'une mission de contrôle effectuée par les services de la CNIL, il a été établi que la société collectait et indexait des milliards de photos accessibles publiquement sur internet afin de proposer un service de reconnaissance faciale.
+
+II – VIOLATIONS CONSTATÉES
+
+4. Sur le manquement à l'article 6 du RGPD — Absence de base légale
+
+5. La formation restreinte relève que la société Clearview AI ne dispose d'aucune base légale valable pour traiter les données personnelles des personnes résidant en France. En effet, la société invoque l'intérêt légitime prévu à l'article 6, paragraphe 1, point f) du RGPD, mais la formation restreinte considère que cet intérêt n'est pas légitime au sens du RGPD, car il consiste à commercialiser des données personnelles collectées massivement à l'insu des personnes.
+
+6. Sur le manquement à l'article 12 du RGPD — Droit à l'information
+
+7. La société ne fournit aucune information aux personnes dont les données sont collectées, en violation des articles 13 et 14 du RGPD relatifs à l'obligation d'information.
+
+III – DÉCISION
+
+8. Eu égard aux éléments susvisés, la formation restreinte de la CNIL décide :
+
+- De prononcer une amende administrative d'un montant de 20 000 000 (vingt millions) d'euros à l'encontre de la société CLEARVIEW AI INC. ;
+- D'enjoindre à la société CLEARVIEW AI INC. de cesser la collecte et l'utilisation, sans base légale, des données des personnes se trouvant sur le territoire français, et de procéder à l'effacement des données des personnes qui en font la demande, dans un délai de deux mois à compter de la notification de la présente décision.
+
+La présidente,
+Marie-Laure Denis

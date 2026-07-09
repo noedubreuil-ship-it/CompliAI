@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Fixture Curia RSS — structure identique au flux officiel des arrêts de la CJUE.
+     Basé sur le schéma RSS 2.0 du site curia.europa.eu (flux: /v/rss.jsp?lang=fr).
+     Données représentatives basées sur la structure documentée de Curia. -->
+<rss version="2.0"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Cour de justice de l'Union européenne — Arrêts et ordonnances</title>
+    <link>https://curia.europa.eu/jcms/jcms/j_6/fr/</link>
+    <description>Arrêts et ordonnances récents de la Cour de justice de l'Union européenne</description>
+    <language>fr</language>
+    <pubDate>Wed, 24 Jun 2026 00:00:00 +0000</pubDate>
+    <atom:link href="http://curia.europa.eu/v/rss.jsp?lang=fr&amp;secondLang=en" rel="self" type="application/rss+xml"/>
+
+    <!-- Arrêt protection des données (test : doit être détecté) -->
+    <item>
+      <title>Arrêt de la Cour (grande chambre) du 10 juin 2026 — Affaire C-123/25 — TechCorp c/ Autorité de protection des données</title>
+      <link>https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX:62025CJ0123</link>
+      <description>Renvoi préjudiciel — Protection des données à caractère personnel — Règlement (UE) 2016/679 — Article 6, paragraphe 1 — Bases légales du traitement — Intérêt légitime — Traitement de données comportementales à des fins de personnalisation publicitaire — Obligations du responsable du traitement.</description>
+      <pubDate>Tue, 10 Jun 2026 00:00:00 +0000</pubDate>
+      <guid isPermaLink="true">https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX:62025CJ0123</guid>
+      <dc:identifier>62025CJ0123</dc:identifier>
+      <dc:date>2026-06-10</dc:date>
+    </item>
+
+    <!-- Arrêt intelligence artificielle pertinent (test : doit être détecté) -->
+    <item>
+      <title>Arrêt de la Cour (première chambre) du 3 juin 2026 — Affaire C-456/25 — DataMinds GmbH c/ Bundesbeauftragter für den Datenschutz</title>
+      <link>https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX:62025CJ0456</link>
+      <description>Renvoi préjudiciel — Règlement (UE) 2024/1689 (AI Act) — Systèmes d'intelligence artificielle à haut risque — Obligations de transparence — Consentement de la personne concernée — Traitement automatisé de décisions individuelles.</description>
+      <pubDate>Tue, 03 Jun 2026 00:00:00 +0000</pubDate>
+      <guid isPermaLink="true">https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX:62025CJ0456</guid>
+      <dc:identifier>62025CJ0456</dc:identifier>
+      <dc:date>2026-06-03</dc:date>
+    </item>
+
+    <!-- Arrêt non pertinent (test : doit être filtré) -->
+    <item>
+      <title>Arrêt de la Cour (deuxième chambre) du 1er juin 2026 — Affaire C-789/25 — Entreprise X c/ Ministre des finances</title>
+      <link>https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX:62025CJ0789</link>
+      <description>Renvoi préjudiciel — Droit fiscal — TVA — Exonérations — Prestations de services médicaux — Article 132 de la directive 2006/112/CE.</description>
+      <pubDate>Sun, 01 Jun 2026 00:00:00 +0000</pubDate>
+      <guid isPermaLink="true">https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX:62025CJ0789</guid>
+      <dc:identifier>62025CJ0789</dc:identifier>
+      <dc:date>2026-06-01</dc:date>
+    </item>
+
+    <!-- Arrêt transfert de données pertinent (test : doit être détecté) -->
+    <item>
+      <title>Arrêt de la Cour (grande chambre) du 18 juin 2026 — Affaire C-321/25 — Commission européenne c/ gouvernement des États-Unis d'Amérique (tiers intervenant)</title>
+      <link>https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX:62025CJ0321</link>
+      <description>Renvoi préjudiciel — Protection des données à caractère personnel — Transfert vers un pays tiers — Décision d'adéquation — Validité — Accès des autorités publiques américaines aux données personnelles transférées.</description>
+      <pubDate>Wed, 18 Jun 2026 00:00:00 +0000</pubDate>
+      <guid isPermaLink="true">https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX:62025CJ0321</guid>
+      <dc:identifier>62025CJ0321</dc:identifier>
+      <dc:date>2026-06-18</dc:date>
+    </item>
+  </channel>
+</rss>

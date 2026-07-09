@@ -1,0 +1,39 @@
+Guidelines 06/2022 on the use of personal data for political purposes
+
+Version 2.0, Adopted on 9 November 2022
+
+The European Data Protection Board
+Having regard to Article 70(1)(e) of the Regulation 2016/679/EU
+
+HAS ADOPTED THE FOLLOWING GUIDELINES:
+
+1. Introduction
+
+1. These guidelines provide guidance to political parties and other organisations involved in political activities (political campaigns) on how they can use personal data in compliance with the GDPR when carrying out political campaigns.
+
+2. The use of data analytics and sophisticated communication technologies in political campaigning is increasing rapidly. While these tools can enhance democratic participation, they also raise significant data protection concerns.
+
+2. Scope
+
+3. These guidelines apply to all processing activities related to political campaigns, including:
+- Voter targeting and profiling
+- Social media advertising
+- Door-to-door canvassing using voter data
+- Email and telephone campaigns
+
+3. Legal Bases for Processing
+
+4. Political parties and campaign organisations must identify an appropriate legal basis before processing personal data. The Board recommends that:
+
+5. Recommendation 1: Do not rely on consent as the sole legal basis for large-scale political profiling. Given the power imbalance between political parties and voters, and the difficulty of ensuring freely given consent in political contexts, consent is generally inappropriate for large-scale voter profiling.
+
+6. Recommendation 2: Legitimate interest under Article 6(1)(f) GDPR can only be used where the processing is strictly necessary and proportionate. Political parties must conduct and document a Legitimate Interest Assessment (LIA) before relying on this basis.
+
+7. Recommendation 3: Where processing relates to political opinions, explicit consent under Article 9(2)(a) GDPR is required, unless another specific exception in Article 9(2) applies. Political opinions constitute special category data under Article 9(1) GDPR.
+
+4. Data Minimisation and Purpose Limitation
+
+8. The Board recommends that organisations:
+- Only collect data that is strictly necessary for the specific campaign purpose
+- Not retain voter data beyond the electoral period for which it was collected
+- Not combine voter data with commercial data sources unless there is a clear legal basis

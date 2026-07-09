@@ -1,6 +1,6 @@
 # RAG Quality Baseline Report
 
-> Généré le 7 juillet 2026
+> Généré le 9 juillet 2026
 > **Rapport initial** : capture l'état actuel du RAG production comme référence.
 > Les exécutions futures seront comparées à ce baseline.
 
@@ -8,82 +8,94 @@
 
 | Mécanisme | Statut | Détails |
 |-----------|--------|---------|
-| Golden Set (16 questions) | ⚠️ WARNING | ✅ 14 / ⚠️ 2 / 🔴 0 |
+| Golden Set (16 questions) | ⚠️ WARNING | ✅ 13 / ⚠️ 3 / 🔴 0 |
 | Couverture articles | 🔴 CRITICAL | 53.4% (34 échecs critiques) |
 
 ---
 ## Mécanisme 1 — Golden Set (16 questions de référence)
 
-**Exécuté le** : 07/07/2026 10:04:37
-**Résultats** : 14 OK / 2 warning / 0 critique
+**Exécuté le** : 09/07/2026 09:18:38
+**Résultats** : 13 OK / 3 warning / 0 critique
 
 ### Détail par question
 
 #### ✅ Q01 — Notre entreprise développe un outil qui analyse des données financières de PME e…
 Résultat : conforme. Articles attendus présents, aucun article blacklisté.
 
-Articles cités : `Commission Guidelines — Classification of high-risk AI systems (Art. 6 AI Act):*`, `AI Act (UE 2024/1689):considérant 58`, `AI Act (UE 2024/1689):6`, `AI Act (UE 2024/1689):considérant 61`, `AI Act (UE 2024/1689):74`, `AI Act (UE 2024/1689):considérant 53`
+Articles cités : `AI Act (UE 2024/1689):considérant 58`, `AI Act (UE 2024/1689):6`, `AI Act (UE 2024/1689):considérant 61`, `AI Act (UE 2024/1689):74`, `AI Act (UE 2024/1689):considérant 53`, `AI Act (UE 2024/1689):27`
 
 <details><summary>Top-5 chunks retournés</summary>
 
-**#1** `Commission Guidelines — Classification of high-risk AI systems (Art. 6 AI Act) · Art. N/A` (sim: 37.9%)
-> Commission Guidelines — Classification of high-risk AI systems (Art. 6 AI Act)
+**#1** `AI Act (UE 2024/1689) · Art. considérant 58` (sim: 63.2%)
+> (58)
 
-The conditions that an AI system must fulfil to be classified as high-risk pursuant to point 5(b) of Annex III and related concepts are analysed in more detail in the following subsections. ii. The relationship between ‘
+Un autre domaine dans lequel l’utilisation des systèmes d’IA mérite une attention particulière est l’accès et le droit à certains services et prestations essentiels, publics et privés, devant permettre aux personnes de participer pleinement à la société ou d’améliorer leur niveau de vie. En pa
 
-**#2** `Commission Guidelines — Classification of high-risk AI systems (Art. 6 AI Act) · Art. N/A` (sim: 38.2%)
-> Commission Guidelines — Classification of high-risk AI systems (Art. 6 AI Act)
+**#2** `AI Act (UE 2024/1689) · Art. 6` (sim: 64.8%)
+> Article 6 §3(c) — Règles relatives à la classification de systèmes d'IA comme systèmes à haut risque
 
-(323) The statement in Recital 58 AI Act that AI systems provided for by Union law for prudential purposes to calculate credit institutions’ and insurance undertakings’ capital requirements should not be considered to be
+c) le système d'IA est destiné à détecter les constantes en matière de prise de décision ou les écarts par rapport aux constantes habituelles antérieures et n'est pas destiné à se substituer à l'éva
 
-**#3** `Commission Guidelines — Classification of high-risk AI systems (Art. 6 AI Act) · Art. N/A` (sim: 37.9%)
-> Commission Guidelines — Classification of high-risk AI systems (Art. 6 AI Act)
+**#3** `AI Act (UE 2024/1689) · Art. considérant 61` (sim: 59.2%)
+> (61)
 
-The score produced by the system may take various forms, such as a number, a ranking, or a label. A credit score may be established for several purposes. Where an AI system is intended to be used to establish such a scor
+Certains systèmes d’IA destinés à être utilisés pour l’administration de la justice et les processus démocratiques devraient être classés comme étant à haut risque, compte tenu de leur incidence potentiellement significative sur la démocratie, l’état de droit, les libertés individuelles ainsi 
 
-**#4** `Commission Guidelines — Classification of high-risk AI systems (Art. 6 AI Act) · Art. N/A` (sim: 37.5%)
-> Commission Guidelines — Classification of high-risk AI systems (Art. 6 AI Act)
+**#4** `AI Act (UE 2024/1689) · Art. 74` (sim: 55.6%)
+> Article 74
 
-Such an evaluation may be based e.g. on demographic data (such as age, the level of education or the place of residence) and/or on financial data including payment behaviour, credit history and income and financial varia
+Surveillance du marché et contrôle des systèmes d’IA sur le marché de l’Union
 
-**#5** `Commission Guidelines — Classification of high-risk AI systems (Art. 6 AI Act) · Art. N/A` (sim: 37.4%)
-> Commission Guidelines — Classification of high-risk AI systems (Art. 6 AI Act)
+1.   Le règlement (UE) 2019/1020 s’applique aux systèmes d’IA relevant du présent règlement. Aux fins du contrôle effectif de l’application du présent règlement:
 
-intended solely for monitoring credit exposures for internal prudential purposes (to track and analyse credit-related activity, assess borrower risk and detect early warning signs of default or financial distress) after 
+a)
+
+toute référence à un opérateur économique 
+
+**#5** `AI Act (UE 2024/1689) · Art. considérant 53` (sim: 59.1%)
+> (53)
+
+Il importe également de préciser qu’il peut exister des cas spécifiques dans lesquels les systèmes d’IA visés dans des domaines prédéfinis spécifiés dans le présent règlement ne présentent pas un risque important d’atteinte aux intérêts juridiques protégés dans ces domaines parce qu’ils n’ont 
 
 </details>
 
 #### ✅ Q02 — Peut-on déployer un système d'IA dans un centre d'appels pour inférer les émotio…
 Résultat : conforme. Articles attendus présents, aucun article blacklisté.
 
-Articles cités : `AI Act (UE 2024/1689):considérant 44`, `AI Act (UE 2024/1689):considérant 18`, `AI Act (UE 2024/1689):considérant 57`, `AI Act (UE 2024/1689):considérant 58`, `AI Act (UE 2024/1689):50`, `AI Act (UE 2024/1689):considérant 4`
+Articles cités : `AI Act (UE 2024/1689):considérant 44`, `AI Act (UE 2024/1689):considérant 18`, `AI Act (UE 2024/1689):ANNEXE III`, `AI Act (UE 2024/1689):considérant 57`, `AI Act (UE 2024/1689):considérant 58`, `AI Act (UE 2024/1689):considérant 72`
 
 <details><summary>Top-5 chunks retournés</summary>
 
-**#1** `AI Act (UE 2024/1689) · Art. considérant 44` (sim: 34.8%)
+**#1** `AI Act (UE 2024/1689) · Art. considérant 44` (sim: 58.1%)
 > (44)
 
 La base scientifique des systèmes d’IA visant à identifier ou à inférer les émotions suscite de vives inquiétudes, d’autant plus que l’expression des émotions varie considérablement d’une culture et d’une situation à l’autre, comme d’ailleurs chez un même individu. Les principaux défauts de ce
 
-**#2** `AI Act (UE 2024/1689) · Art. considérant 18` (sim: 31.3%)
+**#2** `AI Act (UE 2024/1689) · Art. considérant 18` (sim: 52.2%)
 > (18)
 
 La notion de «système de reconnaissance des émotions» visée dans le présent règlement devrait être définie comme un système d’IA servant à identifier les émotions ou les intentions de personnes physiques ou à faire des déductions quant à leurs émotions ou intentions, sur la base de leurs donné
 
-**#3** `AI Act (UE 2024/1689) · Art. considérant 57` (sim: 29.7%)
+**#3** `AI Act (UE 2024/1689) · Art. ANNEXE III` (sim: 43.4%)
+> ANNEXE III
+
+Systèmes d'IA à haut risque visés à l'article 6, paragraphe 2
+
+Les systèmes d'IA à haut risque au sens de l'article 6, paragraphe 2, sont les systèmes d'IA répertoriés dans l'un des domaines suivants:
+
+1.
+
+Biométrie, dans la mesure où leur utilisation est autorisée par le droit de l'Unio
+
+**#4** `AI Act (UE 2024/1689) · Art. considérant 57` (sim: 49.5%)
 > (57)
 
 Les systèmes d’IA utilisés pour des questions liées à l’emploi, à la gestion de la main-d’œuvre et à l’accès à l’emploi indépendant, en particulier pour le recrutement et la sélection de personnes, pour la prise de décisions affectant les conditions des relations professionnelles, ainsi que la
 
-**#4** `AI Act (UE 2024/1689) · Art. considérant 58` (sim: 28.5%)
+**#5** `AI Act (UE 2024/1689) · Art. considérant 58` (sim: 47.5%)
 > (58)
 
 Un autre domaine dans lequel l’utilisation des systèmes d’IA mérite une attention particulière est l’accès et le droit à certains services et prestations essentiels, publics et privés, devant permettre aux personnes de participer pleinement à la société ou d’améliorer leur niveau de vie. En pa
-
-**#5** `AI Act (UE 2024/1689) · Art. 50` (sim: 28.7%)
-> Article 50 — Obligations de transparence pour les fournisseurs et les déployeurs de certains systèmes d'IA
-
-2. Les fournisseurs de systèmes d'IA, y compris de systèmes d'IA à usage général, qui génèrent des contenus de synthèse de type audio, image, vidéo ou texte, veillent à ce que les sorties des 
 
 </details>
 
@@ -155,7 +167,7 @@ b) évaluent et atténuent les risques systémiques éventuels au niveau de l'Un
 
 d) garantissent un niveau approprié de protection en matière de cybersécurité pour le modèle d'IA à usage général présentant un risque systémique et l'infrastructure physique du
 
-**#4** `AI Act (UE 2024/1689) · Art. 55` (sim: 47.3%)
+**#4** `AI Act (UE 2024/1689) · Art. 55` (sim: 47.2%)
 > Article 55
 
 Obligations incombant aux fournisseurs de modèles d’IA à usage général présentant un risque systémique
@@ -222,7 +234,7 @@ a)
 #### ✅ Q06 — Une banque refuse un prêt immobilier en se fondant quasi-exclusivement sur un sc…
 Résultat : conforme. Articles attendus présents, aucun article blacklisté.
 
-Articles cités : `EDPB Lignes directrices 05/2020 — Consentement au sens du RGPD : validité, granularité, retrait:P23`, `EDPB Recommandations 01/2020 — Transferts internationaux post-Schrems II (mesures complémentaires):P18`, `EDPB Recommandations 01/2020 — Transferts internationaux post-Schrems II (mesures complémentaires):P45`, `EDPB Recommandations 01/2020 — Transferts internationaux post-Schrems II (mesures complémentaires):P9`, `EDPB Lignes directrices 05/2020 — Consentement au sens du RGPD : validité, granularité, retrait:P18`, `EDPB Lignes directrices 05/2020 — Consentement au sens du RGPD : validité, granularité, retrait:P8`
+Articles cités : `EDPB Lignes directrices 05/2020 — Consentement au sens du RGPD : validité, granularité, retrait:P23`, `EDPB Recommandations 01/2020 — Transferts internationaux post-Schrems II (mesures complémentaires):P18`, `EDPB Recommandations 01/2020 — Transferts internationaux post-Schrems II (mesures complémentaires):P45`, `EDPB Lignes directrices 04/2019 — Article 25 RGPD : protection des données dès la conception et par défaut (Privacy by Design):P38`, `EDPB Recommandations 01/2020 — Transferts internationaux post-Schrems II (mesures complémentaires):P9`, `EDPB Lignes directrices 05/2020 — Consentement au sens du RGPD : validité, granularité, retrait:P18`
 
 <details><summary>Top-5 chunks retournés</summary>
 
@@ -244,17 +256,16 @@ niveau de protection requis par le droit de l’Union est respecté dans le pays
 de déterminer si les garanties établies par les clauses contractuelles types ou par les règles 
 d’e
 
-**#4** `EDPB Recommandations 01/2020 — Transferts internationaux post-Schrems II (mesures complémentaires) · Art. P9` (sim: 38.0%)
+**#4** `EDPB Lignes directrices 04/2019 — Article 25 RGPD : protection des données dès la conception et par défaut (Privacy by Design) · Art. P38` (sim: 38.3%)
+> Une banque envisage de proposer un service pour améliorer l’efficacité de la gestion des demandes 
+de prêts. L’idée qui sous -tend le service est que la banque, en demandant l’autorisation du client, 
+puisse récupérer des données concernant le client directement auprès des autorités fiscales publiqu
+
+**#5** `EDPB Recommandations 01/2020 — Transferts internationaux post-Schrems II (mesures complémentaires) · Art. P9` (sim: 38.0%)
 > considérant ce qui suit: 
 (1) La Cour de justice de l’Union européenne (CJUE) conclut, dans son arrêt du 16 juillet 2020, Data 
 Protection Commissioner c/ Facebook Ireland LTD, Maximillian Schrems, C-311/18, que l’article 46, 
 paragraphe 1, et l’article 46, paragraphe 2, point d), du RGPD doivent êt
-
-**#5** `EDPB Lignes directrices 05/2020 — Consentement au sens du RGPD : validité, granularité, retrait · Art. P18` (sim: 37.2%)
-> 1 RESPONSABILITÉ EN MATIÈRE DE TRANSFERTS DE DONNÉES 
-1. Le droit primaire de l’Union considère le droit à la protection des données comme un droit 
-fondamental 8. Par conséquent, le droit à la protection des données bénéficie d’un niveau de protection 
-élevé et des limitations ne peuvent être appor
 
 </details>
 
@@ -432,7 +443,7 @@ Cela devrait s'appliquer en particulier aux opérations de traitement à grande 
 
 1. Lorsqu'un type de traitement, en particulier par le recours à de nouvelles technologies, et compte tenu de la nature, de la portée, du contexte et des finalités du traitement, est susceptible d'engendrer un risque élevé pour les 
 
-**#4** `EDPB Lignes directrices WP248 — Analyse d'Impact relative à la Protection des Données (AIPD/DPIA) · Art. P39` (sim: 44.1%)
+**#4** `EDPB Lignes directrices WP248 — Analyse d'Impact relative à la Protection des Données (AIPD/DPIA) · Art. P39` (sim: 44.0%)
 > a) Quand une AIPD est-elle obligatoire? Lorsque le traitement est «susceptible d’engendrer un risque élevé».
 
 **#5** `EDPB Lignes directrices WP248 — Analyse d'Impact relative à la Protection des Données (AIPD/DPIA) · Art. P43` (sim: 43.7%)
@@ -476,7 +487,7 @@ Articles cités : `Data Act — Règlement sur les données (UE 2023/2854):4`, `
 #### ✅ Q13 — Une application mobile de suivi de santé collecte des informations sur les patho…
 Résultat : conforme. Articles attendus présents, aucun article blacklisté.
 
-Articles cités : `EDPB Lignes directrices 08/2020 — Ciblage des utilisateurs de médias sociaux : rôles et responsabilités:P38`, `CJUE — Arrêt Lindenapotheke (C-21/23) — Qualification de données de santé en vente en ligne:P15`, `EDPB Lignes directrices 03/2022 — Dark patterns / interfaces trompeuses sur les plateformes de médias sociaux:P73`, `Data Governance Act — Règlement sur la gouvernance des données (UE 2022/868):considérant 19`, `Data Act — Règlement sur les données (UE 2023/2854):considérant 34`, `RGPD (UE 2016/679):considérant 54`
+Articles cités : `EDPB Lignes directrices 08/2020 — Ciblage des utilisateurs de médias sociaux : rôles et responsabilités:P38`, `EDPB Lignes directrices 03/2022 — Dark patterns / interfaces trompeuses sur les plateformes de médias sociaux:P73`, `Data Act — Règlement sur les données (UE 2023/2854):considérant 34`, `RGPD (UE 2016/679):considérant 54`, `RGPD (UE 2016/679):considérant 63`, `CJUE — Arrêt La Quadrature du Net 2 (C-511/18, C-512/18, C-520/18) — Conservation données et surveillance de masse:P345`
 
 <details><summary>Top-5 chunks retournés</summary>
 
@@ -486,17 +497,21 @@ personnes concernées de toutes les finalités pertinentes du traitement, notamm
 ultérieur des données à caractère personnel obtenues en accédant aux informations se trouvant dans 
 l’éq
 
-**#2** `CJUE — Arrêt Lindenapotheke (C-21/23) — Qualification de données de santé en vente en ligne · Art. P15` (sim: 32.6%)
-> Les données à caractère personnel qui sont, par nature, particulièrement sensibles du point de vue des libertés et des droits fondamentaux méritent une protection spécifique, car le contexte dans lequel elles sont traitées pourrait engendrer des risques importants pour ces libertés et droits. [...] 
-
-**#3** `EDPB Lignes directrices 03/2022 — Dark patterns / interfaces trompeuses sur les plateformes de médias sociaux · Art. P73` (sim: 33.6%)
+**#2** `EDPB Lignes directrices 03/2022 — Dark patterns / interfaces trompeuses sur les plateformes de médias sociaux · Art. P73` (sim: 33.6%)
 > L’utilisateur est invité à donner son consentement pour différents types de finalités (par exemple, un traitement ultérieur des données à caractère personnel). Le consentement n’étant pas spécifique, il n’est donc pas valable lorsque l’utilisateur ne reçoit pas également des informations claires sur
 
-**#4** `Data Governance Act — Règlement sur la gouvernance des données (UE 2022/868) · Art. considérant 19` (sim: 32.3%)
-> (19) Les entreprises et les personnes concernées devraient pouvoir avoir la certitude que la réutilisation de certaines catégories de données protégées qui sont détenues par les organismes du secteur public se fera dans le respect de leurs droits et intérêts. Des garanties supplémentaires devraient 
-
-**#5** `Data Act — Règlement sur les données (UE 2023/2854) · Art. considérant 34` (sim: 32.7%)
+**#3** `Data Act — Règlement sur les données (UE 2023/2854) · Art. considérant 34` (sim: 32.7%)
 > (34) L'utilisation d'un produit connecté ou d'un service connexe peut, en particulier lorsque l'utilisateur est une personne physique, générer des données se rapportant à la personne concernée. Le traitement de ces données est soumis aux règles établies par le règlement (UE) 2016/679, y compris lors
+
+**#4** `RGPD (UE 2016/679) · Art. considérant 54` (sim: 34.2%)
+> (54)
+
+Le traitement des catégories particulières de données à caractère personnel peut être nécessaire pour des motifs d'intérêt public dans les domaines de la santé publique, sans le consentement de la personne concernée. Un tel traitement devrait faire l'objet de mesures appropriées et spécifiques
+
+**#5** `RGPD (UE 2016/679) · Art. considérant 63` (sim: 33.5%)
+> (63)
+
+Une personne concernée devrait avoir le droit d'accéder aux données à caractère personnel qui ont été collectées à son sujet et d'exercer ce droit facilement et à des intervalles raisonnables, afin de prendre connaissance du traitement et d'en vérifier la licéité. Cela inclut le droit des pers
 
 </details>
 
@@ -542,37 +557,41 @@ Sanctions
 
 </details>
 
-#### ✅ Q15 — Une entreprise déploie un chatbot de service client alimenté par un LLM. Quelles…
-Résultat : conforme. Articles attendus présents, aucun article blacklisté.
+#### ⚠️ Q15 — Une entreprise déploie un chatbot de service client alimenté par un LLM. Quelles…
 
-Articles cités : `Commission Guidelines — Prohibited AI practices (Art. 5 AI Act):*`, `Code de bonnes pratiques GPAI — IA à usage général (AI Office, 2025):P10`, `Code de bonnes pratiques GPAI — IA à usage général (AI Office, 2025):P7`, `AI Act (UE 2024/1689):50`, `AI Act (UE 2024/1689):considérant 72`, `AI Act (UE 2024/1689):considérant 9`
+**Articles manquants :**
+- 🔴 `AI Act Art. 26` [important] — Art. 26 §2 — obligations générales du déployeur
+
+Articles retournés : `AI Act (UE 2024/1689):50`, `AI Act (UE 2024/1689):considérant 132`, `AI Act (UE 2024/1689):considérant 164`, `AI Act (UE 2024/1689):13`, `Commission Guidelines — Prohibited AI practices (Art. 5 AI Act):*`, `AI Act (UE 2024/1689):considérant 134`
 
 <details><summary>Top-5 chunks retournés</summary>
 
-**#1** `Commission Guidelines — Prohibited AI practices (Art. 5 AI Act) · Art. N/A` (sim: 33.8%)
-> Commission Guidelines — Prohibited AI practices (Art. 5 AI Act)
+**#1** `AI Act (UE 2024/1689) · Art. 50` (sim: 38.5%)
+> Article 50 — Obligations de transparence pour les fournisseurs et les déployeurs de certains systèmes d'IA
 
-(48) Furthermore, the AI Act applies in conjunction with relevant obligations for providers of intermediary services that embed AI systems or models into their services regulated by Regulation (EU) 2022/2065 (‘the Digital Services Act’
+1. Les fournisseurs veillent à ce que les systèmes d'IA destinés à interagir directement avec des personnes physiques soient conçus et développés de manière que les personnes physiques concern
 
-**#2** `Commission Guidelines — Prohibited AI practices (Art. 5 AI Act) · Art. N/A` (sim: 33.7%)
-> Commission Guidelines — Prohibited AI practices (Art. 5 AI Act)
+**#2** `AI Act (UE 2024/1689) · Art. 50` (sim: 35.3%)
+> Article 50
 
-Another example is an AI system that learns to identify when it is under evaluation and temporarily halts any undesired behaviour, only to resume such behaviour once the evaluation period is over. 65 Such deceptive behaviour is particu
+Obligations de transparence pour les fournisseurs et les déployeurs de certains systèmes d’IA
 
-**#3** `Commission Guidelines — Prohibited AI practices (Art. 5 AI Act) · Art. N/A` (sim: 33.6%)
-> Commission Guidelines — Prohibited AI practices (Art. 5 AI Act)
+1.   Les fournisseurs veillent à ce que les systèmes d’IA destinés à interagir directement avec des personnes physiques soient conçus et développés de manière que les personnes physiques concer
 
-Any use by natural persons where they are acting on behalf or under the authority of a deployer acting in a professional capacity will also fall within the scope of the AI Act. Furthermore, criminal activities cannot be considered pure
+**#3** `AI Act (UE 2024/1689) · Art. 50` (sim: 37.5%)
+> Article 50 — Obligations de transparence pour les fournisseurs et les déployeurs de certains systèmes d'IA
 
-**#4** `Commission Guidelines — Prohibited AI practices (Art. 5 AI Act) · Art. N/A` (sim: 33.2%)
-> Commission Guidelines — Prohibited AI practices (Art. 5 AI Act)
+2. Les fournisseurs de systèmes d'IA, y compris de systèmes d'IA à usage général, qui génèrent des contenus de synthèse de type audio, image, vidéo ou texte, veillent à ce que les sorties des 
 
-likely to manipulate, 33 Defined in Article 3(12) AI Act as the use for which an AI system is intended by the provider, including the specific context and conditions of use, as specified in the information supplied by the provider in t
+**#4** `AI Act (UE 2024/1689) · Art. considérant 132` (sim: 34.4%)
+> (132)
 
-**#5** `Commission Guidelines — Prohibited AI practices (Art. 5 AI Act) · Art. N/A` (sim: 32.6%)
-> Commission Guidelines — Prohibited AI practices (Art. 5 AI Act)
+Certains systèmes d’IA destinés à interagir avec des personnes physiques ou à générer du contenu peuvent présenter des risques spécifiques d’usurpation d’identité ou de tromperie, qu’ils soient ou non considérés comme étant à haut risque. Dans certaines circonstances, l’utilisation de ces sys
 
-For example, an emotion recognition system, if intended to be used by natural persons for purely personal non-professional activities, remains a high-risk AI system as classified in Article 6 AI Act and must be fully in compliance with
+**#5** `AI Act (UE 2024/1689) · Art. 50` (sim: 36.9%)
+> Article 50 — Obligations de transparence pour les fournisseurs et les déployeurs de certains systèmes d'IA
+
+4 (alinéa 2). Les déployeurs d'un système d'IA qui génère ou manipule des textes publiés dans le but d'informer le public sur des questions d'intérêt public indiquent que le texte a été généré
 
 </details>
 

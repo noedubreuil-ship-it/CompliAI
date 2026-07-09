@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:foaf="http://xmlns.com/foaf/0.1/" xmlns:og="http://ogp.me/ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" xmlns:schema="http://schema.org/" xmlns:sioc="http://rdfs.org/sioc/ns#" xmlns:sioct="http://rdfs.org/sioc/types#" xmlns:skos="http://www.w3.org/2004/02/skos/core#" xmlns:xsd="http://www.w3.org/2001/XMLSchema#" version="2.0" xml:base="https://www.cnil.fr/fr">
+  <channel>
+    <title>RSS - Actualités CNIL</title>
+    <link>https://www.cnil.fr/fr</link>
+    <description><![CDATA[Protéger les données personnelles, accompagner l&#039;innovation, préserver les libertés individuelles]]></description>
+    <language>fr</language>
+        <atom:link rel="self" href="https://www.cnil.fr/fr/rss.xml"/>
+<lastBuildDate>Thu, 25 Jun 2026 10:42:16 +0200</lastBuildDate>
+<pubDate>Wed, 24 Jun 26 14:00:00 +0200</pubDate>
+<item>
+  <title>Quatre auteurs reçoivent le deuxième prix CNIL/EHESS pour leur recherche sur la réception du règlement IA par les citoyens européens</title>
+  <link>https://www.cnil.fr/fr/prix-ehess-cnil-2026</link>
+  <description>Lors de la Journée de recherche sur la vie privée, le 24 juin 2026, Gabriel Lima, Gustavo Gil Gasiola, Frederike Zufall et Yixin Zou ont reçu le 2ème prix CNIL/EHESS pour leur article sur la régulation de l’intelligence artificielle et son alignement avec les attentes citoyennes.
+</description>
+  <guid isPermaLink="false">168636fr</guid>
+          <pubDate>Wed, 24 Jun 2026 14:00:00 +0200</pubDate>
+          <source url="https://www.cnil.fr/fr/rss.xml">RSS - Actualités CNIL</source>
+          <dc:creator>CNIL</dc:creator>
+          </item>
+<item>
+  <title>Informations publiques</title>
+  <link>https://www.cnil.fr/fr/informations-publiques</link>
+  <description>Cette page recense les informations publiques de la CNIL (documents, vidéos, open data).
+</description>
+  <guid isPermaLink="false">84655fr</guid>
+          <pubDate>Wed, 24 Jun 2026 14:00:00 +0200</pubDate>
+          <source url="https://www.cnil.fr/fr/rss.xml">RSS - Actualités CNIL</source>
+          <dc:creator>CNIL</dc:creator>
+          </item>
+<item>
+  <title>Remise du prix « Protection de la vie privée » 2026 par la CNIL et l’Inria</title>
+  <link>https://www.cnil.fr/fr/prix-inria-cnil-2026</link>
+  <description>Lors de la Journée de recherche sur la vie privée, le 24 juin 2026,&amp;amp;nbsp;la CNIL et l’Inria ont remis le prix 2026 de la protection de la vie privée à une équipe de chercheurs internationaux pour leur article portant sur l’articulation entre la réglementation et la recherche concernant les designs trompeurs et les bandeaux cookies.
+</description>
+  <guid isPermaLink="false">168633fr</guid>
+          <pubDate>Wed, 24 Jun 2026 14:00:00 +0200</pubDate>
+          <source url="https://www.cnil.fr/fr/rss.xml">RSS - Actualités CNIL</source>
+          <dc:creator>CNIL</dc:creator>
+          </item>
+<item>
+  <title>Victimes de violations de données : restez vigilants face aux offres d’accompagnement</title>
+  <link>https://www.cnil.fr/fr/vigilance-accompagnement-violation-de-donnees</link>
+  <description>Des victimes de violations de données personnelles reçoivent des courriels proposant une aide pour faire supprimer leurs informations en ligne. La CNIL invite à la prudence face à ces démarches dont elle n’est pas à l’origine.
+</description>
+  <guid isPermaLink="false">168648fr</guid>
+          <pubDate>Wed, 24 Jun 2026 14:00:00 +0200</pubDate>
+          <source url="https://www.cnil.fr/fr/rss.xml">RSS - Actualités CNIL</source>
+          <dc:creator>CNIL</dc:creator>
+          </item>
+<item>
+  <title>Élections professionnelles dans la fonction publique et vote électronique : comment transmettre les rapports d’expertise à la CNIL ?</title>
+  <link>https://www.cnil.fr/fr/elections-professionnelles-fonction-publique-vote-electronique</link>
+  <description>Lorsque le recours au vote électronique est prévu pour les élections professionnelles dans la fonction publique, le système de vote doit faire l’objet d’une expertise indépendante. Dans ce cadre, les rapports d’expertise doivent désormais être transmis à la CNIL.
+</description>
+  <guid isPermaLink="false">168639fr</guid>
+          <pubDate>Tue, 23 Jun 2026 14:00:00 +0200</pubDate>
+          <source url="https://www.cnil.fr/fr/rss.xml">RSS - Actualités CNIL</source>
+          <dc:creator>CNIL</dc:creator>
+          </item>
+<item>
+  <title>Sécurité des données : les règles essentielles pour protéger les données et votre activité</title>
+  <link>https://www.cnil.fr/fr/securite-des-donnees-les-regles-essentielles</link>
+  <description>Le numérique offre des opportunités pour développer votre entreprise, mais il s’accompagne aussi de risques concernant la sécurité des données que vous détenez, qu’elles soient personnelles (fichiers clients, employés…) ou non (informations financières, industrielles…). Il est donc impératif de sécuriser les outils que vous utilisez.
+</description>
+  <guid isPermaLink="false">1318fr</guid>
+          <pubDate>Fri, 19 Jun 2026 14:00:00 +0200</pubDate>
+          <source url="https://www.cnil.fr/fr/rss.xml">RSS - Actualités CNIL</source>
+          <dc:creator>CNIL</dc:creator>
+          </item>
+<item>
+  <title>Ordre du jour de la séance plénière du 18 juin 2026</title>
+  <link>https://www.cnil.fr/fr/ordre-du-jour-de-la-seance-pleniere-du-18-juin-2026</link>
+  <description>La Commission nationale de l'informatique et des libertés s’est réunie le jeudi 18 juin 2026 à 9&amp;amp;nbsp;h&amp;amp;nbsp;30 avec l’ordre du jour suivant&amp;amp;nbsp;:
+</description>
+  <guid isPermaLink="false">168627fr</guid>
+          <pubDate>Thu, 18 Jun 2026 14:00:00 +0200</pubDate>
+          <source url="https://www.cnil.fr/fr/rss.xml">RSS - Actualités CNIL</source>
+          <dc:creator>CNIL</dc:creator>
+          </item>
+<item>
+  <title>Nomination de Jean-Michel FIETIER au poste de directeur administratif et financier de la CNIL</title>
+  <link>https://www.cnil.fr/fr/nomination-jean-michel-fietier</link>
+  <description>À compter du 15 juin 2026, Jean-Michel FIETIER est nommé directeur administratif et financier de la CNIL. Il succède à Jean-Marc SALMON, qui occupait ces fonctions depuis 2020.
+</description>
+  <guid isPermaLink="false">168623fr</guid>
+          <pubDate>Tue, 16 Jun 2026 14:00:00 +0200</pubDate>
+          <source url="https://www.cnil.fr/fr/rss.xml">RSS - Actualités CNIL</source>
+          <dc:creator>CNIL</dc:creator>
+          </item>
+<item>
+  <title>Revoir le webinaire - Pixels de suivi dans les courriels : présentation des recommandations de la CNIL</title>
+  <link>https://www.cnil.fr/fr/webinaire-pixels-de-suivi-recommandations-cnil</link>
+  <description>La CNIL vous propose de décrypter un sujet ou une actualité en lien avec la protection des données à travers une série de webinaires. Retrouvez ce nouvel épisode consacré aux pixels de suivi.
+</description>
+  <guid isPermaLink="false">168614fr</guid>
+          <pubDate>Mon, 15 Jun 2026 14:00:00 +0200</pubDate>
+          <source url="https://www.cnil.fr/fr/rss.xml">RSS - Actualités CNIL</source>
+          <dc:creator>CNIL</dc:creator>
+          </item>
+<item>
+  <title>Le CEPD rencontre le commissaire européen McGrath et adopte un modèle commun de notification des violations de données</title>
+  <link>https://www.cnil.fr/fr/le-cepd-rencontre-le-commissaire-europeen-mcgrath-et-adopte-un-modele-commun-de-notification-des</link>
+  <description>Lors de sa dernière session plénière, le CEPD a rencontré Michael McGrath, commissaire européen chargé de la démocratie, de la justice, de l'État de droit et de la protection des consommateurs. Par ailleurs, le CEPD a adopté un&amp;amp;nbsp;modèle commun de notification des violations de données.
+</description>
+  <guid isPermaLink="false">168611fr</guid>
+          <pubDate>Wed, 10 Jun 2026 14:00:00 +0200</pubDate>
+          <source url="https://www.cnil.fr/fr/rss.xml">RSS - Actualités CNIL</source>
+          <dc:creator>CNIL</dc:creator>
+          </item>
+</channel>
+</rss>
