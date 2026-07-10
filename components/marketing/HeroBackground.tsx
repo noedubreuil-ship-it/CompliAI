@@ -54,7 +54,7 @@ export function HeroBackground() {
 
       {/* Constellation EU discrète (variante A) */}
       <svg
-        className="absolute inset-0 w-full h-full opacity-[0.22]"
+        className="absolute inset-0 w-full h-full opacity-[0.40]"
         viewBox="0 0 100 100"
         preserveAspectRatio="xMidYMid slice"
         aria-hidden
@@ -63,7 +63,7 @@ export function HeroBackground() {
           <g key={i} transform={`translate(${s.x} ${s.y}) scale(0.8)`}>
             <path
               d="M0,-1.6 L0.47,-0.5 L1.6,-0.5 L0.65,0.2 L1,1.3 L0,0.6 L-1,1.3 L-0.65,0.2 L-1.6,-0.5 L-0.47,-0.5 Z"
-              fill="#FFCC00"
+              fill="#FFE100"
             />
           </g>
         ))}
@@ -77,16 +77,6 @@ export function HeroBackground() {
             "radial-gradient(ellipse 80% 60% at 50% 25%, rgba(0,51,153,0.45) 0%, transparent 65%)",
             "linear-gradient(180deg, rgba(0,9,34,0.80) 0%, rgba(0,9,34,0.55) 45%, rgba(0,9,34,0.96) 100%)",
           ].join(", "),
-        }}
-      />
-
-      {/* Grille subtile */}
-      <div
-        className="absolute inset-0 opacity-[0.06]"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
-          backgroundSize: "64px 64px",
         }}
       />
 
