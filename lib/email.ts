@@ -247,3 +247,192 @@ export async function sendCreditPackConfirmation({
     html: wrapEmail("Achat de crédits confirmé", body),
   });
 }
+
+// ─── Reçu d'abonnement mensuel ────────────────────────────────────────────────
+export async function sendSubscriptionReceipt({
+  email,
+  userName,
+  amountPaidCents,
+  periodStart,
+  periodEnd,
+  invoiceNumber,
+  invoiceUrl,
+}: {
+  email: string;
+  userName?: string;
+  amountPaidCents: number;
+  periodStart: Date;
+  periodEnd: Date;
+  invoiceNumber?: string;
+  invoiceUrl?: string;
+}) {
+  const displayName = userName ?? email.split("@")[0];
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.compliai.eu";
+  const amount = (amountPaidCents / 100).toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
+  const fmt = (d: Date) => d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+
+  const body = `
+    <h2 style="margin:0 0 8px;font-size:20px;color:#111;font-weight:700;">Reçu de paiement</h2>
+    <p style="color:#444;line-height:1.6;margin:0 0 20px;font-size:14px;">
+      Bonjour ${displayName}, merci pour votre confiance. Voici le reçu de votre abonnement CompliAI.
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;margin:0 0 24px;">
+      <tr>
+        <td style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
+          <span style="color:#888;font-size:12px;">Abonnement</span><br/>
+          <strong style="color:#111;">CompliAI — Mensuel</strong>
+        </td>
+        <td style="padding:16px 20px;border-bottom:1px solid #e2e8f0;text-align:right;">
+          <span style="color:#888;font-size:12px;">Montant payé</span><br/>
+          <strong style="color:#003399;">${amount}</strong>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="2" style="padding:16px 20px;${invoiceNumber ? "border-bottom:1px solid #e2e8f0;" : ""}">
+          <span style="color:#888;font-size:12px;">Période facturée</span><br/>
+          <strong style="color:#111;">${fmt(periodStart)} → ${fmt(periodEnd)}</strong>
+        </td>
+      </tr>
+      ${invoiceNumber ? `<tr><td colspan="2" style="padding:16px 20px;">
+        <span style="color:#888;font-size:12px;">N° de facture</span><br/>
+        <strong style="color:#111;">${invoiceNumber}</strong>
+      </td></tr>` : ""}
+    </table>
+
+    <div style="text-align:center;">
+      ${invoiceUrl ? `<a href="${invoiceUrl}" style="display:inline-block;background:#003399;color:#fff;font-weight:600;font-size:14px;padding:12px 24px;border-radius:8px;text-decoration:none;margin-right:8px;">Télécharger la facture →</a>` : ""}
+      <a href="${appUrl}/dashboard/credits" style="display:inline-block;color:#003399;font-weight:600;font-size:14px;padding:12px 8px;text-decoration:none;">Gérer mon abonnement</a>
+    </div>
+
+    <p style="color:#888;font-size:12px;line-height:1.6;margin-top:24px;border-top:1px solid #f0f0f0;padding-top:16px;">
+      Ce reçu est envoyé à ${email}. Pour toute question de facturation, répondez à cet email.
+    </p>
+  `;
+
+  const resend = getResend();
+  if (!resend) return null;
+  return resend.emails.send({
+    from: FROM,
+    to: email,
+    subject: `Reçu CompliAI — ${amount}`,
+    html: wrapEmail("Reçu de paiement CompliAI", body),
+  });
+}
+
+// ─── Rappel de renouvellement (J-7 / J-1) ─────────────────────────────────────
+export async function sendRenewalReminder({
+  email,
+  userName,
+  daysBefore,
+  renewalDate,
+  amountCents,
+}: {
+  email: string;
+  userName?: string;
+  daysBefore: 7 | 1;
+  renewalDate: Date;
+  amountCents: number;
+}) {
+  const displayName = userName ?? email.split("@")[0];
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.compliai.eu";
+  const amount = (amountCents / 100).toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
+  const dateStr = renewalDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+  const when = daysBefore === 1 ? "demain" : `dans ${daysBefore} jours`;
+
+  const body = `
+    <h2 style="margin:0 0 8px;font-size:20px;color:#111;font-weight:700;">
+      Votre abonnement se renouvelle ${when}
+    </h2>
+    <p style="color:#444;line-height:1.7;margin:0 0 20px;font-size:14px;">
+      Bonjour ${displayName},<br/><br/>
+      Votre abonnement CompliAI sera automatiquement reconduit le <strong>${dateStr}</strong>
+      pour un montant de <strong>${amount}</strong>. Aucune action n'est requise si vous souhaitez continuer.
+    </p>
+
+    <p style="color:#444;line-height:1.7;margin:0 0 24px;font-size:14px;">
+      Vous gardez ainsi l'accès au consultant juridique, à la génération de documents et à la veille
+      réglementaire mise à jour quotidiennement.
+    </p>
+
+    <div style="text-align:center;">
+      <a href="${appUrl}/dashboard/credits" style="display:inline-block;background:#003399;color:#fff;font-weight:600;font-size:14px;padding:12px 24px;border-radius:8px;text-decoration:none;">
+        Gérer mon abonnement
+      </a>
+    </div>
+
+    <p style="color:#888;font-size:12px;line-height:1.6;margin-top:24px;border-top:1px solid #f0f0f0;padding-top:16px;">
+      Vous pouvez modifier ou résilier votre abonnement à tout moment depuis votre espace, sans frais.
+      Email envoyé à ${email}.
+    </p>
+  `;
+
+  const resend = getResend();
+  if (!resend) return null;
+  return resend.emails.send({
+    from: FROM,
+    to: email,
+    subject: daysBefore === 1
+      ? "Votre abonnement CompliAI se renouvelle demain"
+      : `Votre abonnement CompliAI se renouvelle dans ${daysBefore} jours`,
+    html: wrapEmail("Renouvellement à venir", body),
+  });
+}
+
+// ─── Réengagement inactivité (J+14 / J+30) ────────────────────────────────────
+export async function sendReengagement({
+  email,
+  userName,
+  daysInactive,
+}: {
+  email: string;
+  userName?: string;
+  daysInactive: 14 | 30;
+}) {
+  const displayName = userName ?? email.split("@")[0];
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.compliai.eu";
+
+  const heading = daysInactive === 14
+    ? "Une question de conformité en attente ?"
+    : "Le droit européen n'attend pas — CompliAI non plus";
+  const intro = daysInactive === 14
+    ? "Cela fait deux semaines que nous ne vous avons pas vu. Le corpus a été mis à jour chaque jour depuis : de nouvelles décisions et lignes directrices sont peut-être pertinentes pour vous."
+    : "Votre veille réglementaire continue de tourner en arrière-plan. AI Act, RGPD, DSA — les obligations évoluent, et votre espace CompliAI est prêt à répondre à vos questions.";
+
+  const body = `
+    <h2 style="margin:0 0 8px;font-size:20px;color:#111;font-weight:700;">${heading}</h2>
+    <p style="color:#444;line-height:1.7;margin:0 0 20px;font-size:14px;">
+      Bonjour ${displayName},<br/><br/>${intro}
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+      ${[
+        { t: "Posez une question au consultant", h: `${appUrl}/dashboard/chat` },
+        { t: "Générez un document de conformité", h: `${appUrl}/dashboard/tools` },
+      ].map((row) => `
+      <tr><td style="padding:10px 0;border-bottom:1px solid #f0f0f0;">
+        <a href="${row.h}" style="color:#003399;font-size:14px;font-weight:600;text-decoration:none;">${row.t} →</a>
+      </td></tr>`).join("")}
+    </table>
+
+    <div style="text-align:center;">
+      <a href="${appUrl}/dashboard" style="display:inline-block;background:#003399;color:#fff;font-weight:600;font-size:14px;padding:12px 24px;border-radius:8px;text-decoration:none;">
+        Revenir sur mon espace →
+      </a>
+    </div>
+
+    <p style="color:#888;font-size:12px;line-height:1.6;margin-top:24px;border-top:1px solid #f0f0f0;padding-top:16px;">
+      Email envoyé à ${email}. Vous ne souhaitez plus recevoir ces rappels ?
+      Gérez vos préférences depuis votre <a href="${appUrl}/dashboard/settings" style="color:#003399;">espace</a>.
+    </p>
+  `;
+
+  const resend = getResend();
+  if (!resend) return null;
+  return resend.emails.send({
+    from: FROM,
+    to: email,
+    subject: heading,
+    html: wrapEmail("On vous attend sur CompliAI", body),
+  });
+}
