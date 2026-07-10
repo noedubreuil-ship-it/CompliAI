@@ -1,0 +1,15 @@
+{
+  "Nav": {
+    "features": "Fonctionnalités",
+    "tools": "Outils",
+    "regulations": "Réglementations",
+    "pricing": "Tarifs",
+    "login": "Connexion",
+    "freeTrial": "Essai gratuit"
+  },
+  "LanguageSwitcher": {
+    "label": "Langue",
+    "fr": "Français",
+    "en": "English"
+  }
+}

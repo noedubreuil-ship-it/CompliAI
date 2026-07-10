@@ -7,6 +7,8 @@ import { HeroBackground } from "@/components/marketing/HeroBackground";
 import { MarketingSiteFooter } from "@/components/marketing/MarketingSiteFooter";
 import { loginRedirectHref } from "@/lib/marketing/site-links";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import {
   Shield, CheckCircle2, ArrowRight, FileSearch, MessageSquare,
   Bell, BookOpen, AlertTriangle, Menu, X, Star, Lock, FileText,
@@ -94,6 +96,13 @@ function useInView(threshold = 0.2) {
 function Nav() {
   const scrolled = useScrolled(40);
   const [open, setOpen] = useState(false);
+  const t = useTranslations("Nav");
+  const links: [string, string][] = [
+    [t("features"), "#fonctionnalités"],
+    [t("tools"), "#outils"],
+    [t("regulations"), "#réglementations"],
+    [t("pricing"), "/pricing"],
+  ];
 
   return (
     <nav
@@ -118,13 +127,8 @@ function Nav() {
 
         {/* Desktop links */}
         <div className="hidden md:flex items-center gap-7">
-          {[
-            ["Fonctionnalités", "#fonctionnalités"],
-            ["Outils", "#outils"],
-            ["Réglementations", "#réglementations"],
-            ["Tarifs", "/pricing"],
-          ].map(([label, href]) => (
-            <a key={label} href={href}
+          {links.map(([label, href]) => (
+            <a key={href} href={href}
               className="text-xs font-medium text-[#1D1D1F]/75 hover:text-[#1D1D1F] transition-colors cursor-pointer whitespace-nowrap">
               {label}
             </a>
@@ -133,14 +137,15 @@ function Nav() {
 
         {/* CTA */}
         <div className="hidden md:flex items-center gap-3">
+          <LanguageSwitcher />
           <Link href="/auth/login">
             <span className="text-xs font-medium text-[#003399] hover:underline cursor-pointer">
-              Connexion
+              {t("login")}
             </span>
           </Link>
           <Link href="/auth/login">
             <span className="text-xs font-semibold px-4 py-1.5 rounded-full bg-[#003399] text-white hover:bg-[#0044cc] transition-colors cursor-pointer">
-              Essai gratuit
+              {t("freeTrial")}
             </span>
           </Link>
         </div>
@@ -155,26 +160,24 @@ function Nav() {
       {/* Mobile menu */}
       {open && (
         <div className="md:hidden bg-white/95 backdrop-blur-2xl border-t border-black/[0.06] px-5 py-4 space-y-1">
-          {[
-            ["Fonctionnalités", "#fonctionnalités"],
-            ["Outils", "#outils"],
-            ["Réglementations", "#réglementations"],
-            ["Tarifs", "/pricing"],
-          ].map(([label, href]) => (
-            <a key={label} href={href} onClick={() => setOpen(false)}
+          {links.map(([label, href]) => (
+            <a key={href} href={href} onClick={() => setOpen(false)}
               className="block py-3 text-sm text-[#1D1D1F]/80 border-b border-black/[0.04] cursor-pointer">
               {label}
             </a>
           ))}
+          <div className="flex items-center justify-between pt-3">
+            <LanguageSwitcher />
+          </div>
           <div className="flex gap-3 pt-3">
             <Link href="/auth/login" className="flex-1">
               <button className="w-full py-2.5 rounded-full border border-[#003399] text-[#003399] text-sm font-medium cursor-pointer">
-                Connexion
+                {t("login")}
               </button>
             </Link>
             <Link href="/auth/login" className="flex-1">
               <button className="w-full py-2.5 rounded-full bg-[#003399] text-white text-sm font-medium cursor-pointer">
-                Essai gratuit
+                {t("freeTrial")}
               </button>
             </Link>
           </div>

@@ -1,0 +1,15 @@
+{
+  "Nav": {
+    "features": "Features",
+    "tools": "Tools",
+    "regulations": "Regulations",
+    "pricing": "Pricing",
+    "login": "Log in",
+    "freeTrial": "Free trial"
+  },
+  "LanguageSwitcher": {
+    "label": "Language",
+    "fr": "Français",
+    "en": "English"
+  }
+}

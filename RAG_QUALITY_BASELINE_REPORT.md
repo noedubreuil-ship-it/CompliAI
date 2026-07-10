@@ -14,7 +14,7 @@
 ---
 ## Mécanisme 1 — Golden Set (16 questions de référence)
 
-**Exécuté le** : 09/07/2026 14:47:36
+**Exécuté le** : 09/07/2026 22:54:14
 **Résultats** : 16 OK / 0 warning / 0 critique
 
 ### Détail par question
@@ -22,68 +22,74 @@
 #### ✅ Q01 — Notre entreprise développe un outil qui analyse des données financières de PME e…
 Résultat : conforme. Articles attendus présents, aucun article blacklisté.
 
-Articles cités : `AI Act (UE 2024/1689):considérant 58`, `AI Act (UE 2024/1689):6`, `AI Act (UE 2024/1689):27`, `AI Act (UE 2024/1689):9`, `AI Act (UE 2024/1689):51`, `Commission Guidelines — Classification of high-risk AI systems (Art. 6 AI Act):*`
+Articles cités : `AI Act (UE 2024/1689):considérant 58`, `AI Act (UE 2024/1689):6`, `AI Act (UE 2024/1689):9`, `AI Act (UE 2024/1689):27`, `AI Act (UE 2024/1689):considérant 61`, `AI Act (UE 2024/1689):considérant 53`
 
 <details><summary>Top-5 chunks retournés</summary>
 
-**#1** `AI Act (UE 2024/1689) · Art. considérant 58` (sim: 37.9%)
+**#1** `AI Act (UE 2024/1689) · Art. considérant 58` (sim: 63.2%)
 > (58)
 
 Un autre domaine dans lequel l’utilisation des systèmes d’IA mérite une attention particulière est l’accès et le droit à certains services et prestations essentiels, publics et privés, devant permettre aux personnes de participer pleinement à la société ou d’améliorer leur niveau de vie. En pa
 
-**#2** `AI Act (UE 2024/1689) · Art. 6` (sim: 38.9%)
+**#2** `AI Act (UE 2024/1689) · Art. 6` (sim: 64.8%)
 > Article 6 §3(c) — Règles relatives à la classification de systèmes d'IA comme systèmes à haut risque
 
 c) le système d'IA est destiné à détecter les constantes en matière de prise de décision ou les écarts par rapport aux constantes habituelles antérieures et n'est pas destiné à se substituer à l'éva
 
-**#3** `AI Act (UE 2024/1689) · Art. 27` (sim: 37.3%)
-> Article 27 — Analyse d'impact des systèmes d'IA à haut risque sur les droits fondamentaux
-
-5. Le Bureau de l'IA élabore un modèle de questionnaire, y compris au moyen d'un outil automatisé, afin d'aider les déployeurs à se conformer de manière simplifiée aux obligations qui leur incombent en vertu d
-
-**#4** `AI Act (UE 2024/1689) · Art. 9` (sim: 38.1%)
+**#3** `AI Act (UE 2024/1689) · Art. 9` (sim: 63.5%)
 > Article 9 §8 — Système de gestion des risques
 
 8. Les tests des systèmes d'IA à haut risque sont effectués, selon les besoins, à tout moment pendant le processus de développement et, en tout état de cause, avant leur mise sur le marché ou leur mise en service. Les tests sont effectués sur la base d'
 
-**#5** `AI Act (UE 2024/1689) · Art. 6` (sim: 38.5%)
-> Article 6 §3(b) — Règles relatives à la classification de systèmes d'IA comme systèmes à haut risque
+**#4** `AI Act (UE 2024/1689) · Art. 27` (sim: 62.2%)
+> Article 27 — Analyse d'impact des systèmes d'IA à haut risque sur les droits fondamentaux
 
-b) le système d'IA est destiné à améliorer le résultat d'une activité humaine préalablement réalisée;
+5. Le Bureau de l'IA élabore un modèle de questionnaire, y compris au moyen d'un outil automatisé, afin d'aider les déployeurs à se conformer de manière simplifiée aux obligations qui leur incombent en vertu d
+
+**#5** `AI Act (UE 2024/1689) · Art. considérant 61` (sim: 59.2%)
+> (61)
+
+Certains systèmes d’IA destinés à être utilisés pour l’administration de la justice et les processus démocratiques devraient être classés comme étant à haut risque, compte tenu de leur incidence potentiellement significative sur la démocratie, l’état de droit, les libertés individuelles ainsi 
 
 </details>
 
 #### ✅ Q02 — Peut-on déployer un système d'IA dans un centre d'appels pour inférer les émotio…
 Résultat : conforme. Articles attendus présents, aucun article blacklisté.
 
-Articles cités : `AI Act (UE 2024/1689):considérant 44`, `AI Act (UE 2024/1689):considérant 18`, `AI Act (UE 2024/1689):considérant 57`, `AI Act (UE 2024/1689):5`, `AI Act (UE 2024/1689):3`, `Commission Guidelines — Prohibited AI practices (Art. 5 AI Act):*`
+Articles cités : `AI Act (UE 2024/1689):considérant 44`, `AI Act (UE 2024/1689):considérant 18`, `AI Act (UE 2024/1689):considérant 57`, `AI Act (UE 2024/1689):considérant 58`, `AI Act (UE 2024/1689):ANNEXE III`, `AI Act (UE 2024/1689):50`
 
 <details><summary>Top-5 chunks retournés</summary>
 
-**#1** `AI Act (UE 2024/1689) · Art. considérant 44` (sim: 34.8%)
+**#1** `AI Act (UE 2024/1689) · Art. considérant 44` (sim: 58.1%)
 > (44)
 
 La base scientifique des systèmes d’IA visant à identifier ou à inférer les émotions suscite de vives inquiétudes, d’autant plus que l’expression des émotions varie considérablement d’une culture et d’une situation à l’autre, comme d’ailleurs chez un même individu. Les principaux défauts de ce
 
-**#2** `AI Act (UE 2024/1689) · Art. considérant 18` (sim: 31.3%)
+**#2** `AI Act (UE 2024/1689) · Art. considérant 18` (sim: 52.2%)
 > (18)
 
 La notion de «système de reconnaissance des émotions» visée dans le présent règlement devrait être définie comme un système d’IA servant à identifier les émotions ou les intentions de personnes physiques ou à faire des déductions quant à leurs émotions ou intentions, sur la base de leurs donné
 
-**#3** `AI Act (UE 2024/1689) · Art. considérant 57` (sim: 29.7%)
+**#3** `AI Act (UE 2024/1689) · Art. considérant 57` (sim: 49.5%)
 > (57)
 
 Les systèmes d’IA utilisés pour des questions liées à l’emploi, à la gestion de la main-d’œuvre et à l’accès à l’emploi indépendant, en particulier pour le recrutement et la sélection de personnes, pour la prise de décisions affectant les conditions des relations professionnelles, ainsi que la
 
-**#4** `AI Act (UE 2024/1689) · Art. 5` (sim: 30.2%)
-> Article 5 §1(f) — Pratiques interdites en matière d'IA
+**#4** `AI Act (UE 2024/1689) · Art. considérant 58` (sim: 47.5%)
+> (58)
 
-f) la mise sur le marché, la mise en service à cette fin spécifique ou l'utilisation de systèmes d'IA pour inférer les émotions d'une personne physique sur le lieu de travail et dans les établissements d'enseignement, sauf lorsque l'utilisation
+Un autre domaine dans lequel l’utilisation des systèmes d’IA mérite une attention particulière est l’accès et le droit à certains services et prestations essentiels, publics et privés, devant permettre aux personnes de participer pleinement à la société ou d’améliorer leur niveau de vie. En pa
 
-**#5** `AI Act (UE 2024/1689) · Art. 3` (sim: 29.3%)
-> Article 3 — Définitions
+**#5** `AI Act (UE 2024/1689) · Art. ANNEXE III` (sim: 43.4%)
+> ANNEXE III
 
-39) «système de reconnaissance des émotions», un système d'IA permettant la reconnaissance ou la déduction des émotions ou des intentions de personnes physiques sur la base de leurs données biométriques;
+Systèmes d'IA à haut risque visés à l'article 6, paragraphe 2
+
+Les systèmes d'IA à haut risque au sens de l'article 6, paragraphe 2, sont les systèmes d'IA répertoriés dans l'un des domaines suivants:
+
+1.
+
+Biométrie, dans la mesure où leur utilisation est autorisée par le droit de l'Unio
 
 </details>
 
@@ -424,7 +430,7 @@ Cela devrait s'appliquer en particulier aux opérations de traitement à grande 
 
 Lorsqu'il ressort d'une analyse d'impact relative à la protection des données que, en l'absence des garanties, de mesures de sécurité et de mécanismes pour atténuer le risque, le traitement engendrerait un risque élevé pour les droits et libertés des personnes physiques et que le responsable d
 
-**#5** `EDPB Lignes directrices WP248 — Analyse d'Impact relative à la Protection des Données (AIPD/DPIA) · Art. P39` (sim: 44.1%)
+**#5** `EDPB Lignes directrices WP248 — Analyse d'Impact relative à la Protection des Données (AIPD/DPIA) · Art. P39` (sim: 44.0%)
 > a) Quand une AIPD est-elle obligatoire? Lorsque le traitement est «susceptible d’engendrer un risque élevé».
 
 </details>
