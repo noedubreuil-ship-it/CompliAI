@@ -11,5 +11,133 @@
     "label": "Langue",
     "fr": "Français",
     "en": "English"
+  },
+  "Landing": {
+    "heroChip": "AI Act · RGPD · DSA · DMA · Data Act",
+    "heroTitle1": "La conformité IA européenne.",
+    "heroTitle2": "En 5 minutes.",
+    "heroSubtitle": "Auditez votre projet IA, identifiez vos obligations réglementaires et générez votre roadmap de conformité — sans cabinet d'avocats.",
+    "ctaStart": "Démarrer gratuitement",
+    "ctaPricing": "Voir les tarifs",
+    "noCard": "Sans carte bancaire · Annulation à tout moment",
+    "stats": {
+      "regulations": "Règlements & textes EU",
+      "extracts": "Extraits officiels indexés",
+      "daily": "Quotidienne",
+      "dailySub": "Mise à jour automatique",
+      "toolsSub": "Outils juridiques IA"
+    },
+    "preview": {
+      "eyebrow": "Aperçu produit",
+      "title": "Le consultant juridique, en action.",
+      "subtitle": "Posez votre question en langage naturel. CompliAI répond avec les articles, considérants et décisions exacts — chaque source est citée et vérifiable.",
+      "windowLabel": "app.compliai.eu · Consultant juridique",
+      "imgAlt": "Aperçu du consultant juridique CompliAI : question posée et réponse sourcée",
+      "mockQuestion": "Mon chatbot doit-il informer l'utilisateur qu'il parle à une IA ?",
+      "mockAnswer": "Oui. L'AI Act impose une obligation de transparence (<b>article 50 §1</b>) : les systèmes d'IA destinés à interagir avec des personnes physiques doivent les informer qu'elles communiquent avec une IA, sauf si cela est manifeste au vu du contexte."
+    },
+    "method": {
+      "dailyTitle": "Mise à jour quotidienne",
+      "dailyDesc": "Le corpus est actualisé automatiquement chaque jour depuis les sources officielles. Votre conformité reste à jour sans effort.",
+      "sourcesTitle": "Sources officielles citées",
+      "sourcesDesc": "Chaque réponse renvoie aux textes exacts : EUR-Lex, CJUE, EDPB et autorités nationales. Rien n'est inventé, tout est vérifiable.",
+      "corpusTitle": "43 règlements, 14 276 extraits",
+      "corpusDesc": "AI Act, RGPD, DSA, DMA, DORA, NIS2, Data Act, jurisprudence CJUE, lignes directrices EDPB — un corpus juridique structuré et vectorisé."
+    },
+    "personas": {
+      "eyebrow": "Pour tous les acteurs",
+      "title": "Conçu pour votre métier.",
+      "subtitle": "Que vous soyez fondateur, juriste ou chercheur, CompliAI s'adapte à vos besoins spécifiques.",
+      "startupsTitle": "Startups & Entreprises",
+      "startupsDesc": "Auditez vos produits IA, générez votre registre réglementaire et suivez vos obligations en temps réel.",
+      "startupsCta": "Auditer mon projet",
+      "lawyersTitle": "Juristes & Avocats",
+      "lawyersDesc": "Recherche sémantique dans les textes officiels, génération de clauses contractuelles, suivi EUR-Lex.",
+      "lawyersCta": "Outils pour avocats",
+      "studentsTitle": "Étudiants & Chercheurs",
+      "studentsDesc": "Textes de loi annotés, quiz interactifs, comparateurs de législations entre les 27 États membres.",
+      "studentsCta": "Accès académique"
+    },
+    "bento": {
+      "eyebrow": "Plateforme complète",
+      "title": "4 modes. Une seule plateforme.",
+      "mode": "Mode",
+      "mode1Title": "Audit de conformité en 5 minutes",
+      "mode1Desc": "Décrivez votre projet IA et obtenez un verdict immédiat — AI Act, RGPD, DSA — avec une roadmap d'actions priorisées.",
+      "mode2Title": "Consultant juridique IA 24/7",
+      "mode2Desc": "Analyse depuis la bibliothèque juridique indexée (droits européens, jurisprudence, États membres). Synthèse ou note développée au choix. Information juridique générale — pas un dossier défendu par un avocat.",
+      "mode2Cta": "Accéder au consultant",
+      "mode3Title": "Registre IA réglementaire",
+      "mode3Desc": "L'AI Act impose un registre des systèmes à haut risque. CompliAI le génère et le maintient automatiquement.",
+      "mode3Cta": "Voir le registre",
+      "mode4Title": "Veille réglementaire automatisée",
+      "mode4Desc": "Scan quotidien d'EUR-Lex. Dès qu'une mise à jour impacte vos projets, vous recevez une alerte avec analyse d'impact."
+    },
+    "why": {
+      "title": "Pourquoi CompliAI ?",
+      "withoutLabel": "Sans CompliAI",
+      "withoutTitle": "Un audit juridique coûte entre 15 000€ et 50 000€",
+      "without1": "Délais de 2 à 6 semaines",
+      "without2": "350€–600€/heure de conseil",
+      "without3": "Zéro mise à jour automatique",
+      "without4": "Incompréhensible pour les non-juristes",
+      "withLabel": "Avec CompliAI",
+      "withTitle": "Audit complet en 5 minutes pour 49€/mois",
+      "with1": "Résultats immédiats, 24h/24",
+      "with2": "Abonnement fixe, sans surprise",
+      "with3": "Mises à jour EUR-Lex automatiques",
+      "with4": "Explications simples avec citations"
+    },
+    "pyramid": {
+      "eyebrow": "Classification AI Act",
+      "title": "Pyramide des risques",
+      "unacceptable": "Inacceptable",
+      "high": "Haut risque",
+      "limited": "Risque limité",
+      "minimal": "Risque minimal",
+      "annex": "Annexe III",
+      "voluntary": "Code volontaire",
+      "footer": "CompliAI détermine automatiquement votre niveau de risque"
+    },
+    "tools": {
+      "eyebrow": "Aperçu produit",
+      "title": "Voyez ce que vous obtenez après inscription",
+      "subtitle": "Consultant sourcé, checklist DPO et audit express — trois parcours utilisés chaque jour par les équipes conformité.",
+      "consultantTitle": "Consultant juridique",
+      "consultantDesc": "Chat avec citations EUR-Lex / CJUE, note développée ou synthèse.",
+      "checklistTitle": "Checklist conformité",
+      "checklistDesc": "Roadmap AI Act + RGPD priorisée, export CSV/PDF, suivi des statuts.",
+      "auditTitle": "Audit express",
+      "auditDesc": "Verdict AI Act en quelques minutes, score et actions bloquantes.",
+      "try": "Essayer",
+      "specializedEyebrow": "16 outils spécialisés",
+      "specializedTitle": "Pour les entreprises, les avocats et les étudiants.",
+      "seeAll": "Voir tous les outils"
+    },
+    "regulations": {
+      "eyebrow": "Base juridique officielle",
+      "title": "43 règlements européens.",
+      "titleLine2": "1 seule plateforme.",
+      "subtitle": "14 276 extraits officiels indexés depuis EUR-Lex, CJUE et les autorités de protection des données, vectorisés pour une recherche sémantique précise.",
+      "moreCount": "+33",
+      "moreLabel": "autres textes, directives & JP",
+      "officialSource": "Source officielle · eur-lex.europa.eu"
+    },
+    "testimonials": {
+      "eyebrow": "Ils nous font confiance",
+      "title": "Ce que disent nos utilisateurs.",
+      "quote1": "CompliAI nous a permis d'identifier 3 obligations critiques que nous ignorions. Le gain de temps est incroyable.",
+      "role1": "DPO, FinTech startup",
+      "quote2": "En tant qu'avocat spécialisé, j'utilise CompliAI pour mes recherches préliminaires. La précision des citations est impressionnante.",
+      "role2": "Avocat en droit numérique",
+      "quote3": "Notre équipe peut maintenant gérer la conformité AI Act sans cabinet externe. ROI immédiat.",
+      "role3": "CTO, Scale-up B2B"
+    },
+    "finalCta": {
+      "title1": "Prêt à sécuriser",
+      "title2": "votre conformité IA ?",
+      "subtitle": "Rejoignez des centaines de startups, avocats et juristes qui utilisent CompliAI pour naviguer le droit européen.",
+      "activeUsers": "utilisateurs actifs"
+    }
   }
 }

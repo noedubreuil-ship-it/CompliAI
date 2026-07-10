@@ -11,5 +11,133 @@
     "label": "Language",
     "fr": "Français",
     "en": "English"
+  },
+  "Landing": {
+    "heroChip": "AI Act · GDPR · DSA · DMA · Data Act",
+    "heroTitle1": "European AI compliance.",
+    "heroTitle2": "In 5 minutes.",
+    "heroSubtitle": "Audit your AI project, identify your regulatory obligations and generate your compliance roadmap — without a law firm.",
+    "ctaStart": "Start for free",
+    "ctaPricing": "See pricing",
+    "noCard": "No credit card · Cancel anytime",
+    "stats": {
+      "regulations": "EU regulations & texts",
+      "extracts": "Official extracts indexed",
+      "daily": "Daily",
+      "dailySub": "Automatic updates",
+      "toolsSub": "AI legal tools"
+    },
+    "preview": {
+      "eyebrow": "Product preview",
+      "title": "The legal consultant, in action.",
+      "subtitle": "Ask your question in plain language. CompliAI answers with the exact articles, recitals and rulings — every source is cited and verifiable.",
+      "windowLabel": "app.compliai.eu · Legal consultant",
+      "imgAlt": "Preview of the CompliAI legal consultant: a question asked and a sourced answer",
+      "mockQuestion": "Does my chatbot have to tell users they're talking to an AI?",
+      "mockAnswer": "Yes. <b>Article 50(1) of the AI Act</b> sets a transparency obligation: AI systems intended to interact with natural persons must inform them that they are communicating with an AI, unless this is obvious from the context."
+    },
+    "method": {
+      "dailyTitle": "Daily updates",
+      "dailyDesc": "The corpus is refreshed automatically every day from official sources. Your compliance stays current, effortlessly.",
+      "sourcesTitle": "Official sources cited",
+      "sourcesDesc": "Every answer points to the exact texts: EUR-Lex, CJEU, EDPB and national authorities. Nothing is made up — everything is verifiable.",
+      "corpusTitle": "43 regulations, 14,276 extracts",
+      "corpusDesc": "AI Act, GDPR, DSA, DMA, DORA, NIS2, Data Act, CJEU case law, EDPB guidelines — a structured, vectorised legal corpus."
+    },
+    "personas": {
+      "eyebrow": "For every role",
+      "title": "Built for your job.",
+      "subtitle": "Whether you're a founder, lawyer or researcher, CompliAI adapts to your specific needs.",
+      "startupsTitle": "Startups & Companies",
+      "startupsDesc": "Audit your AI products, generate your regulatory register and track your obligations in real time.",
+      "startupsCta": "Audit my project",
+      "lawyersTitle": "Lawyers & Legal teams",
+      "lawyersDesc": "Semantic search across official texts, contract clause generation, EUR-Lex monitoring.",
+      "lawyersCta": "Tools for lawyers",
+      "studentsTitle": "Students & Researchers",
+      "studentsDesc": "Annotated legal texts, interactive quizzes, legislation comparators across the 27 Member States.",
+      "studentsCta": "Academic access"
+    },
+    "bento": {
+      "eyebrow": "Complete platform",
+      "title": "4 modes. One platform.",
+      "mode": "Mode",
+      "mode1Title": "Compliance audit in 5 minutes",
+      "mode1Desc": "Describe your AI project and get an instant verdict — AI Act, GDPR, DSA — with a prioritised action roadmap.",
+      "mode2Title": "24/7 AI legal consultant",
+      "mode2Desc": "Analysis from the indexed legal library (EU law, case law, Member States). Summary or detailed note as you prefer. General legal information — not a case argued by a lawyer.",
+      "mode2Cta": "Open the consultant",
+      "mode3Title": "Regulatory AI register",
+      "mode3Desc": "The AI Act requires a register of high-risk systems. CompliAI generates and maintains it automatically.",
+      "mode3Cta": "View the register",
+      "mode4Title": "Automated regulatory monitoring",
+      "mode4Desc": "Daily EUR-Lex scan. As soon as an update affects your projects, you get an alert with an impact analysis."
+    },
+    "why": {
+      "title": "Why CompliAI?",
+      "withoutLabel": "Without CompliAI",
+      "withoutTitle": "A legal audit costs between €15,000 and €50,000",
+      "without1": "Turnaround of 2 to 6 weeks",
+      "without2": "€350–€600 per hour of advice",
+      "without3": "Zero automatic updates",
+      "without4": "Incomprehensible for non-lawyers",
+      "withLabel": "With CompliAI",
+      "withTitle": "Full audit in 5 minutes for €49/month",
+      "with1": "Instant results, 24/7",
+      "with2": "Flat subscription, no surprises",
+      "with3": "Automatic EUR-Lex updates",
+      "with4": "Plain-language explanations with citations"
+    },
+    "pyramid": {
+      "eyebrow": "AI Act classification",
+      "title": "Risk pyramid",
+      "unacceptable": "Unacceptable",
+      "high": "High risk",
+      "limited": "Limited risk",
+      "minimal": "Minimal risk",
+      "annex": "Annex III",
+      "voluntary": "Voluntary code",
+      "footer": "CompliAI automatically determines your risk level"
+    },
+    "tools": {
+      "eyebrow": "Product preview",
+      "title": "See what you get after signing up",
+      "subtitle": "Sourced consultant, DPO checklist and express audit — three journeys used every day by compliance teams.",
+      "consultantTitle": "Legal consultant",
+      "consultantDesc": "Chat with EUR-Lex / CJEU citations, detailed note or summary.",
+      "checklistTitle": "Compliance checklist",
+      "checklistDesc": "Prioritised AI Act + GDPR roadmap, CSV/PDF export, status tracking.",
+      "auditTitle": "Express audit",
+      "auditDesc": "AI Act verdict in minutes, score and blocking actions.",
+      "try": "Try it",
+      "specializedEyebrow": "16 specialised tools",
+      "specializedTitle": "For companies, lawyers and students.",
+      "seeAll": "See all tools"
+    },
+    "regulations": {
+      "eyebrow": "Official legal basis",
+      "title": "43 European regulations.",
+      "titleLine2": "One single platform.",
+      "subtitle": "14,276 official extracts indexed from EUR-Lex, CJEU and data protection authorities, vectorised for precise semantic search.",
+      "moreCount": "+33",
+      "moreLabel": "other texts, directives & case law",
+      "officialSource": "Official source · eur-lex.europa.eu"
+    },
+    "testimonials": {
+      "eyebrow": "Trusted by",
+      "title": "What our users say.",
+      "quote1": "CompliAI helped us identify 3 critical obligations we were unaware of. The time saved is incredible.",
+      "role1": "DPO, FinTech startup",
+      "quote2": "As a specialised lawyer, I use CompliAI for my preliminary research. The precision of the citations is impressive.",
+      "role2": "Digital law attorney",
+      "quote3": "Our team can now handle AI Act compliance without an external firm. Immediate ROI.",
+      "role3": "CTO, B2B scale-up"
+    },
+    "finalCta": {
+      "title1": "Ready to secure",
+      "title2": "your AI compliance?",
+      "subtitle": "Join hundreds of startups, lawyers and legal teams using CompliAI to navigate European law.",
+      "activeUsers": "active users"
+    }
   }
 }

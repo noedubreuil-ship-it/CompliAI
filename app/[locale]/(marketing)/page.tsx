@@ -194,6 +194,7 @@ function Nav() {
 ────────────────────────────────────────────────────────────────────────────── */
 
 function ProductPreview() {
+  const t = useTranslations("Landing.preview");
   // Le mock s'affiche par défaut ; si public/product-preview.png existe et se
   // charge, on bascule sur la vraie capture. Robuste sans dépendre de onError.
   const [imgOk, setImgOk] = useState(false);
@@ -211,14 +212,14 @@ function ProductPreview() {
         <span className="w-2.5 h-2.5 rounded-full bg-[#FF5F57]" />
         <span className="w-2.5 h-2.5 rounded-full bg-[#FEBC2E]" />
         <span className="w-2.5 h-2.5 rounded-full bg-[#28C840]" />
-        <span className="ml-3 text-[11px] text-[#6E6E73] font-medium">app.compliai.eu · Consultant juridique</span>
+        <span className="ml-3 text-[11px] text-[#6E6E73] font-medium">{t("windowLabel")}</span>
       </div>
 
       {imgOk ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src="/product-preview.png"
-          alt="Aperçu du consultant juridique CompliAI : question posée et réponse sourcée"
+          alt={t("imgAlt")}
           className="block w-full h-auto"
           onError={() => setImgOk(false)}
         />
@@ -227,7 +228,7 @@ function ProductPreview() {
           {/* Question utilisateur */}
           <div className="flex justify-end">
             <div className="max-w-[80%] bg-[#003399] text-white text-sm rounded-2xl rounded-br-md px-4 py-2.5 leading-relaxed">
-              Mon chatbot doit-il informer l&apos;utilisateur qu&apos;il parle à une IA ?
+              {t("mockQuestion")}
             </div>
           </div>
           {/* Réponse assistant */}
@@ -237,9 +238,7 @@ function ProductPreview() {
             </div>
             <div className="flex-1 space-y-3">
               <div className="bg-[#F5F5F7] rounded-2xl rounded-tl-md px-4 py-3 text-sm text-[#1D1D1F] leading-relaxed">
-                Oui. L&apos;<strong>article 50 §1 de l&apos;AI Act</strong> impose une obligation de transparence :
-                les systèmes d&apos;IA destinés à interagir avec des personnes physiques doivent les informer
-                qu&apos;elles communiquent avec une IA, sauf si cela est manifeste au vu du contexte.
+                {t.rich("mockAnswer", { b: (chunks) => <strong>{chunks}</strong> })}
               </div>
               <div className="flex flex-wrap gap-2">
                 {[
@@ -263,6 +262,7 @@ function ProductPreview() {
 /* ─── Page ──────────────────────────────────────────────────────────────────── */
 
 export default function LandingPage() {
+  const t = useTranslations("Landing");
   return (
     <div className="min-h-screen bg-white overflow-x-hidden text-[#1D1D1F]">
       <Nav />
@@ -279,7 +279,7 @@ export default function LandingPage() {
           {/* Eyebrow chip */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/15 bg-white/8 text-white/60 text-xs mb-8 backdrop-blur-sm">
             <EUFlagSVG width={16} height={11} />
-            AI Act · RGPD · DSA · DMA · Data Act
+            {t("heroChip")}
           </div>
 
           {/* Headline */}
@@ -287,40 +287,39 @@ export default function LandingPage() {
             className="text-white font-bold leading-[1.02] tracking-[-0.04em] mb-6"
             style={{ fontSize: "clamp(2.8rem, 7vw, 5.5rem)" }}
           >
-            La conformité IA européenne.<br />
+            {t("heroTitle1")}<br />
             <span style={{
               background: "linear-gradient(90deg, #FFCC00 0%, #FFE566 40%, #FFCC00 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               backgroundClip: "text",
             }}>
-              En 5 minutes.
+              {t("heroTitle2")}
             </span>
           </h1>
 
           {/* Subheadline */}
           <p className="text-white/50 font-normal leading-relaxed mx-auto mb-10"
             style={{ fontSize: "clamp(1.1rem, 2vw, 1.4rem)", maxWidth: "600px" }}>
-            Auditez votre projet IA, identifiez vos obligations réglementaires
-            et générez votre roadmap de conformité — sans cabinet d'avocats.
+            {t("heroSubtitle")}
           </p>
 
           {/* CTA */}
           <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
             <Link href="/auth/login">
               <button className="group flex items-center gap-2 px-7 py-3.5 rounded-full bg-[#FFCC00] text-[#003399] font-semibold text-sm hover:bg-yellow-300 transition-all shadow-lg shadow-yellow-500/20 hover:shadow-yellow-500/40 cursor-pointer">
-                Démarrer gratuitement
+                {t("ctaStart")}
                 <ChevronRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
               </button>
             </Link>
             <Link href="/pricing">
               <button className="flex items-center gap-1.5 text-sm text-[#003399] font-medium cursor-pointer hover:underline underline-offset-2">
-                Voir les tarifs <ChevronRight className="h-3.5 w-3.5" />
+                {t("ctaPricing")} <ChevronRight className="h-3.5 w-3.5" />
               </button>
             </Link>
           </div>
 
-          <p className="text-white/20 text-xs mt-7">Sans carte bancaire · Annulation à tout moment</p>
+          <p className="text-white/20 text-xs mt-7">{t("noCard")}</p>
         </div>
 
         {/* Scroll cue */}
@@ -336,10 +335,10 @@ export default function LandingPage() {
         <div className="max-w-[980px] mx-auto px-5 py-14">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
-              { val: "43", sub: "Règlements & textes EU" },
-              { val: "14 276", sub: "Extraits officiels indexés" },
-              { val: "Quotidienne", sub: "Mise à jour automatique" },
-              { val: "16", sub: "Outils juridiques IA" },
+              { val: "43", sub: t("stats.regulations") },
+              { val: "14 276", sub: t("stats.extracts") },
+              { val: t("stats.daily"), sub: t("stats.dailySub") },
+              { val: "16", sub: t("stats.toolsSub") },
             ].map(({ val, sub }) => (
               <div key={sub}>
                 <p className="font-bold tracking-[-0.03em] text-[#1D1D1F] mb-1"
@@ -358,14 +357,13 @@ export default function LandingPage() {
       ══════════════════════════════════════════════════════════════════════ */}
       <section className="bg-white pt-20 pb-8">
         <div className="max-w-[980px] mx-auto px-5 text-center">
-          <p className="text-xs font-semibold text-[#003399] tracking-widest uppercase mb-4">Aperçu produit</p>
+          <p className="text-xs font-semibold text-[#003399] tracking-widest uppercase mb-4">{t("preview.eyebrow")}</p>
           <h2 className="font-bold tracking-[-0.03em] text-[#1D1D1F] mb-3"
             style={{ fontSize: "clamp(1.8rem, 4vw, 2.8rem)" }}>
-            Le consultant juridique, en action.
+            {t("preview.title")}
           </h2>
           <p className="text-[#6E6E73] text-sm max-w-[520px] mx-auto mb-10">
-            Posez votre question en langage naturel. CompliAI répond avec les articles, considérants
-            et décisions exacts — chaque source est citée et vérifiable.
+            {t("preview.subtitle")}
           </p>
         </div>
         <div className="max-w-[900px] mx-auto px-5">
@@ -380,21 +378,9 @@ export default function LandingPage() {
         <div className="max-w-[980px] mx-auto px-5">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
-              {
-                icon: Zap,
-                title: "Mise à jour quotidienne",
-                desc: "Le corpus est actualisé automatiquement chaque jour depuis les sources officielles. Votre conformité reste à jour sans effort.",
-              },
-              {
-                icon: BookOpen,
-                title: "Sources officielles citées",
-                desc: "Chaque réponse renvoie aux textes exacts : EUR-Lex, CJUE, EDPB et autorités nationales. Rien n'est inventé, tout est vérifiable.",
-              },
-              {
-                icon: Scale,
-                title: "43 règlements, 14 276 extraits",
-                desc: "AI Act, RGPD, DSA, DMA, DORA, NIS2, Data Act, jurisprudence CJUE, lignes directrices EDPB — un corpus juridique structuré et vectorisé.",
-              },
+              { icon: Zap, title: t("method.dailyTitle"), desc: t("method.dailyDesc") },
+              { icon: BookOpen, title: t("method.sourcesTitle"), desc: t("method.sourcesDesc") },
+              { icon: Scale, title: t("method.corpusTitle"), desc: t("method.corpusDesc") },
             ].map(({ icon: Icon, title, desc }) => (
               <div key={title} className="bg-[#F5F5F7] rounded-3xl p-7">
                 <div className="w-11 h-11 rounded-2xl bg-white flex items-center justify-center mb-5 shadow-sm">
@@ -415,38 +401,23 @@ export default function LandingPage() {
       ══════════════════════════════════════════════════════════════════════ */}
       <section className="bg-[#F5F5F7] py-24">
         <div className="max-w-[980px] mx-auto px-5 text-center">
-          <p className="text-xs font-semibold text-[#003399] tracking-widest uppercase mb-4">Pour tous les acteurs</p>
+          <p className="text-xs font-semibold text-[#003399] tracking-widest uppercase mb-4">{t("personas.eyebrow")}</p>
           <h2 className="font-bold tracking-[-0.03em] text-[#1D1D1F] leading-tight mb-5"
             style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)" }}>
-            Conçu pour votre métier.
+            {t("personas.title")}
           </h2>
           <p className="text-[#6E6E73] max-w-[580px] mx-auto leading-relaxed"
             style={{ fontSize: "clamp(1rem, 2vw, 1.2rem)" }}>
-            Que vous soyez fondateur, juriste ou chercheur, CompliAI s'adapte à vos besoins spécifiques.
+            {t("personas.subtitle")}
           </p>
         </div>
 
         {/* 3-col cards */}
         <div className="max-w-[980px] mx-auto px-5 mt-12 grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
-            {
-              icon: Building2,
-              title: "Startups & Entreprises",
-              desc: "Auditez vos produits IA, générez votre registre réglementaire et suivez vos obligations en temps réel.",
-              cta: "Auditer mon projet",
-            },
-            {
-              icon: Gavel,
-              title: "Juristes & Avocats",
-              desc: "Recherche sémantique dans les textes officiels, génération de clauses contractuelles, suivi EUR-Lex.",
-              cta: "Outils pour avocats",
-            },
-            {
-              icon: GraduationCap,
-              title: "Étudiants & Chercheurs",
-              desc: "Textes de loi annotés, quiz interactifs, comparateurs de législations entre les 27 États membres.",
-              cta: "Accès académique",
-            },
+            { icon: Building2, title: t("personas.startupsTitle"), desc: t("personas.startupsDesc"), cta: t("personas.startupsCta") },
+            { icon: Gavel, title: t("personas.lawyersTitle"), desc: t("personas.lawyersDesc"), cta: t("personas.lawyersCta") },
+            { icon: GraduationCap, title: t("personas.studentsTitle"), desc: t("personas.studentsDesc"), cta: t("personas.studentsCta") },
           ].map(({ icon: Icon, title, desc, cta }) => (
             <Link href="/auth/login" key={title}>
               <div className="bg-white rounded-3xl p-8 h-full flex flex-col cursor-pointer group transition-all hover:shadow-[0_8px_40px_rgba(0,0,0,0.08)] hover:-translate-y-0.5">
@@ -473,10 +444,10 @@ export default function LandingPage() {
         <div className="max-w-[980px] mx-auto px-5">
 
           <div className="text-center mb-12">
-            <p className="text-xs font-semibold text-[#003399] tracking-widest uppercase mb-4">Plateforme complète</p>
+            <p className="text-xs font-semibold text-[#003399] tracking-widest uppercase mb-4">{t("bento.eyebrow")}</p>
             <h2 className="font-bold tracking-[-0.03em] text-[#1D1D1F]"
               style={{ fontSize: "clamp(2rem, 5vw, 3.2rem)" }}>
-              4 modes. Une seule plateforme.
+              {t("bento.title")}
             </h2>
           </div>
 
@@ -487,14 +458,14 @@ export default function LandingPage() {
             <div className="bg-[#1D1D1F] rounded-3xl p-8 md:col-span-2 flex flex-col md:flex-row gap-8 items-start group cursor-default">
               <div className="flex-1">
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 text-white/50 text-[11px] font-medium mb-5">
-                  Mode 1
+                  {t("bento.mode")} 1
                 </div>
                 <h3 className="font-bold text-white tracking-[-0.03em] leading-tight mb-3"
                   style={{ fontSize: "clamp(1.5rem, 3vw, 2.2rem)" }}>
-                  Audit de conformité<br />en 5 minutes
+                  {t("bento.mode1Title")}
                 </h3>
                 <p className="text-white/50 text-sm leading-relaxed max-w-[380px]">
-                  Décrivez votre projet IA et obtenez un verdict immédiat — AI Act, RGPD, DSA — avec une roadmap d'actions priorisées.
+                  {t("bento.mode1Desc")}
                 </p>
               </div>
               <div className="flex-shrink-0 w-full md:w-[240px] h-[160px] rounded-2xl bg-white/5 border border-white/8 flex items-center justify-center">
@@ -505,15 +476,13 @@ export default function LandingPage() {
             {/* Card 2 */}
             <div className="bg-white rounded-3xl p-8 cursor-default group">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F5F5F7] text-[#6E6E73] text-[11px] font-medium mb-5">
-                Mode 2
+                {t("bento.mode")} 2
               </div>
               <h3 className="font-bold text-[#1D1D1F] tracking-[-0.02em] leading-tight mb-3 text-xl">
-                Consultant juridique IA 24/7
+                {t("bento.mode2Title")}
               </h3>
               <p className="text-[#6E6E73] text-sm leading-relaxed">
-                Analyse depuis la bibliothèque juridique indexée (droits européens, jurisprudence, États membres).
-                Synthèse ou note développée au choix. Information juridique générale — pas un dossier défendu par un
-                avocat.
+                {t("bento.mode2Desc")}
               </p>
               <div className="mt-6 h-px bg-[#F5F5F7]" />
               <Link
@@ -521,20 +490,20 @@ export default function LandingPage() {
                 className="mt-4 flex items-center gap-2 text-[#003399] text-sm font-medium cursor-pointer hover:gap-3 transition-all"
               >
                 <MessageSquare className="h-4 w-4" />
-                Accéder au consultant
+                {t("bento.mode2Cta")}
               </Link>
             </div>
 
             {/* Card 3 */}
             <div className="bg-[#003399] rounded-3xl p-8 cursor-default">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 text-white/50 text-[11px] font-medium mb-5">
-                Mode 3
+                {t("bento.mode")} 3
               </div>
               <h3 className="font-bold text-white tracking-[-0.02em] leading-tight mb-3 text-xl">
-                Registre IA réglementaire
+                {t("bento.mode3Title")}
               </h3>
               <p className="text-white/60 text-sm leading-relaxed">
-                L'AI Act impose un registre des systèmes à haut risque. CompliAI le génère et le maintient automatiquement.
+                {t("bento.mode3Desc")}
               </p>
               <div className="mt-6 h-px bg-white/10" />
               <Link
@@ -542,7 +511,7 @@ export default function LandingPage() {
                 className="mt-4 flex items-center gap-2 text-[#FFCC00] text-sm font-medium cursor-pointer hover:gap-3 transition-all"
               >
                 <BookOpen className="h-4 w-4" />
-                Voir le registre
+                {t("bento.mode3Cta")}
               </Link>
             </div>
 
@@ -553,14 +522,14 @@ export default function LandingPage() {
               </div>
               <div className="flex-1">
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white text-[#6E6E73] text-[11px] font-medium mb-5 border border-black/[0.06]">
-                  Mode 4
+                  {t("bento.mode")} 4
                 </div>
                 <h3 className="font-bold text-[#1D1D1F] tracking-[-0.02em] leading-tight mb-3"
                   style={{ fontSize: "clamp(1.3rem, 3vw, 1.8rem)" }}>
-                  Veille réglementaire automatisée
+                  {t("bento.mode4Title")}
                 </h3>
                 <p className="text-[#6E6E73] text-sm leading-relaxed max-w-[420px]">
-                  Scan quotidien d'EUR-Lex. Dès qu'une mise à jour impacte vos projets, vous recevez une alerte avec analyse d'impact.
+                  {t("bento.mode4Desc")}
                 </p>
               </div>
             </div>
@@ -578,7 +547,7 @@ export default function LandingPage() {
           <div className="text-center mb-16">
             <h2 className="font-bold tracking-[-0.03em] text-[#1D1D1F]"
               style={{ fontSize: "clamp(2rem, 5vw, 3.2rem)" }}>
-              Pourquoi CompliAI ?
+              {t("why.title")}
             </h2>
           </div>
 
@@ -587,18 +556,18 @@ export default function LandingPage() {
             <div className="bg-[#F5F5F7] rounded-3xl p-8">
               <div className="flex items-center gap-2 mb-6">
                 <AlertTriangle className="h-4 w-4 text-red-500" />
-                <span className="text-xs font-semibold text-red-500 uppercase tracking-widest">Sans CompliAI</span>
+                <span className="text-xs font-semibold text-red-500 uppercase tracking-widest">{t("why.withoutLabel")}</span>
               </div>
               <p className="font-bold text-[#1D1D1F] tracking-[-0.02em] leading-snug mb-6"
                 style={{ fontSize: "clamp(1.3rem, 2.5vw, 1.7rem)" }}>
-                Un audit juridique coûte entre 15 000€ et 50 000€
+                {t("why.withoutTitle")}
               </p>
               <div className="space-y-3">
                 {[
-                  "Délais de 2 à 6 semaines",
-                  "350€–600€/heure de conseil",
-                  "Zéro mise à jour automatique",
-                  "Incompréhensible pour les non-juristes",
+                  t("why.without1"),
+                  t("why.without2"),
+                  t("why.without3"),
+                  t("why.without4"),
                 ].map(p => (
                   <div key={p} className="flex items-center gap-3">
                     <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center shrink-0">
@@ -618,18 +587,18 @@ export default function LandingPage() {
               <div className="relative">
                 <div className="flex items-center gap-2 mb-6">
                   <CheckCircle2 className="h-4 w-4 text-[#FFCC00]" />
-                  <span className="text-xs font-semibold text-[#FFCC00] uppercase tracking-widest">Avec CompliAI</span>
+                  <span className="text-xs font-semibold text-[#FFCC00] uppercase tracking-widest">{t("why.withLabel")}</span>
                 </div>
                 <p className="font-bold text-white tracking-[-0.02em] leading-snug mb-6"
                   style={{ fontSize: "clamp(1.3rem, 2.5vw, 1.7rem)" }}>
-                  Audit complet en 5 minutes pour 49€/mois
+                  {t("why.withTitle")}
                 </p>
                 <div className="space-y-3">
                   {[
-                    "Résultats immédiats, 24h/24",
-                    "Abonnement fixe, sans surprise",
-                    "Mises à jour EUR-Lex automatiques",
-                    "Explications simples avec citations",
+                    t("why.with1"),
+                    t("why.with2"),
+                    t("why.with3"),
+                    t("why.with4"),
                   ].map(p => (
                     <div key={p} className="flex items-center gap-3">
                       <div className="w-5 h-5 rounded-full bg-[#FFCC00]/20 flex items-center justify-center shrink-0">
@@ -652,19 +621,19 @@ export default function LandingPage() {
       <section className="bg-[#1D1D1F] py-24">
         <div className="max-w-[680px] mx-auto px-5 text-center">
           <p className="text-xs font-semibold text-white/30 tracking-widest uppercase mb-4">
-            Classification AI Act
+            {t("pyramid.eyebrow")}
           </p>
           <h2 className="font-bold text-white tracking-[-0.03em] mb-12"
             style={{ fontSize: "clamp(1.8rem, 4vw, 2.8rem)" }}>
-            Pyramide des risques
+            {t("pyramid.title")}
           </h2>
 
           <div className="space-y-3">
             {[
-              { label: "Inacceptable", from: "#EF4444", to: "#DC2626", w: "32%", ref: "Art. 5" },
-              { label: "Haut risque", from: "#F97316", to: "#EA580C", w: "52%", ref: "Annexe III" },
-              { label: "Risque limité", from: "#EAB308", to: "#CA8A04", w: "74%", ref: "Art. 50" },
-              { label: "Risque minimal", from: "#22C55E", to: "#16A34A", w: "100%", ref: "Code volontaire" },
+              { label: t("pyramid.unacceptable"), from: "#EF4444", to: "#DC2626", w: "32%", ref: "Art. 5" },
+              { label: t("pyramid.high"), from: "#F97316", to: "#EA580C", w: "52%", ref: t("pyramid.annex") },
+              { label: t("pyramid.limited"), from: "#EAB308", to: "#CA8A04", w: "74%", ref: "Art. 50" },
+              { label: t("pyramid.minimal"), from: "#22C55E", to: "#16A34A", w: "100%", ref: t("pyramid.voluntary") },
             ].map(level => (
               <div key={level.label} className="flex items-center gap-5 justify-center">
                 <div
@@ -681,7 +650,7 @@ export default function LandingPage() {
             ))}
           </div>
           <p className="text-white/20 text-xs mt-10">
-            CompliAI détermine automatiquement votre niveau de risque
+            {t("pyramid.footer")}
           </p>
         </div>
       </section>
@@ -692,33 +661,20 @@ export default function LandingPage() {
       <section id="outils" className="bg-white py-24">
         <div className="max-w-[980px] mx-auto px-5">
           <div className="text-center mb-10">
-            <p className="text-xs font-semibold text-[#003399] tracking-widest uppercase mb-4">Aperçu produit</p>
+            <p className="text-xs font-semibold text-[#003399] tracking-widest uppercase mb-4">{t("tools.eyebrow")}</p>
             <h2 className="font-bold tracking-[-0.03em] text-[#1D1D1F] text-2xl md:text-3xl mb-3">
-              Voyez ce que vous obtenez après inscription
+              {t("tools.title")}
             </h2>
             <p className="text-sm text-[#6E6E73] max-w-xl mx-auto">
-              Consultant sourcé, checklist DPO et audit express — trois parcours utilisés chaque jour par les équipes
-              conformité.
+              {t("tools.subtitle")}
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-4 mb-16">
             {[
-              {
-                title: "Consultant juridique",
-                desc: "Chat avec citations EUR-Lex / CJUE, note développée ou synthèse.",
-                href: "/dashboard/chat",
-              },
-              {
-                title: "Checklist conformité",
-                desc: "Roadmap AI Act + RGPD priorisée, export CSV/PDF, suivi des statuts.",
-                href: "/dashboard/tools/checklist",
-              },
-              {
-                title: "Audit express",
-                desc: "Verdict AI Act en quelques minutes, score et actions bloquantes.",
-                href: "/dashboard/projects/new",
-              },
+              { title: t("tools.consultantTitle"), desc: t("tools.consultantDesc"), href: "/dashboard/chat" },
+              { title: t("tools.checklistTitle"), desc: t("tools.checklistDesc"), href: "/dashboard/tools/checklist" },
+              { title: t("tools.auditTitle"), desc: t("tools.auditDesc"), href: "/dashboard/projects/new" },
             ].map((card) => (
               <Link
                 key={card.title}
@@ -727,16 +683,16 @@ export default function LandingPage() {
               >
                 <p className="font-semibold text-[#1D1D1F] text-sm">{card.title}</p>
                 <p className="text-xs text-[#6E6E73] mt-2 leading-relaxed">{card.desc}</p>
-                <p className="text-xs text-[#003399] font-medium mt-4">Essayer →</p>
+                <p className="text-xs text-[#003399] font-medium mt-4">{t("tools.try")} →</p>
               </Link>
             ))}
           </div>
 
           <div className="text-center mb-14">
-            <p className="text-xs font-semibold text-[#003399] tracking-widest uppercase mb-4">16 outils spécialisés</p>
+            <p className="text-xs font-semibold text-[#003399] tracking-widest uppercase mb-4">{t("tools.specializedEyebrow")}</p>
             <h2 className="font-bold tracking-[-0.03em] text-[#1D1D1F]"
               style={{ fontSize: "clamp(2rem, 5vw, 3.2rem)" }}>
-              Pour les entreprises,<br />les avocats et les étudiants.
+              {t("tools.specializedTitle")}
             </h2>
           </div>
 
@@ -760,7 +716,7 @@ export default function LandingPage() {
           <div className="text-center">
             <Link href={loginRedirectHref("/dashboard/tools")}>
               <button className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#003399] text-white text-sm font-medium hover:bg-[#0044cc] transition-colors cursor-pointer">
-                Voir tous les outils
+                {t("tools.seeAll")}
                 <ChevronRight className="h-3.5 w-3.5" />
               </button>
             </Link>
@@ -775,15 +731,14 @@ export default function LandingPage() {
         <div className="max-w-[980px] mx-auto px-5 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <EUFlagSVG width={28} height={19} />
-            <p className="text-xs font-semibold text-[#6E6E73] tracking-widest uppercase">Base juridique officielle</p>
+            <p className="text-xs font-semibold text-[#6E6E73] tracking-widest uppercase">{t("regulations.eyebrow")}</p>
           </div>
           <h2 className="font-bold tracking-[-0.03em] text-[#1D1D1F] mb-3"
             style={{ fontSize: "clamp(1.8rem, 4vw, 2.8rem)" }}>
-            43 règlements européens.<br />1 seule plateforme.
+            {t("regulations.title")}<br />{t("regulations.titleLine2")}
           </h2>
           <p className="text-[#6E6E73] text-sm mb-12 max-w-[560px] mx-auto">
-            14 276 extraits officiels indexés depuis EUR-Lex, CJUE et les autorités de protection des données,
-            vectorisés pour une recherche sémantique précise.
+            {t("regulations.subtitle")}
           </p>
 
           <div className="flex flex-wrap justify-center gap-3">
@@ -798,15 +753,15 @@ export default function LandingPage() {
               </div>
             ))}
             <div className="bg-[#003399] rounded-2xl px-6 py-4 text-center min-w-[120px] flex flex-col items-center justify-center cursor-default">
-              <p className="font-bold text-white tracking-[-0.02em] text-lg">+33</p>
-              <p className="text-[10px] text-white/70 mt-1 leading-snug">autres textes,<br />directives & JP</p>
+              <p className="font-bold text-white tracking-[-0.02em] text-lg">{t("regulations.moreCount")}</p>
+              <p className="text-[10px] text-white/70 mt-1 leading-snug">{t("regulations.moreLabel")}</p>
             </div>
           </div>
 
           <a href="https://eur-lex.europa.eu" target="_blank" rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-xs text-[#6E6E73] hover:text-[#1D1D1F] mt-10 transition-colors cursor-pointer">
             <ArrowRight className="h-3 w-3" />
-            Source officielle · eur-lex.europa.eu
+            {t("regulations.officialSource")}
           </a>
         </div>
       </section>
@@ -817,30 +772,34 @@ export default function LandingPage() {
       <section className="bg-white py-24">
         <div className="max-w-[980px] mx-auto px-5">
           <div className="text-center mb-14">
-            <p className="text-xs font-semibold text-[#003399] tracking-widest uppercase mb-4">Ils nous font confiance</p>
+            <p className="text-xs font-semibold text-[#003399] tracking-widest uppercase mb-4">{t("testimonials.eyebrow")}</p>
             <h2 className="font-bold tracking-[-0.03em] text-[#1D1D1F]"
               style={{ fontSize: "clamp(2rem, 4vw, 3rem)" }}>
-              Ce que disent nos utilisateurs.
+              {t("testimonials.title")}
             </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {TESTIMONIALS.map(t => (
-              <div key={t.author}
+            {[
+              { quote: t("testimonials.quote1"), author: "Marie Lefebvre", role: t("testimonials.role1") },
+              { quote: t("testimonials.quote2"), author: "Thomas Dubois", role: t("testimonials.role2") },
+              { quote: t("testimonials.quote3"), author: "Sarah Chen", role: t("testimonials.role3") },
+            ].map(item => (
+              <div key={item.author}
                 className="bg-[#F5F5F7] rounded-3xl p-7 cursor-default hover:shadow-[0_8px_40px_rgba(0,0,0,0.07)] hover:-translate-y-0.5 transition-all">
                 <div className="flex gap-0.5 mb-5">
                   {[0,1,2,3,4].map(i => (
                     <Star key={i} className="h-3.5 w-3.5 fill-[#FFCC00] text-[#FFCC00]" />
                   ))}
                 </div>
-                <p className="text-[#1D1D1F] text-sm leading-relaxed mb-6">"{t.quote}"</p>
+                <p className="text-[#1D1D1F] text-sm leading-relaxed mb-6">&ldquo;{item.quote}&rdquo;</p>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-[#003399] flex items-center justify-center text-white text-[10px] font-bold shrink-0">
-                    {t.author.split(" ").map(n => n[0]).join("")}
+                    {item.author.split(" ").map(n => n[0]).join("")}
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-[#1D1D1F]">{t.author}</p>
-                    <p className="text-[11px] text-[#6E6E73]">{t.role}</p>
+                    <p className="text-xs font-semibold text-[#1D1D1F]">{item.author}</p>
+                    <p className="text-[11px] text-[#6E6E73]">{item.role}</p>
                   </div>
                 </div>
               </div>
@@ -861,10 +820,10 @@ export default function LandingPage() {
 
           <h2 className="font-bold text-white tracking-[-0.04em] leading-tight mb-6"
             style={{ fontSize: "clamp(2.5rem, 6vw, 4.5rem)" }}>
-            Prêt à sécuriser<br />votre conformité IA ?
+            {t("finalCta.title1")}<br />{t("finalCta.title2")}
           </h2>
           <p className="text-white/45 mb-10 leading-relaxed" style={{ fontSize: "clamp(1rem, 2vw, 1.2rem)" }}>
-            Rejoignez des centaines de startups, avocats et juristes qui utilisent CompliAI pour naviguer le droit européen.
+            {t("finalCta.subtitle")}
           </p>
 
           {/* Social proof */}
@@ -877,7 +836,7 @@ export default function LandingPage() {
               ))}
             </div>
             <p className="text-white/35 text-xs">
-              <span className="text-white/70 font-semibold">500+</span> utilisateurs actifs
+              <span className="text-white/70 font-semibold">500+</span> {t("finalCta.activeUsers")}
             </p>
           </div>
 
@@ -885,17 +844,17 @@ export default function LandingPage() {
             <Link href="/auth/login">
               <button className="group flex items-center gap-2 px-8 py-3.5 rounded-full bg-[#FFCC00] text-[#003399] font-semibold text-sm hover:bg-yellow-300 transition-all shadow-lg shadow-yellow-500/20 cursor-pointer">
                 <Shield className="h-4 w-4" />
-                Démarrer gratuitement
+                {t("ctaStart")}
                 <ChevronRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
               </button>
             </Link>
             <Link href="/pricing">
               <button className="flex items-center gap-1.5 text-sm text-white/50 font-medium cursor-pointer hover:text-white/80 transition-colors px-4">
-                Voir les tarifs <ChevronRight className="h-3.5 w-3.5" />
+                {t("ctaPricing")} <ChevronRight className="h-3.5 w-3.5" />
               </button>
             </Link>
           </div>
-          <p className="text-white/45 text-xs mt-6">Sans carte bancaire · Annulation à tout moment</p>
+          <p className="text-white/45 text-xs mt-6">{t("noCard")}</p>
         </div>
       </section>
 
