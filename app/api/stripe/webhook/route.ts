@@ -6,6 +6,7 @@ import { resolvePlanFromStripePriceId } from "@/lib/stripe/plan-mapping";
 import { getPlanConfig } from "@/lib/pricing";
 import { grantCredits, initUserCredits } from "@/lib/credits";
 import { fulfillCreditPackFromSession } from "@/lib/stripe/fulfill-credit-pack";
+import { sendSubscriptionReceipt } from "@/lib/email";
 import type Stripe from "stripe";
 
 const admin = createClient(
@@ -137,6 +138,25 @@ export async function POST(request: Request) {
           credits: monthlyCredits,
           invoiceId: invoice.id,
         }));
+
+        // Reçu de paiement (best-effort, ne bloque pas le webhook)
+        try {
+          const email = invoice.customer_email;
+          if (email) {
+            const line = invoice.lines?.data?.[0];
+            await sendSubscriptionReceipt({
+              email,
+              userName: invoice.customer_name ?? undefined,
+              amountPaidCents: invoice.amount_paid,
+              periodStart: new Date((line?.period?.start ?? invoice.period_start) * 1000),
+              periodEnd: new Date((line?.period?.end ?? invoice.period_end) * 1000),
+              invoiceNumber: invoice.number ?? undefined,
+              invoiceUrl: invoice.hosted_invoice_url ?? invoice.invoice_pdf ?? undefined,
+            });
+          }
+        } catch (err) {
+          console.error(JSON.stringify({ level: "error", event: "receipt_email_failed", invoiceId: invoice.id, err: String(err) }));
+        }
         break;
       }
 
