@@ -1,24 +1,46 @@
 import Link from "next/link";
 import { Shield } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { EUFlagSVG } from "@/components/EUFlag";
 import { FOOTER_COLUMNS } from "@/lib/marketing/site-links";
 
+/** Correspondance libellé FR d'origine → clé de traduction (les noms propres restent). */
+const LABEL_KEY: Record<string, string> = {
+  "Produit": "colProduct",
+  "Réglementations": "colRegulations",
+  "Ressources": "colResources",
+  "Légal": "colLegal",
+  "Fonctionnalités": "features",
+  "Tarifs": "pricing",
+  "Changelog": "changelog",
+  "Roadmap": "roadmap",
+  "Documentation": "documentation",
+  "Blog": "blog",
+  "Mentions légales": "legalNotice",
+  "Confidentialité": "privacy",
+  "CGU": "terms",
+  "Contact": "contact",
+};
+
 export function MarketingSiteFooter({ variant = "default" }: { variant?: "default" | "compact" }) {
+  const t = useTranslations("Footer");
+  const tr = (label: string) => (LABEL_KEY[label] ? t(LABEL_KEY[label]) : label);
+
   if (variant === "compact") {
     return (
       <footer className="border-t bg-[#F5F5F7] mt-auto">
         <div className="max-w-2xl mx-auto px-6 py-8 flex flex-wrap gap-4 text-xs text-[#6E6E73]">
           <Link href="/legal/mentions-legales" className="hover:text-[#1D1D1F]">
-            Mentions légales
+            {t("legalNotice")}
           </Link>
           <Link href="/legal/privacy" className="hover:text-[#1D1D1F]">
-            Confidentialité
+            {t("privacy")}
           </Link>
           <Link href="/legal/cgu" className="hover:text-[#1D1D1F]">
-            CGU
+            {t("terms")}
           </Link>
           <Link href="/contact" className="hover:text-[#1D1D1F]">
-            Contact
+            {t("contact")}
           </Link>
         </div>
       </footer>
@@ -31,7 +53,7 @@ export function MarketingSiteFooter({ variant = "default" }: { variant?: "defaul
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
           {FOOTER_COLUMNS.map((col) => (
             <div key={col.title}>
-              <p className="text-xs font-semibold text-[#1D1D1F] mb-3">{col.title}</p>
+              <p className="text-xs font-semibold text-[#1D1D1F] mb-3">{tr(col.title)}</p>
               <ul className="space-y-2">
                 {col.links.map((link) => (
                   <li key={link.label}>
@@ -42,14 +64,14 @@ export function MarketingSiteFooter({ variant = "default" }: { variant?: "defaul
                         rel="noopener noreferrer"
                         className="text-xs text-[#6E6E73] hover:text-[#1D1D1F] transition-colors"
                       >
-                        {link.label}
+                        {tr(link.label)}
                       </a>
                     ) : (
                       <Link
                         href={link.href}
                         className="text-xs text-[#6E6E73] hover:text-[#1D1D1F] transition-colors"
                       >
-                        {link.label}
+                        {tr(link.label)}
                       </Link>
                     )}
                   </li>
@@ -68,12 +90,12 @@ export function MarketingSiteFooter({ variant = "default" }: { variant?: "defaul
               Compli<span className="text-[#003399]">AI</span>
             </span>
             <span className="text-xs text-[#6E6E73]">
-              © {new Date().getFullYear()} · Tous droits réservés
+              © {new Date().getFullYear()} · {t("rights")}
             </span>
           </div>
           <div className="flex items-center gap-1.5 text-[10px] text-[#6E6E73]">
             <EUFlagSVG width={16} height={11} />
-            Basé sur EUR-Lex · Textes officiels de l&apos;Union européenne
+            {t("eurlexLine")}
           </div>
         </div>
       </div>

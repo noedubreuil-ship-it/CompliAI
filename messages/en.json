@@ -12,6 +12,24 @@
     "fr": "Français",
     "en": "English"
   },
+  "Footer": {
+    "colProduct": "Product",
+    "colRegulations": "Regulations",
+    "colResources": "Resources",
+    "colLegal": "Legal",
+    "features": "Features",
+    "pricing": "Pricing",
+    "changelog": "Changelog",
+    "roadmap": "Roadmap",
+    "documentation": "Documentation",
+    "blog": "Blog",
+    "legalNotice": "Legal notice",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "contact": "Contact",
+    "rights": "All rights reserved",
+    "eurlexLine": "Based on EUR-Lex · Official texts of the European Union"
+  },
   "Landing": {
     "heroChip": "AI Act · GDPR · DSA · DMA · Data Act",
     "heroTitle1": "European AI compliance.",

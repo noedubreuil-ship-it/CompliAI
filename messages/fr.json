@@ -12,6 +12,24 @@
     "fr": "Français",
     "en": "English"
   },
+  "Footer": {
+    "colProduct": "Produit",
+    "colRegulations": "Réglementations",
+    "colResources": "Ressources",
+    "colLegal": "Légal",
+    "features": "Fonctionnalités",
+    "pricing": "Tarifs",
+    "changelog": "Changelog",
+    "roadmap": "Roadmap",
+    "documentation": "Documentation",
+    "blog": "Blog",
+    "legalNotice": "Mentions légales",
+    "privacy": "Confidentialité",
+    "terms": "CGU",
+    "contact": "Contact",
+    "rights": "Tous droits réservés",
+    "eurlexLine": "Basé sur EUR-Lex · Textes officiels de l'Union européenne"
+  },
   "Landing": {
     "heroChip": "AI Act · RGPD · DSA · DMA · Data Act",
     "heroTitle1": "La conformité IA européenne.",
