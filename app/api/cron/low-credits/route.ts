@@ -41,13 +41,14 @@ export async function GET(request: Request) {
 
   for (const row of users) {
     try {
-      // Vérifie cooldown 24h
+      // Vérifie cooldown 24h (via email_log — credit_transactions.type est
+      // contraint aux types financiers, un marqueur y échouerait).
       const { count } = await admin
-        .from("credit_transactions")
+        .from("email_log")
         .select("id", { count: "exact", head: true })
         .eq("user_id", row.user_id)
-        .eq("type", "low_credits_alert")
-        .gte("created_at", since24h);
+        .eq("email_type", "low_credits_alert")
+        .gte("sent_at", since24h);
 
       if ((count ?? 0) > 0) continue;
 
@@ -72,12 +73,10 @@ export async function GET(request: Request) {
         threshold: LOW_THRESHOLD,
       });
 
-      await admin.from("credit_transactions").insert({
+      await admin.from("email_log").insert({
         user_id: row.user_id,
-        amount: 0,
-        type: "low_credits_alert",
-        description: `Alerte cron — solde ${row.balance}`,
-        metadata: { threshold: LOW_THRESHOLD, source: "cron" },
+        email_type: "low_credits_alert",
+        metadata: { threshold: LOW_THRESHOLD, balance: row.balance },
       });
 
       sent++;
