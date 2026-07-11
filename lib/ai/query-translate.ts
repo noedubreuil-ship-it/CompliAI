@@ -15,13 +15,20 @@ function getClient() {
 }
 
 /**
+ * Marqueurs français distinctifs (peu de collision avec EN/DE/NL/ES/IT).
+ * Volontairement sans tokens partagés avec l'anglais ("obligations", "article"…)
+ * ni avec l'espagnol/italien ("que", "le", "la"…). Inclut les élisions
+ * apostrophées typiquement françaises (qu', n', c', j', s', m', t').
+ */
+const FRENCH_RE =
+  /\b(avec|dans|pour|vous|nous|votre|notre|leurs|aux|sous|sans|sur|être|où|déjà|combien|pourquoi|quelle|quelles|quels|conformité|règlement|règlements|données|traitement|responsable|également|notamment|afin|ainsi|française|français|entreprise|juridique|est-ce|puis-je|dois-je|doit-il|faut-il|cette|ces|conformément|au titre|au sens|résume|résumé|rédige|explique)\b|(?:^|[\s('’])(?:qu|n|c|j|m|t|s|l|d)['’]/i;
+
+/**
  * Détecte si la langue d'une question est déjà le français.
  * Heuristique rapide — on évite l'appel LLM si inutile.
  */
 function isProbablyFrench(text: string): boolean {
-  // Mots-outils très fréquents en français mais rares dans les autres langues européennes
-  const frenchMarkers = /\b(qu[ei]|dans|pour|avec|sur|une|les|des|est|sont|que|cette|notre|leurs|vous|nous|votre|d[eu] la|d[eu] l[e']|au titre|au sens|au titre de|conformément|notamment)\b/i;
-  return frenchMarkers.test(text);
+  return FRENCH_RE.test(text);
 }
 
 /**
@@ -98,6 +105,7 @@ export function detectLanguage(text: string): string {
   const t = text.toLowerCase();
 
   const markers: [string, RegExp][] = [
+    ["fr", FRENCH_RE],
     ["de", /\b(und|oder|mit|sind|werden|nicht|haben|nach|dem|den|das|die|der|für|von|bei|durch|unter|über|welche|welcher)\b/],
     ["nl", /\b(en|van|het|een|zijn|voor|met|ook|hebben|worden|niet|deze|maar|door)\b/],
     ["es", /\b(que|con|para|por|una|son|está|tienen|según|también|mediante|cuales|sobre)\b/],
@@ -106,7 +114,7 @@ export function detectLanguage(text: string): string {
     ["pt", /\b(que|com|para|por|uma|são|está|têm|segundo|também|mediante)\b/],
     ["ro", /\b(și|sau|pentru|care|este|sunt|prin|din|asupra|conform|potrivit)\b/],
     ["sv", /\b(och|eller|med|för|inte|som|vid|från|enligt|vilken|dessa)\b/],
-    ["da", /\b(og|eller|med|for|ikke|som|ved|fra|ifølge|hvilken|disse)\b/],
+    ["da", /\b(og|eller|ikke|ved|fra|ifølge|hvilken|disse)\b/],
     ["fi", /\b(ja|tai|kanssa|jonka|joka|jotka|mukaan|kaikki|nämä)\b/],
     ["cs", /\b(nebo|pro|která|který|které|podle|není|jsou|jejich)\b/],
     ["sk", /\b(alebo|pre|ktorá|ktorý|ktoré|podľa|nie|sú|ich)\b/],
