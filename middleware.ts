@@ -14,7 +14,47 @@ function detectLocalePrefix(pathname: string): string | null {
   return null;
 }
 
+/**
+ * La langue la plus prioritaire du navigateur est-elle le français ?
+ * Sert à choisir le repli : francophone → FR (défaut), sinon → EN (international).
+ */
+function prefersFrench(acceptLanguage: string | null): boolean {
+  if (!acceptLanguage) return false;
+  const top = acceptLanguage
+    .split(",")
+    .map((part) => {
+      const [tag, q] = part.trim().split(";q=");
+      return { tag: tag.trim().toLowerCase(), q: q ? parseFloat(q) : 1 };
+    })
+    .sort((a, b) => b.q - a.q)[0];
+  return top?.tag.startsWith("fr") ?? false;
+}
+
+const COOKIE_NAME = routing.localeCookie && typeof routing.localeCookie === "object"
+  ? routing.localeCookie.name ?? "NEXT_LOCALE"
+  : "NEXT_LOCALE";
+
 export async function middleware(request: NextRequest) {
+  const { pathname: rawPath } = request.nextUrl;
+  const hasLocaleCookie = request.cookies.has(COOKIE_NAME);
+  const existingPrefix = detectLocalePrefix(rawPath);
+
+  // Repli international : un visiteur sans préférence enregistrée dont le
+  // navigateur n'est PAS francophone est envoyé vers /en (l'anglais est la
+  // langue par défaut des non-francophones). On évite /auth (flux OAuth).
+  if (
+    !hasLocaleCookie &&
+    !existingPrefix &&
+    !rawPath.startsWith("/auth") &&
+    !prefersFrench(request.headers.get("accept-language"))
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = `/en${rawPath === "/" ? "" : rawPath}`;
+    const redirect = NextResponse.redirect(url);
+    redirect.cookies.set(COOKIE_NAME, "en", { maxAge: 60 * 60 * 24 * 365, path: "/" });
+    return redirect;
+  }
+
   // 1. next-intl : détection/négociation de la locale + cookie + rewrite éventuel.
   const response = intlMiddleware(request);
 
