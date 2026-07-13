@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,7 @@ export default function ResetPasswordPage() {
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const t = useTranslations("Auth");
   const supabase = createClient();
 
   useEffect(() => {
@@ -33,11 +35,11 @@ export default function ResetPasswordPage() {
     setError(null);
 
     if (password !== confirm) {
-      setError("Les mots de passe ne correspondent pas.");
+      setError(t("pwMismatch"));
       return;
     }
     if (password.length < 8) {
-      setError("Le mot de passe doit contenir au moins 8 caractères.");
+      setError(t("pwTooShort"));
       return;
     }
 
@@ -45,7 +47,7 @@ export default function ResetPasswordPage() {
     const { error } = await supabase.auth.updateUser({ password });
 
     if (error) {
-      setError("Erreur lors de la mise à jour du mot de passe. Le lien a peut-être expiré.");
+      setError(t("pwUpdateError"));
     } else {
       setDone(true);
       setTimeout(() => router.push("/dashboard"), 3000);
@@ -63,9 +65,9 @@ export default function ResetPasswordPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Nouveau mot de passe</CardTitle>
+            <CardTitle>{t("resetTitle")}</CardTitle>
             <CardDescription>
-              Choisissez un nouveau mot de passe sécurisé pour votre compte.
+              {t("resetDesc")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -73,16 +75,16 @@ export default function ResetPasswordPage() {
               <div className="text-center py-4 space-y-4">
                 <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto" />
                 <div>
-                  <p className="font-medium text-slate-900">Mot de passe mis à jour !</p>
+                  <p className="font-medium text-slate-900">{t("passwordUpdated")}</p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Redirection vers le tableau de bord dans 3 secondes…
+                    {t("redirectingDashboard")}
                   </p>
                 </div>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="password">Nouveau mot de passe</Label>
+                  <Label htmlFor="password">{t("newPassword")}</Label>
                   <div className="relative">
                     <Input
                       id="password"
@@ -103,7 +105,7 @@ export default function ResetPasswordPage() {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="confirm">Confirmer le mot de passe</Label>
+                  <Label htmlFor="confirm">{t("confirmPassword")}</Label>
                   <Input
                     id="confirm"
                     type={showPassword ? "text" : "password"}
@@ -135,12 +137,12 @@ export default function ResetPasswordPage() {
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {password.length === 0
-                      ? "Minimum 8 caractères"
+                      ? t("pwMin")
                       : password.length < 8
-                      ? "Trop court"
+                      ? t("pwShort")
                       : password.length < 12
-                      ? "Acceptable"
-                      : "Fort — bien !"}
+                      ? t("pwOk")
+                      : t("pwStrong")}
                   </p>
                 </div>
 
@@ -152,7 +154,7 @@ export default function ResetPasswordPage() {
 
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                  Mettre à jour le mot de passe
+                  {t("updatePasswordButton")}
                 </Button>
               </form>
             )}

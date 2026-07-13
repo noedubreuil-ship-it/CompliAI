@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const router = useRouter();
+  const t = useTranslations("Auth");
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") ?? "/dashboard";
   const redirectLabel = redirectDestinationLabel(redirectTo);
@@ -41,12 +43,12 @@ function LoginForm() {
       if (error) {
         setError(error.message);
       } else {
-        setMessage("Vérifiez votre email pour confirmer votre compte.");
+        setMessage(t("checkEmail"));
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        setError("Email ou mot de passe incorrect.");
+        setError(t("errorInvalid"));
       } else {
         router.push(redirectTo);
         router.refresh();
@@ -65,15 +67,13 @@ function LoginForm() {
 
         <Card>
           <CardHeader>
-            <CardTitle>{isSignUp ? "Créer un compte" : "Connexion"}</CardTitle>
+            <CardTitle>{isSignUp ? t("signUpTitle") : t("signInTitle")}</CardTitle>
             <CardDescription>
-              {isSignUp
-                ? "Commencez à auditer vos projets IA en conformité avec le droit européen."
-                : "Accédez à votre espace de conformité réglementaire."}
+              {isSignUp ? t("signUpDesc") : t("signInDesc")}
             </CardDescription>
             {redirectTo !== "/dashboard" && (
               <p className="text-xs text-blue-700 bg-blue-50 border border-blue-100 rounded-md px-3 py-2 mt-2">
-                Après connexion, vous serez redirigé vers : <strong>{redirectLabel}</strong>
+                {t("redirectNotice")} <strong>{redirectLabel}</strong>
               </p>
             )}
           </CardHeader>
@@ -81,11 +81,11 @@ function LoginForm() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {isSignUp && (
                 <div className="space-y-1.5">
-                  <Label htmlFor="fullName">Nom complet</Label>
+                  <Label htmlFor="fullName">{t("fullName")}</Label>
                   <Input
                     id="fullName"
                     type="text"
-                    placeholder="Jean Dupont"
+                    placeholder={t("fullNamePlaceholder")}
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     required
@@ -93,7 +93,7 @@ function LoginForm() {
                 </div>
               )}
               <div className="space-y-1.5">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("email")}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -105,13 +105,13 @@ function LoginForm() {
               </div>
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Mot de passe</Label>
+                  <Label htmlFor="password">{t("password")}</Label>
                   {!isSignUp && (
                     <Link
                       href="/auth/forgot-password"
                       className="text-xs text-muted-foreground hover:text-foreground"
                     >
-                      Mot de passe oublié ?
+                      {t("forgotPassword")}
                     </Link>
                   )}
                 </div>
@@ -148,31 +148,31 @@ function LoginForm() {
 
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                {isSignUp ? "Créer mon compte" : "Se connecter"}
+                {isSignUp ? t("signUpButton") : t("signInButton")}
               </Button>
             </form>
 
             <div className="mt-4 text-center text-sm text-muted-foreground">
-              {isSignUp ? "Déjà un compte ?" : "Pas encore de compte ?"}{" "}
+              {isSignUp ? t("haveAccount") : t("noAccount")}{" "}
               <button
                 type="button"
                 onClick={() => { setIsSignUp(!isSignUp); setError(null); }}
                 className="text-primary font-medium hover:underline"
               >
-                {isSignUp ? "Se connecter" : "S'inscrire gratuitement"}
+                {isSignUp ? t("toggleToSignIn") : t("toggleToSignUp")}
               </button>
             </div>
           </CardContent>
         </Card>
 
         <p className="text-center text-xs text-muted-foreground mt-4">
-          En vous connectant, vous acceptez nos{" "}
+          {t("legalPrefix")}{" "}
           <Link href="/legal/cgu" className="underline hover:text-foreground">
-            CGU
+            {t("legalTerms")}
           </Link>{" "}
-          et notre{" "}
+          {t("legalAnd")}{" "}
           <Link href="/legal/privacy" className="underline hover:text-foreground">
-            politique de confidentialité
+            {t("legalPrivacy")}
           </Link>
           .
         </p>

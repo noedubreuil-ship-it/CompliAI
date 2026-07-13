@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Shield, Loader2, ArrowLeft, CheckCircle2 } from "lucide-react";
 
 export default function ForgotPasswordPage() {
+  const t = useTranslations("Auth");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -28,13 +30,13 @@ export default function ForgotPasswordPage() {
 
       if (res.status === 429) {
         const data = await res.json();
-        setError(data.error ?? "Trop de tentatives. Réessayez plus tard.");
+        setError(data.error ?? t("tooManyAttempts"));
       } else {
         // Toujours afficher succès (anti-énumération d'emails)
         setSent(true);
       }
     } catch {
-      setError("Une erreur est survenue. Vérifiez votre connexion et réessayez.");
+      setError(t("genericError"));
     }
 
     setLoading(false);
@@ -50,9 +52,9 @@ export default function ForgotPasswordPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Mot de passe oublié</CardTitle>
+            <CardTitle>{t("forgotTitle")}</CardTitle>
             <CardDescription>
-              Saisissez votre email et nous vous enverrons un lien de réinitialisation.
+              {t("forgotDesc")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -60,22 +62,22 @@ export default function ForgotPasswordPage() {
               <div className="text-center py-4 space-y-4">
                 <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto" />
                 <div>
-                  <p className="font-medium text-slate-900">Email envoyé !</p>
+                  <p className="font-medium text-slate-900">{t("emailSent")}</p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Vérifiez votre boîte mail et cliquez sur le lien pour réinitialiser votre mot de passe.
+                    {t("emailSentDesc")}
                   </p>
                 </div>
                 <Link href="/auth/login">
                   <Button variant="outline" className="w-full">
                     <ArrowLeft className="h-4 w-4" />
-                    Retour à la connexion
+                    {t("backToLogin")}
                   </Button>
                 </Link>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t("email")}</Label>
                   <Input
                     id="email"
                     type="email"
@@ -94,7 +96,7 @@ export default function ForgotPasswordPage() {
 
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                  Envoyer le lien de réinitialisation
+                  {t("sendResetLink")}
                 </Button>
 
                 <div className="text-center">
@@ -103,7 +105,7 @@ export default function ForgotPasswordPage() {
                     className="text-sm text-muted-foreground hover:text-foreground flex items-center justify-center gap-1"
                   >
                     <ArrowLeft className="h-3 w-3" />
-                    Retour à la connexion
+                    {t("backToLogin")}
                   </Link>
                 </div>
               </form>
