@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import {
   Shield,
@@ -66,6 +67,11 @@ interface DashboardNavbarProps {
   isAdmin?: boolean;
 }
 
+/** Slug de traduction dérivé du href (ex: /dashboard/tools/dpia → tools_dpia). */
+function navSlug(href: string): string {
+  return href.replace(/^\/dashboard\/?/, "").replace(/\//g, "_") || "root";
+}
+
 function NavDropdownPanel({
   items,
   isPro,
@@ -79,6 +85,7 @@ function NavDropdownPanel({
   footerHref?: string;
   footerLabel?: string;
 }) {
+  const t = useTranslations("Dashboard.appNav");
   return (
     <ul className="w-[min(100vw-2rem,22rem)] p-2 bg-white rounded-lg">
       {items.map((item) => {
@@ -104,7 +111,7 @@ function NavDropdownPanel({
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-neutral-900">{item.label}</span>
+                    <span className="text-sm font-semibold text-neutral-900">{t(`${navSlug(item.href)}.l`)}</span>
                     {item.badge && (
                       <span className="rounded-full bg-neutral-200 px-1.5 py-0.5 text-[10px] font-semibold text-neutral-600">
                         {item.badge}
@@ -113,7 +120,7 @@ function NavDropdownPanel({
                     {locked && <Lock className="h-3 w-3 text-amber-500" />}
                   </div>
                   {item.description && (
-                    <p className="mt-0.5 text-xs leading-snug text-neutral-500">{item.description}</p>
+                    <p className="mt-0.5 text-xs leading-snug text-neutral-500">{t(`${navSlug(item.href)}.d`)}</p>
                   )}
                 </div>
               </Link>
@@ -146,6 +153,7 @@ function MobileNavLink({
   isPro: boolean;
   pathname: string;
 }) {
+  const t = useTranslations("Dashboard.appNav");
   const locked = item.requiresPro && !isPro;
   const active = isNavItemActive(pathname, item.href);
   return (
@@ -157,7 +165,7 @@ function MobileNavLink({
       )}
     >
       <item.icon className="h-4 w-4 shrink-0 opacity-70" />
-      <span className="flex-1">{item.label}</span>
+      <span className="flex-1">{t(`${navSlug(item.href)}.l`)}</span>
       {locked && <Sparkles className="h-3 w-3 text-amber-400" />}
     </Link>
   );
@@ -165,6 +173,8 @@ function MobileNavLink({
 
 export function DashboardNavbar({ userEmail, userName, tier, isAdmin = false }: DashboardNavbarProps) {
   const pathname = usePathname();
+  const t = useTranslations("Dashboard");
+  const ts = useTranslations("Dashboard.appNav");
   const router = useRouter();
   const supabase = createClient();
   const isPro = tier === "pro" || tier === "enterprise";
@@ -214,14 +224,14 @@ export function DashboardNavbar({ userEmail, userName, tier, isAdmin = false }: 
                   )}
                 >
                   <MessageSquare className="h-3.5 w-3.5" />
-                  Chat
+                  {t("nav.chat")}
                 </Link>
               </NavigationMenuItem>
 
               {LEGAL_TOOL_SECTIONS.map((section: NavSection) => (
                 <NavigationMenuItem key={section.id}>
                   <NavigationMenuTrigger className={sectionTriggerClass(sectionHasActiveItem(pathname, section))}>
-                    {section.label}
+                    {ts(`sec_${section.id}`)}
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
                     <NavDropdownPanel
@@ -229,7 +239,7 @@ export function DashboardNavbar({ userEmail, userName, tier, isAdmin = false }: 
                       isPro={isPro}
                       pathname={pathname}
                       footerHref="/dashboard/tools"
-                      footerLabel="Voir tous les outils"
+                      footerLabel={t("nav.seeAllTools")}
                     />
                   </NavigationMenuContent>
                 </NavigationMenuItem>
@@ -239,7 +249,7 @@ export function DashboardNavbar({ userEmail, userName, tier, isAdmin = false }: 
                 <NavigationMenuTrigger
                   className={sectionTriggerClass(WORKSPACE_NAV.some((i) => isNavItemActive(pathname, i.href)))}
                 >
-                  Espace travail
+                  {t("nav.workspace")}
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <NavDropdownPanel items={WORKSPACE_NAV} isPro={isPro} pathname={pathname} />
@@ -250,7 +260,7 @@ export function DashboardNavbar({ userEmail, userName, tier, isAdmin = false }: 
                 <NavigationMenuTrigger
                   className={sectionTriggerClass(VEILLE_NAV.some((i) => isNavItemActive(pathname, i.href)))}
                 >
-                  Veille
+                  {t("nav.veille")}
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <NavDropdownPanel items={VEILLE_NAV} isPro={isPro} pathname={pathname} />
@@ -266,7 +276,7 @@ export function DashboardNavbar({ userEmail, userName, tier, isAdmin = false }: 
           href="/dashboard/support"
           className="hidden text-xs font-medium text-neutral-500 hover:text-neutral-900 md:inline-flex"
         >
-          Aide
+          {t("nav.help")}
         </Link>
 
         <CreditBadge className="hidden shrink-0 sm:flex" />
@@ -285,7 +295,7 @@ export function DashboardNavbar({ userEmail, userName, tier, isAdmin = false }: 
                   <User className="h-4 w-4 text-white" />
                 </div>
                 <div className="min-w-0 text-left">
-                  <p className="truncate text-sm font-semibold text-neutral-900 dark:text-white">{userName || "Utilisateur"}</p>
+                  <p className="truncate text-sm font-semibold text-neutral-900 dark:text-white">{userName || t("nav.user")}</p>
                   <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">{userEmail}</p>
                 </div>
               </SheetTitle>
@@ -301,7 +311,7 @@ export function DashboardNavbar({ userEmail, userName, tier, isAdmin = false }: 
                   )}
                 >
                   <MessageSquare className="h-4 w-4" />
-                  Chat consultant
+                  {t("nav.chatConsultant")}
                 </Link>
               </div>
 
@@ -309,7 +319,7 @@ export function DashboardNavbar({ userEmail, userName, tier, isAdmin = false }: 
                 {LEGAL_TOOL_SECTIONS.map((section) => (
                   <AccordionItem key={section.id} value={section.id} className="border-0">
                     <AccordionTrigger className="rounded-lg px-3 py-2 text-sm font-medium hover:no-underline hover:bg-neutral-50">
-                      {section.label}
+                      {ts(`sec_${section.id}`)}
                     </AccordionTrigger>
                     <AccordionContent className="space-y-0.5 pb-1 pl-1">
                       {section.items.map((item) => (
@@ -320,7 +330,7 @@ export function DashboardNavbar({ userEmail, userName, tier, isAdmin = false }: 
                 ))}
                 <AccordionItem value="workspace" className="border-0">
                   <AccordionTrigger className="rounded-lg px-3 py-2 text-sm font-medium hover:no-underline hover:bg-neutral-50">
-                    Espace travail
+                    {t("nav.workspace")}
                   </AccordionTrigger>
                   <AccordionContent className="space-y-0.5 pb-1 pl-1">
                     {WORKSPACE_NAV.map((item) => (
@@ -330,7 +340,7 @@ export function DashboardNavbar({ userEmail, userName, tier, isAdmin = false }: 
                 </AccordionItem>
                 <AccordionItem value="veille" className="border-0">
                   <AccordionTrigger className="rounded-lg px-3 py-2 text-sm font-medium hover:no-underline hover:bg-neutral-50">
-                    Veille
+                    {t("nav.veille")}
                   </AccordionTrigger>
                   <AccordionContent className="space-y-0.5 pb-1 pl-1">
                     {VEILLE_NAV.map((item) => (
@@ -342,11 +352,11 @@ export function DashboardNavbar({ userEmail, userName, tier, isAdmin = false }: 
 
               {isAdmin && (
                 <div className="mt-4 space-y-1 border-t border-neutral-100 dark:border-white/10 px-1 pt-4">
-                  <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Admin</p>
+                  <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">{t("admin.title")}</p>
                   {[
-                    { href: "/dashboard/admin/rag-validation", icon: Database, label: "Validation RAG" },
-                    { href: "/dashboard/admin/credits", icon: Users, label: "Crédits utilisateurs" },
-                    { href: "/dashboard/admin/ai-logs", icon: Activity, label: "Logs IA" },
+                    { href: "/dashboard/admin/rag-validation", icon: Database, label: t("admin.ragValidation") },
+                    { href: "/dashboard/admin/credits", icon: Users, label: t("admin.userCredits") },
+                    { href: "/dashboard/admin/ai-logs", icon: Activity, label: t("admin.aiLogs") },
                   ].map(({ href, icon: Icon, label }) => (
                     <Link
                       key={href}
@@ -361,7 +371,7 @@ export function DashboardNavbar({ userEmail, userName, tier, isAdmin = false }: 
               )}
 
               <div className="mt-4 space-y-1 border-t border-neutral-100 dark:border-white/10 px-1 pt-4">
-                <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Compte</p>
+                <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">{t("account.title")}</p>
 
                 <div
                   className={cn(
@@ -372,9 +382,9 @@ export function DashboardNavbar({ userEmail, userName, tier, isAdmin = false }: 
                   )}
                 >
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Plan</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">{t("account.plan")}</p>
                     <p className="mt-0.5 text-base font-bold text-neutral-900 dark:text-white">
-                      {tier === "free" ? "Gratuit" : tier.charAt(0).toUpperCase() + tier.slice(1)}
+                      {tier === "free" ? t("account.free") : tier.charAt(0).toUpperCase() + tier.slice(1)}
                     </p>
                   </div>
                   {isPro ? <Shield className="h-5 w-5 text-neutral-700 dark:text-neutral-300" /> : <Sparkles className="h-5 w-5 text-neutral-300 dark:text-neutral-500" />}
@@ -387,19 +397,19 @@ export function DashboardNavbar({ userEmail, userName, tier, isAdmin = false }: 
                   >
                     <Zap className="h-5 w-5 shrink-0 text-amber-400" />
                     <div className="flex-1">
-                      <p className="text-sm font-semibold">Passer à Pro</p>
-                      <p className="text-xs text-white/60">Outils cabinet & UE-27</p>
+                      <p className="text-sm font-semibold">{t("account.upgradeTitle")}</p>
+                      <p className="text-xs text-white/60">{t("account.upgradeSub")}</p>
                     </div>
                     <ChevronRight className="h-4 w-4 text-white/40" />
                   </Link>
                 )}
 
                 {[
-                  { href: "/dashboard/credits", icon: CreditCard, label: "Crédits IA" },
-                  { href: "/dashboard/api-keys", icon: Key, label: "Clés API" },
-                  { href: "/dashboard/support", icon: HelpCircle, label: "Support" },
-                  { href: "/dashboard/settings", icon: Settings, label: "Paramètres" },
-                  { href: "/dashboard/audit-trail", icon: History, label: "Audit trail" },
+                  { href: "/dashboard/credits", icon: CreditCard, label: t("account.credits") },
+                  { href: "/dashboard/api-keys", icon: Key, label: t("account.apiKeys") },
+                  { href: "/dashboard/support", icon: HelpCircle, label: t("account.support") },
+                  { href: "/dashboard/settings", icon: Settings, label: t("account.settings") },
+                  { href: "/dashboard/audit-trail", icon: History, label: t("account.auditTrail") },
                 ].map(({ href, icon: Icon, label }) => (
                   <Link
                     key={href}
@@ -415,7 +425,7 @@ export function DashboardNavbar({ userEmail, userName, tier, isAdmin = false }: 
 
             <div className="space-y-2 border-t border-neutral-100 dark:border-white/10 px-4 py-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-neutral-600 dark:text-neutral-300">Thème</span>
+                <span className="text-sm text-neutral-600 dark:text-neutral-300">{t("account.theme")}</span>
                 <div className="flex gap-1">
                   {[
                     { v: "light" as const, Icon: Sun },
@@ -443,7 +453,7 @@ export function DashboardNavbar({ userEmail, userName, tier, isAdmin = false }: 
                 className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-neutral-500 dark:text-neutral-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400"
               >
                 <LogOut className="h-4 w-4" />
-                Se déconnecter
+                {t("account.signOut")}
               </button>
             </div>
           </SheetContent>
