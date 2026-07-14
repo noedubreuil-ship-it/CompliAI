@@ -16,7 +16,9 @@ export async function GET(request: Request) {
       const isNewUser = Date.now() - createdAt < 30_000;
       if (isNewUser && data.user.email) {
         const fullName = data.user.user_metadata?.full_name as string | undefined;
-        sendWelcomeEmail({ email: data.user.email, userName: fullName }).catch(() => {});
+        const locale = (data.user.user_metadata?.locale as string | undefined)
+          ?? (request.headers.get("cookie")?.match(/COMPLIAI_LOCALE=(\w+)/)?.[1]);
+        sendWelcomeEmail({ email: data.user.email, userName: fullName, locale }).catch(() => {});
       }
       return NextResponse.redirect(`${origin}${next}`);
     }

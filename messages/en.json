@@ -12,6 +12,85 @@
     "fr": "Français",
     "en": "English"
   },
+  "Emails": {
+    "footer": "CompliAI · AI compliance for businesses ·",
+    "manageCredits": "Manage my credits",
+    "welcome": {
+      "subject": "Welcome to CompliAI — your compliance workspace is ready",
+      "title": "Welcome to CompliAI",
+      "heading": "Welcome to CompliAI 👋",
+      "intro": "Hello {name}, your CompliAI account is ready. You can now access all your compliance tools: DPIA, AI Act checklist, CJEU case law, and much more.",
+      "step1Title": "Ask your first question",
+      "step1Desc": "The AI consultant answers your GDPR and AI Act questions with official sources.",
+      "step2Title": "Generate a DPIA or checklist",
+      "step2Desc": "Fill in your project and get a complete document in 5 minutes.",
+      "step3Title": "Explore case law",
+      "step3Desc": "CJEU, CNIL, EDPB — all the important decisions indexed.",
+      "stepStart": "Get started →",
+      "ctaAccess": "Go to my workspace →",
+      "help": "A question? Reply directly to this email or visit our {docs}.",
+      "docsWord": "documentation",
+      "registeredWith": "You signed up with the address {email}."
+    },
+    "lowCredits": {
+      "subject": "⚡ {balance} credits left — Top up your CompliAI account",
+      "title": "AI credits low",
+      "heading": "⚡ Your AI credits are almost used up",
+      "intro": "Hello {name}, you have {balance} credits left on your {plan} plan — that's {pct}% of the alert threshold.",
+      "body": "Top up your account to keep using the AI consultant, audits and all compliance tools without interruption.",
+      "cta": "Buy credits →"
+    },
+    "creditPack": {
+      "subject": "✅ {credits} credits added to your CompliAI account",
+      "title": "Credit purchase confirmed",
+      "heading": "✅ Payment confirmed — {packName}",
+      "intro": "Hello {name}, your purchase has been processed.",
+      "pack": "Pack purchased",
+      "amount": "Amount",
+      "creditsAdded": "Credits added",
+      "newBalance": "New balance",
+      "creditsUnit": "credits",
+      "cta": "Back to the dashboard →"
+    },
+    "receipt": {
+      "subject": "CompliAI receipt — {amount}",
+      "title": "CompliAI payment receipt",
+      "heading": "Payment receipt",
+      "intro": "Hello {name}, thank you for your trust. Here is the receipt for your CompliAI subscription.",
+      "subscription": "Subscription",
+      "planName": "CompliAI — Monthly",
+      "amountPaid": "Amount paid",
+      "period": "Billing period",
+      "invoiceNumber": "Invoice no.",
+      "download": "Download the invoice →",
+      "manage": "Manage my subscription",
+      "sentTo": "This receipt is sent to {email}. For any billing question, reply to this email."
+    },
+    "renewal": {
+      "subjectTomorrow": "Your CompliAI subscription renews tomorrow",
+      "subjectDays": "Your CompliAI subscription renews in {days} days",
+      "title": "Upcoming renewal",
+      "headingTomorrow": "Your subscription renews tomorrow",
+      "headingDays": "Your subscription renews in {days} days",
+      "intro": "Hello {name}, your CompliAI subscription will be automatically renewed on {date} for {amount}. No action is required if you wish to continue.",
+      "body": "You keep access to the legal consultant, document generation and the daily-updated regulatory monitoring.",
+      "cta": "Manage my subscription",
+      "footer": "You can change or cancel your subscription at any time from your workspace, at no cost. Email sent to {email}."
+    },
+    "reengagement": {
+      "heading14": "A compliance question on hold?",
+      "heading30": "European law doesn't wait — neither does CompliAI",
+      "intro14": "It's been two weeks since we last saw you. The corpus has been updated every day since: new decisions and guidelines may be relevant to you.",
+      "intro30": "Your regulatory monitoring keeps running in the background. AI Act, GDPR, DSA — obligations evolve, and your CompliAI workspace is ready to answer your questions.",
+      "greeting": "Hello {name},",
+      "link1": "Ask the consultant a question →",
+      "link2": "Generate a compliance document →",
+      "cta": "Return to my workspace →",
+      "title": "We're waiting for you on CompliAI",
+      "footer": "Email sent to {email}. Don't want to receive these reminders anymore? Manage your preferences from your {space}.",
+      "spaceWord": "workspace"
+    }
+  },
   "Auth": {
     "signInTitle": "Log in",
     "signUpTitle": "Create an account",

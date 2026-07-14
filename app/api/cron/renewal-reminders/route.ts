@@ -93,6 +93,7 @@ export async function GET(request: Request) {
         daysBefore,
         renewalDate: periodEnd,
         amountCents,
+        locale: authUser?.user?.user_metadata?.locale as string | undefined,
       });
 
       await admin.from("email_log").insert({

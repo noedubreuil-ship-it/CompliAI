@@ -99,6 +99,7 @@ export async function GET(request: Request) {
         email,
         userName: profile?.full_name ?? undefined,
         daysInactive: days,
+        locale: authUser?.user?.user_metadata?.locale as string | undefined,
       });
 
       await admin.from("email_log").insert({

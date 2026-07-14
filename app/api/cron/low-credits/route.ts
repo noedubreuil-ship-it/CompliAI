@@ -71,6 +71,7 @@ export async function GET(request: Request) {
         balance: row.balance,
         plan: row.plan ?? "free",
         threshold: LOW_THRESHOLD,
+        locale: authUser?.user?.user_metadata?.locale as string | undefined,
       });
 
       await admin.from("email_log").insert({

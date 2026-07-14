@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ function LoginForm() {
   const [message, setMessage] = useState<string | null>(null);
   const router = useRouter();
   const t = useTranslations("Auth");
+  const locale = useLocale();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") ?? "/dashboard";
   const redirectLabel = redirectDestinationLabel(redirectTo);
@@ -38,7 +39,7 @@ function LoginForm() {
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { full_name: fullName } },
+        options: { data: { full_name: fullName, locale } },
       });
       if (error) {
         setError(error.message);

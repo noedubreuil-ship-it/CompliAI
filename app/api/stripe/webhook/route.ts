@@ -144,6 +144,8 @@ export async function POST(request: Request) {
           const email = invoice.customer_email;
           if (email) {
             const line = invoice.lines?.data?.[0];
+            const { data: authUser } = await admin.auth.admin.getUserById(userId);
+            const locale = authUser?.user?.user_metadata?.locale as string | undefined;
             await sendSubscriptionReceipt({
               email,
               userName: invoice.customer_name ?? undefined,
@@ -152,6 +154,7 @@ export async function POST(request: Request) {
               periodEnd: new Date((line?.period?.end ?? invoice.period_end) * 1000),
               invoiceNumber: invoice.number ?? undefined,
               invoiceUrl: invoice.hosted_invoice_url ?? invoice.invoice_pdf ?? undefined,
+              locale,
             });
           }
         } catch (err) {

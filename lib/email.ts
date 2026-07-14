@@ -1,6 +1,19 @@
 import { Resend } from "resend";
+import { createTranslator } from "next-intl";
+import frMessages from "@/messages/fr.json";
+import enMessages from "@/messages/en.json";
 
 const FROM = process.env.RESEND_FROM_EMAIL ?? "alerts@compliai.eu";
+
+const CATALOG: Record<string, typeof frMessages> = { fr: frMessages, en: enMessages as typeof frMessages };
+
+/** Traducteur d'emails hors contexte de requête (cron, webhook). */
+function emailT(locale?: string | null) {
+  const l = locale === "en" ? "en" : "fr";
+  return createTranslator({ locale: l, messages: CATALOG[l], namespace: "Emails" });
+}
+
+type EmailTranslator = ReturnType<typeof emailT>;
 
 function getResend(): Resend | null {
   const key = process.env.RESEND_API_KEY;
@@ -9,9 +22,10 @@ function getResend(): Resend | null {
 }
 
 // ─── Template helpers ─────────────────────────────────────────────────────────
-function wrapEmail(title: string, body: string): string {
+function wrapEmail(title: string, body: string, et: EmailTranslator, locale?: string | null): string {
+  const lang = locale === "en" ? "en" : "fr";
   return `<!DOCTYPE html>
-<html lang="fr">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -40,8 +54,8 @@ function wrapEmail(title: string, body: string): string {
           <tr>
             <td style="padding:16px 32px;border-top:1px solid #f0f0f0;">
               <p style="margin:0;font-size:11px;color:#aaa;">
-                CompliAI · Conformité IA pour les entreprises ·
-                <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/credits" style="color:#003399;">Gérer mes crédits</a>
+                ${et("footer")}
+                <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/credits" style="color:#003399;">${et("manageCredits")}</a>
               </p>
             </td>
           </tr>
@@ -57,29 +71,32 @@ function wrapEmail(title: string, body: string): string {
 export async function sendWelcomeEmail({
   email,
   userName,
+  locale,
 }: {
   email: string;
   userName?: string;
+  locale?: string | null;
 }) {
+  const et = emailT(locale);
   const displayName = userName ?? email.split("@")[0];
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.compliai.eu";
 
+  const steps = [
+    { n: "1", title: et("welcome.step1Title"), desc: et("welcome.step1Desc"), href: `${appUrl}/dashboard/chat` },
+    { n: "2", title: et("welcome.step2Title"), desc: et("welcome.step2Desc"), href: `${appUrl}/dashboard/tools` },
+    { n: "3", title: et("welcome.step3Title"), desc: et("welcome.step3Desc"), href: `${appUrl}/dashboard/tools/jurisprudence` },
+  ];
+
   const body = `
     <h2 style="margin:0 0 8px;font-size:22px;color:#111;font-weight:700;">
-      Bienvenue sur CompliAI 👋
+      ${et("welcome.heading")}
     </h2>
     <p style="color:#444;line-height:1.7;margin:0 0 20px;font-size:14px;">
-      Bonjour ${displayName},<br/><br/>
-      Votre compte CompliAI est prêt. Vous pouvez dès maintenant accéder à tous vos outils de conformité : DPIA, checklist AI Act, jurisprudence CJUE, et bien plus.
+      ${et("welcome.intro", { name: displayName })}
     </p>
 
-    <!-- 3 étapes -->
     <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
-      ${[
-        { n: "1", title: "Posez votre première question", desc: "Le consultant IA répond à vos questions RGPD et AI Act avec sources officielles.", href: `${appUrl}/dashboard/chat` },
-        { n: "2", title: "Générez une DPIA ou checklist", desc: "Renseignez votre projet et obtenez un document complet en 5 minutes.", href: `${appUrl}/dashboard/tools` },
-        { n: "3", title: "Explorez la jurisprudence", desc: "CJUE, CNIL, EDPB — toutes les décisions importantes indexées.", href: `${appUrl}/dashboard/tools/jurisprudence` },
-      ]
+      ${steps
         .map(
           (step) => `
       <tr>
@@ -92,7 +109,7 @@ export async function sendWelcomeEmail({
               <td style="padding-left:12px;">
                 <p style="margin:0 0 2px;font-size:14px;font-weight:600;color:#111;">${step.title}</p>
                 <p style="margin:0 0 6px;font-size:12px;color:#666;">${step.desc}</p>
-                <a href="${step.href}" style="font-size:12px;color:#003399;font-weight:600;text-decoration:none;">Commencer →</a>
+                <a href="${step.href}" style="font-size:12px;color:#003399;font-weight:600;text-decoration:none;">${et("welcome.stepStart")}</a>
               </td>
             </tr>
           </table>
@@ -105,13 +122,13 @@ export async function sendWelcomeEmail({
     <div style="text-align:center;margin-top:8px;">
       <a href="${appUrl}/dashboard"
          style="display:inline-block;background:#003399;color:#ffffff;font-weight:700;font-size:14px;padding:14px 32px;border-radius:8px;text-decoration:none;">
-        Accéder à mon espace →
+        ${et("welcome.ctaAccess")}
       </a>
     </div>
 
     <p style="color:#888;font-size:12px;line-height:1.6;margin-top:24px;border-top:1px solid #f0f0f0;padding-top:16px;">
-      Une question ? Répondez directement à cet email ou visitez notre <a href="${appUrl}/docs" style="color:#003399;">documentation</a>.<br/>
-      Vous êtes inscrit avec l'adresse ${email}.
+      ${et("welcome.help", { docs: `<a href="${appUrl}/docs" style="color:#003399;">${et("welcome.docsWord")}</a>` })}<br/>
+      ${et("welcome.registeredWith", { email })}
     </p>
   `;
 
@@ -120,8 +137,8 @@ export async function sendWelcomeEmail({
   return resend.emails.send({
     from: FROM,
     to: email,
-    subject: "Bienvenue sur CompliAI — votre espace conformité est prêt",
-    html: wrapEmail("Bienvenue sur CompliAI", body),
+    subject: et("welcome.subject"),
+    html: wrapEmail(et("welcome.title"), body, et, locale),
   });
 }
 
@@ -132,38 +149,39 @@ export async function sendLowCreditsAlert({
   balance,
   plan,
   threshold,
+  locale,
 }: {
   email: string;
   userName?: string;
   balance: number;
   plan: string;
   threshold: number;
+  locale?: string | null;
 }) {
+  const et = emailT(locale);
+  const nl = locale === "en" ? "en-US" : "fr-FR";
   const displayName = userName ?? email;
   const pct = Math.round((balance / threshold) * 100);
 
   const body = `
     <h2 style="margin:0 0 16px;font-size:20px;color:#111;font-weight:700;">
-      ⚡ Vos crédits IA sont presque épuisés
+      ${et("lowCredits.heading")}
     </h2>
     <p style="color:#444;line-height:1.6;margin:0 0 20px;">
-      Bonjour ${displayName},<br/>
-      Il vous reste <strong style="color:#f59e0b;">${balance.toLocaleString("fr-FR")} crédits</strong>
-      sur votre plan <strong>${plan}</strong> — soit ${pct}% du seuil d'alerte.
+      ${et("lowCredits.intro", { name: displayName, balance: balance.toLocaleString(nl), plan, pct })}
     </p>
 
-    <!-- Barre de progression -->
     <div style="background:#f1f5f9;border-radius:8px;height:10px;overflow:hidden;margin:0 0 24px;">
       <div style="background:#f59e0b;height:10px;width:${Math.min(pct, 100)}%;border-radius:8px;"></div>
     </div>
 
     <p style="color:#444;line-height:1.6;margin:0 0 24px;">
-      Rechargez votre compte pour continuer à utiliser le consultant IA, les audits et tous les outils de conformité sans interruption.
+      ${et("lowCredits.body")}
     </p>
 
     <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/credits"
        style="display:inline-block;background:#003399;color:#ffffff;font-weight:600;font-size:14px;padding:12px 24px;border-radius:8px;text-decoration:none;">
-      Acheter des crédits →
+      ${et("lowCredits.cta")}
     </a>
   `;
 
@@ -172,8 +190,8 @@ export async function sendLowCreditsAlert({
   return resend.emails.send({
     from: FROM,
     to: email,
-    subject: `⚡ ${balance.toLocaleString("fr-FR")} crédits restants — Rechargez votre compte CompliAI`,
-    html: wrapEmail("Crédits IA bas", body),
+    subject: et("lowCredits.subject", { balance: balance.toLocaleString(nl) }),
+    html: wrapEmail(et("lowCredits.title"), body, et, locale),
   });
 }
 
@@ -185,6 +203,7 @@ export async function sendCreditPackConfirmation({
   credits,
   newBalance,
   amountPaidCents,
+  locale,
 }: {
   email: string;
   userName?: string;
@@ -192,49 +211,51 @@ export async function sendCreditPackConfirmation({
   credits: number;
   newBalance: number;
   amountPaidCents: number;
+  locale?: string | null;
 }) {
+  const et = emailT(locale);
+  const nl = locale === "en" ? "en-US" : "fr-FR";
   const displayName = userName ?? email;
-  const amountFormatted = (amountPaidCents / 100).toLocaleString("fr-FR", {
+  const amountFormatted = (amountPaidCents / 100).toLocaleString(nl, {
     style: "currency",
     currency: "EUR",
   });
 
   const body = `
     <h2 style="margin:0 0 16px;font-size:20px;color:#111;font-weight:700;">
-      ✅ Paiement confirmé — ${packName}
+      ${et("creditPack.heading", { packName })}
     </h2>
     <p style="color:#444;line-height:1.6;margin:0 0 20px;">
-      Bonjour ${displayName}, votre achat a bien été pris en compte.
+      ${et("creditPack.intro", { name: displayName })}
     </p>
 
-    <!-- Récap -->
     <table width="100%" cellpadding="0" cellspacing="0"
       style="background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;margin:0 0 24px;">
       <tr>
         <td style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
-          <span style="color:#888;font-size:12px;">Pack acheté</span><br/>
+          <span style="color:#888;font-size:12px;">${et("creditPack.pack")}</span><br/>
           <strong style="color:#111;">${packName}</strong>
         </td>
         <td style="padding:16px 20px;border-bottom:1px solid #e2e8f0;text-align:right;">
-          <span style="color:#888;font-size:12px;">Montant</span><br/>
+          <span style="color:#888;font-size:12px;">${et("creditPack.amount")}</span><br/>
           <strong style="color:#111;">${amountFormatted}</strong>
         </td>
       </tr>
       <tr>
         <td style="padding:16px 20px;">
-          <span style="color:#888;font-size:12px;">Crédits ajoutés</span><br/>
-          <strong style="color:#22c55e;">+${credits.toLocaleString("fr-FR")} crédits</strong>
+          <span style="color:#888;font-size:12px;">${et("creditPack.creditsAdded")}</span><br/>
+          <strong style="color:#22c55e;">+${credits.toLocaleString(nl)} ${et("creditPack.creditsUnit")}</strong>
         </td>
         <td style="padding:16px 20px;text-align:right;">
-          <span style="color:#888;font-size:12px;">Nouveau solde</span><br/>
-          <strong style="color:#003399;">${newBalance.toLocaleString("fr-FR")} crédits</strong>
+          <span style="color:#888;font-size:12px;">${et("creditPack.newBalance")}</span><br/>
+          <strong style="color:#003399;">${newBalance.toLocaleString(nl)} ${et("creditPack.creditsUnit")}</strong>
         </td>
       </tr>
     </table>
 
     <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard"
        style="display:inline-block;background:#003399;color:#ffffff;font-weight:600;font-size:14px;padding:12px 24px;border-radius:8px;text-decoration:none;">
-      Retour au tableau de bord →
+      ${et("creditPack.cta")}
     </a>
   `;
 
@@ -243,8 +264,8 @@ export async function sendCreditPackConfirmation({
   return resend.emails.send({
     from: FROM,
     to: email,
-    subject: `✅ ${credits.toLocaleString("fr-FR")} crédits ajoutés à votre compte CompliAI`,
-    html: wrapEmail("Achat de crédits confirmé", body),
+    subject: et("creditPack.subject", { credits: credits.toLocaleString(nl) }),
+    html: wrapEmail(et("creditPack.title"), body, et, locale),
   });
 }
 
@@ -257,6 +278,7 @@ export async function sendSubscriptionReceipt({
   periodEnd,
   invoiceNumber,
   invoiceUrl,
+  locale,
 }: {
   email: string;
   userName?: string;
@@ -265,48 +287,51 @@ export async function sendSubscriptionReceipt({
   periodEnd: Date;
   invoiceNumber?: string;
   invoiceUrl?: string;
+  locale?: string | null;
 }) {
+  const et = emailT(locale);
+  const nl = locale === "en" ? "en-US" : "fr-FR";
   const displayName = userName ?? email.split("@")[0];
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.compliai.eu";
-  const amount = (amountPaidCents / 100).toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
-  const fmt = (d: Date) => d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+  const amount = (amountPaidCents / 100).toLocaleString(nl, { style: "currency", currency: "EUR" });
+  const fmt = (d: Date) => d.toLocaleDateString(nl, { day: "numeric", month: "long", year: "numeric" });
 
   const body = `
-    <h2 style="margin:0 0 8px;font-size:20px;color:#111;font-weight:700;">Reçu de paiement</h2>
+    <h2 style="margin:0 0 8px;font-size:20px;color:#111;font-weight:700;">${et("receipt.heading")}</h2>
     <p style="color:#444;line-height:1.6;margin:0 0 20px;font-size:14px;">
-      Bonjour ${displayName}, merci pour votre confiance. Voici le reçu de votre abonnement CompliAI.
+      ${et("receipt.intro", { name: displayName })}
     </p>
 
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;margin:0 0 24px;">
       <tr>
         <td style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
-          <span style="color:#888;font-size:12px;">Abonnement</span><br/>
-          <strong style="color:#111;">CompliAI — Mensuel</strong>
+          <span style="color:#888;font-size:12px;">${et("receipt.subscription")}</span><br/>
+          <strong style="color:#111;">${et("receipt.planName")}</strong>
         </td>
         <td style="padding:16px 20px;border-bottom:1px solid #e2e8f0;text-align:right;">
-          <span style="color:#888;font-size:12px;">Montant payé</span><br/>
+          <span style="color:#888;font-size:12px;">${et("receipt.amountPaid")}</span><br/>
           <strong style="color:#003399;">${amount}</strong>
         </td>
       </tr>
       <tr>
         <td colspan="2" style="padding:16px 20px;${invoiceNumber ? "border-bottom:1px solid #e2e8f0;" : ""}">
-          <span style="color:#888;font-size:12px;">Période facturée</span><br/>
+          <span style="color:#888;font-size:12px;">${et("receipt.period")}</span><br/>
           <strong style="color:#111;">${fmt(periodStart)} → ${fmt(periodEnd)}</strong>
         </td>
       </tr>
       ${invoiceNumber ? `<tr><td colspan="2" style="padding:16px 20px;">
-        <span style="color:#888;font-size:12px;">N° de facture</span><br/>
+        <span style="color:#888;font-size:12px;">${et("receipt.invoiceNumber")}</span><br/>
         <strong style="color:#111;">${invoiceNumber}</strong>
       </td></tr>` : ""}
     </table>
 
     <div style="text-align:center;">
-      ${invoiceUrl ? `<a href="${invoiceUrl}" style="display:inline-block;background:#003399;color:#fff;font-weight:600;font-size:14px;padding:12px 24px;border-radius:8px;text-decoration:none;margin-right:8px;">Télécharger la facture →</a>` : ""}
-      <a href="${appUrl}/dashboard/credits" style="display:inline-block;color:#003399;font-weight:600;font-size:14px;padding:12px 8px;text-decoration:none;">Gérer mon abonnement</a>
+      ${invoiceUrl ? `<a href="${invoiceUrl}" style="display:inline-block;background:#003399;color:#fff;font-weight:600;font-size:14px;padding:12px 24px;border-radius:8px;text-decoration:none;margin-right:8px;">${et("receipt.download")}</a>` : ""}
+      <a href="${appUrl}/dashboard/credits" style="display:inline-block;color:#003399;font-weight:600;font-size:14px;padding:12px 8px;text-decoration:none;">${et("receipt.manage")}</a>
     </div>
 
     <p style="color:#888;font-size:12px;line-height:1.6;margin-top:24px;border-top:1px solid #f0f0f0;padding-top:16px;">
-      Ce reçu est envoyé à ${email}. Pour toute question de facturation, répondez à cet email.
+      ${et("receipt.sentTo", { email })}
     </p>
   `;
 
@@ -315,8 +340,8 @@ export async function sendSubscriptionReceipt({
   return resend.emails.send({
     from: FROM,
     to: email,
-    subject: `Reçu CompliAI — ${amount}`,
-    html: wrapEmail("Reçu de paiement CompliAI", body),
+    subject: et("receipt.subject", { amount }),
+    html: wrapEmail(et("receipt.title"), body, et, locale),
   });
 }
 
@@ -327,43 +352,43 @@ export async function sendRenewalReminder({
   daysBefore,
   renewalDate,
   amountCents,
+  locale,
 }: {
   email: string;
   userName?: string;
   daysBefore: 7 | 1;
   renewalDate: Date;
   amountCents: number;
+  locale?: string | null;
 }) {
+  const et = emailT(locale);
+  const nl = locale === "en" ? "en-US" : "fr-FR";
   const displayName = userName ?? email.split("@")[0];
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.compliai.eu";
-  const amount = (amountCents / 100).toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
-  const dateStr = renewalDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
-  const when = daysBefore === 1 ? "demain" : `dans ${daysBefore} jours`;
+  const amount = (amountCents / 100).toLocaleString(nl, { style: "currency", currency: "EUR" });
+  const dateStr = renewalDate.toLocaleDateString(nl, { day: "numeric", month: "long", year: "numeric" });
+  const heading = daysBefore === 1 ? et("renewal.headingTomorrow") : et("renewal.headingDays", { days: daysBefore });
 
   const body = `
     <h2 style="margin:0 0 8px;font-size:20px;color:#111;font-weight:700;">
-      Votre abonnement se renouvelle ${when}
+      ${heading}
     </h2>
     <p style="color:#444;line-height:1.7;margin:0 0 20px;font-size:14px;">
-      Bonjour ${displayName},<br/><br/>
-      Votre abonnement CompliAI sera automatiquement reconduit le <strong>${dateStr}</strong>
-      pour un montant de <strong>${amount}</strong>. Aucune action n'est requise si vous souhaitez continuer.
+      ${et("renewal.intro", { name: displayName, date: dateStr, amount })}
     </p>
 
     <p style="color:#444;line-height:1.7;margin:0 0 24px;font-size:14px;">
-      Vous gardez ainsi l'accès au consultant juridique, à la génération de documents et à la veille
-      réglementaire mise à jour quotidiennement.
+      ${et("renewal.body")}
     </p>
 
     <div style="text-align:center;">
       <a href="${appUrl}/dashboard/credits" style="display:inline-block;background:#003399;color:#fff;font-weight:600;font-size:14px;padding:12px 24px;border-radius:8px;text-decoration:none;">
-        Gérer mon abonnement
+        ${et("renewal.cta")}
       </a>
     </div>
 
     <p style="color:#888;font-size:12px;line-height:1.6;margin-top:24px;border-top:1px solid #f0f0f0;padding-top:16px;">
-      Vous pouvez modifier ou résilier votre abonnement à tout moment depuis votre espace, sans frais.
-      Email envoyé à ${email}.
+      ${et("renewal.footer", { email })}
     </p>
   `;
 
@@ -372,10 +397,8 @@ export async function sendRenewalReminder({
   return resend.emails.send({
     from: FROM,
     to: email,
-    subject: daysBefore === 1
-      ? "Votre abonnement CompliAI se renouvelle demain"
-      : `Votre abonnement CompliAI se renouvelle dans ${daysBefore} jours`,
-    html: wrapEmail("Renouvellement à venir", body),
+    subject: daysBefore === 1 ? et("renewal.subjectTomorrow") : et("renewal.subjectDays", { days: daysBefore }),
+    html: wrapEmail(et("renewal.title"), body, et, locale),
   });
 }
 
@@ -384,46 +407,46 @@ export async function sendReengagement({
   email,
   userName,
   daysInactive,
+  locale,
 }: {
   email: string;
   userName?: string;
   daysInactive: 14 | 30;
+  locale?: string | null;
 }) {
+  const et = emailT(locale);
   const displayName = userName ?? email.split("@")[0];
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.compliai.eu";
 
-  const heading = daysInactive === 14
-    ? "Une question de conformité en attente ?"
-    : "Le droit européen n'attend pas — CompliAI non plus";
-  const intro = daysInactive === 14
-    ? "Cela fait deux semaines que nous ne vous avons pas vu. Le corpus a été mis à jour chaque jour depuis : de nouvelles décisions et lignes directrices sont peut-être pertinentes pour vous."
-    : "Votre veille réglementaire continue de tourner en arrière-plan. AI Act, RGPD, DSA — les obligations évoluent, et votre espace CompliAI est prêt à répondre à vos questions.";
+  const heading = daysInactive === 14 ? et("reengagement.heading14") : et("reengagement.heading30");
+  const intro = daysInactive === 14 ? et("reengagement.intro14") : et("reengagement.intro30");
+
+  const links = [
+    { t: et("reengagement.link1"), h: `${appUrl}/dashboard/chat` },
+    { t: et("reengagement.link2"), h: `${appUrl}/dashboard/tools` },
+  ];
 
   const body = `
     <h2 style="margin:0 0 8px;font-size:20px;color:#111;font-weight:700;">${heading}</h2>
     <p style="color:#444;line-height:1.7;margin:0 0 20px;font-size:14px;">
-      Bonjour ${displayName},<br/><br/>${intro}
+      ${et("reengagement.greeting", { name: displayName })}<br/><br/>${intro}
     </p>
 
     <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
-      ${[
-        { t: "Posez une question au consultant", h: `${appUrl}/dashboard/chat` },
-        { t: "Générez un document de conformité", h: `${appUrl}/dashboard/tools` },
-      ].map((row) => `
+      ${links.map((row) => `
       <tr><td style="padding:10px 0;border-bottom:1px solid #f0f0f0;">
-        <a href="${row.h}" style="color:#003399;font-size:14px;font-weight:600;text-decoration:none;">${row.t} →</a>
+        <a href="${row.h}" style="color:#003399;font-size:14px;font-weight:600;text-decoration:none;">${row.t}</a>
       </td></tr>`).join("")}
     </table>
 
     <div style="text-align:center;">
       <a href="${appUrl}/dashboard" style="display:inline-block;background:#003399;color:#fff;font-weight:600;font-size:14px;padding:12px 24px;border-radius:8px;text-decoration:none;">
-        Revenir sur mon espace →
+        ${et("reengagement.cta")}
       </a>
     </div>
 
     <p style="color:#888;font-size:12px;line-height:1.6;margin-top:24px;border-top:1px solid #f0f0f0;padding-top:16px;">
-      Email envoyé à ${email}. Vous ne souhaitez plus recevoir ces rappels ?
-      Gérez vos préférences depuis votre <a href="${appUrl}/dashboard/settings" style="color:#003399;">espace</a>.
+      ${et("reengagement.footer", { email, space: `<a href="${appUrl}/dashboard/settings" style="color:#003399;">${et("reengagement.spaceWord")}</a>` })}
     </p>
   `;
 
@@ -433,6 +456,6 @@ export async function sendReengagement({
     from: FROM,
     to: email,
     subject: heading,
-    html: wrapEmail("On vous attend sur CompliAI", body),
+    html: wrapEmail(et("reengagement.title"), body, et, locale),
   });
 }

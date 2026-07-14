@@ -12,6 +12,85 @@
     "fr": "Français",
     "en": "English"
   },
+  "Emails": {
+    "footer": "CompliAI · Conformité IA pour les entreprises ·",
+    "manageCredits": "Gérer mes crédits",
+    "welcome": {
+      "subject": "Bienvenue sur CompliAI — votre espace conformité est prêt",
+      "title": "Bienvenue sur CompliAI",
+      "heading": "Bienvenue sur CompliAI 👋",
+      "intro": "Bonjour {name}, votre compte CompliAI est prêt. Vous pouvez dès maintenant accéder à tous vos outils de conformité : DPIA, checklist AI Act, jurisprudence CJUE, et bien plus.",
+      "step1Title": "Posez votre première question",
+      "step1Desc": "Le consultant IA répond à vos questions RGPD et AI Act avec sources officielles.",
+      "step2Title": "Générez une DPIA ou checklist",
+      "step2Desc": "Renseignez votre projet et obtenez un document complet en 5 minutes.",
+      "step3Title": "Explorez la jurisprudence",
+      "step3Desc": "CJUE, CNIL, EDPB — toutes les décisions importantes indexées.",
+      "stepStart": "Commencer →",
+      "ctaAccess": "Accéder à mon espace →",
+      "help": "Une question ? Répondez directement à cet email ou visitez notre {docs}.",
+      "docsWord": "documentation",
+      "registeredWith": "Vous êtes inscrit avec l'adresse {email}."
+    },
+    "lowCredits": {
+      "subject": "⚡ {balance} crédits restants — Rechargez votre compte CompliAI",
+      "title": "Crédits IA bas",
+      "heading": "⚡ Vos crédits IA sont presque épuisés",
+      "intro": "Bonjour {name}, il vous reste {balance} crédits sur votre plan {plan} — soit {pct}% du seuil d'alerte.",
+      "body": "Rechargez votre compte pour continuer à utiliser le consultant IA, les audits et tous les outils de conformité sans interruption.",
+      "cta": "Acheter des crédits →"
+    },
+    "creditPack": {
+      "subject": "✅ {credits} crédits ajoutés à votre compte CompliAI",
+      "title": "Achat de crédits confirmé",
+      "heading": "✅ Paiement confirmé — {packName}",
+      "intro": "Bonjour {name}, votre achat a bien été pris en compte.",
+      "pack": "Pack acheté",
+      "amount": "Montant",
+      "creditsAdded": "Crédits ajoutés",
+      "newBalance": "Nouveau solde",
+      "creditsUnit": "crédits",
+      "cta": "Retour au tableau de bord →"
+    },
+    "receipt": {
+      "subject": "Reçu CompliAI — {amount}",
+      "title": "Reçu de paiement CompliAI",
+      "heading": "Reçu de paiement",
+      "intro": "Bonjour {name}, merci pour votre confiance. Voici le reçu de votre abonnement CompliAI.",
+      "subscription": "Abonnement",
+      "planName": "CompliAI — Mensuel",
+      "amountPaid": "Montant payé",
+      "period": "Période facturée",
+      "invoiceNumber": "N° de facture",
+      "download": "Télécharger la facture →",
+      "manage": "Gérer mon abonnement",
+      "sentTo": "Ce reçu est envoyé à {email}. Pour toute question de facturation, répondez à cet email."
+    },
+    "renewal": {
+      "subjectTomorrow": "Votre abonnement CompliAI se renouvelle demain",
+      "subjectDays": "Votre abonnement CompliAI se renouvelle dans {days} jours",
+      "title": "Renouvellement à venir",
+      "headingTomorrow": "Votre abonnement se renouvelle demain",
+      "headingDays": "Votre abonnement se renouvelle dans {days} jours",
+      "intro": "Bonjour {name}, votre abonnement CompliAI sera automatiquement reconduit le {date} pour un montant de {amount}. Aucune action n'est requise si vous souhaitez continuer.",
+      "body": "Vous gardez ainsi l'accès au consultant juridique, à la génération de documents et à la veille réglementaire mise à jour quotidiennement.",
+      "cta": "Gérer mon abonnement",
+      "footer": "Vous pouvez modifier ou résilier votre abonnement à tout moment depuis votre espace, sans frais. Email envoyé à {email}."
+    },
+    "reengagement": {
+      "heading14": "Une question de conformité en attente ?",
+      "heading30": "Le droit européen n'attend pas — CompliAI non plus",
+      "intro14": "Cela fait deux semaines que nous ne vous avons pas vu. Le corpus a été mis à jour chaque jour depuis : de nouvelles décisions et lignes directrices sont peut-être pertinentes pour vous.",
+      "intro30": "Votre veille réglementaire continue de tourner en arrière-plan. AI Act, RGPD, DSA — les obligations évoluent, et votre espace CompliAI est prêt à répondre à vos questions.",
+      "greeting": "Bonjour {name},",
+      "link1": "Posez une question au consultant →",
+      "link2": "Générez un document de conformité →",
+      "cta": "Revenir sur mon espace →",
+      "title": "On vous attend sur CompliAI",
+      "footer": "Email envoyé à {email}. Vous ne souhaitez plus recevoir ces rappels ? Gérez vos préférences depuis votre {space}.",
+      "spaceWord": "espace"
+    }
+  },
   "Auth": {
     "signInTitle": "Connexion",
     "signUpTitle": "Créer un compte",
