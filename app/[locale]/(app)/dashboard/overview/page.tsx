@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,11 +18,14 @@ import ScoreHistory from "@/components/dashboard/ScoreHistory";
 import OnboardingWizard from "@/components/dashboard/OnboardingWizard";
 import { ProductOnboardingStepper } from "@/components/dashboard/ProductOnboardingStepper";
 
-export const metadata = {
-  title: "Vue d'ensemble — CompliAI",
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "Overview" });
+  return { title: t("metaTitle") };
+}
 
 export default async function DashboardOverviewPage() {
+  const t = await getTranslations("Overview");
   const supabase = await createClient();
   const {
     data: { user },
@@ -82,7 +86,7 @@ export default async function DashboardOverviewPage() {
 
   const stats = [
     {
-      label: "Projets actifs",
+      label: t("statActiveProjects"),
       value: projects?.length ?? 0,
       icon: FolderSearch,
       color: "text-blue-600",
@@ -90,7 +94,7 @@ export default async function DashboardOverviewPage() {
       href: "/dashboard/projects",
     },
     {
-      label: "Issues bloquantes",
+      label: t("statBlockingIssues"),
       value: openIssues?.length ?? 0,
       icon: AlertTriangle,
       color: "text-orange-600",
@@ -98,7 +102,7 @@ export default async function DashboardOverviewPage() {
       href: "/dashboard/projects",
     },
     {
-      label: "Alertes non lues",
+      label: t("statUnreadAlerts"),
       value: unreadAlerts?.length ?? 0,
       icon: Bell,
       color: "text-red-600",
@@ -106,7 +110,7 @@ export default async function DashboardOverviewPage() {
       href: "/dashboard/alerts",
     },
     {
-      label: "Audits réalisés",
+      label: t("statAuditsDone"),
       value: totalAuditsCount ?? 0,
       icon: CheckCircle2,
       color: "text-green-600",
@@ -118,7 +122,7 @@ export default async function DashboardOverviewPage() {
   const historyPoints = (auditHistory ?? []).map((a: any) => ({
     date: a.created_at,
     score: a.compliance_score,
-    projectName: a.projects?.name ?? "Projet",
+    projectName: a.projects?.name ?? t("projectFallback"),
   }));
 
   return (
@@ -136,13 +140,13 @@ export default async function DashboardOverviewPage() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Vue d&apos;ensemble</h1>
-          <p className="text-muted-foreground mt-1">Score, audits et indicateurs de conformité</p>
+          <h1 className="text-2xl font-bold text-slate-900">{t("title")}</h1>
+          <p className="text-muted-foreground mt-1">{t("subtitle")}</p>
         </div>
         <Link href="/dashboard/projects/new">
           <Button>
             <Plus className="h-4 w-4" />
-            Nouvel audit
+            {t("newAudit")}
           </Button>
         </Link>
       </div>
@@ -152,15 +156,14 @@ export default async function DashboardOverviewPage() {
           <div className="flex items-center gap-6">
             <ComplianceScore score={avgScore} size="lg" showLabel={true} />
             <div className="flex-1">
-              <h2 className="text-lg font-bold text-slate-900">Score de conformité global</h2>
+              <h2 className="text-lg font-bold text-slate-900">{t("globalScore")}</h2>
               {avgScore != null ? (
                 <p className="text-sm text-muted-foreground mt-1">
-                  Moyenne sur {scoredAudits.length} audit{scoredAudits.length > 1 ? "s" : ""} récent
-                  {scoredAudits.length > 1 ? "s" : ""}
+                  {t("avgOver", { count: scoredAudits.length })}
                 </p>
               ) : (
                 <p className="text-sm text-muted-foreground mt-1">
-                  Lancez un audit pour obtenir votre score
+                  {t("runAuditForScore")}
                 </p>
               )}
             </div>
@@ -192,9 +195,9 @@ export default async function DashboardOverviewPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">Audits récents</CardTitle>
+            <CardTitle className="text-base">{t("recentAudits")}</CardTitle>
             <Link href="/dashboard/projects" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
-              Voir tout <ArrowRight className="h-3 w-3" />
+              {t("seeAll")} <ArrowRight className="h-3 w-3" />
             </Link>
           </CardHeader>
           <CardContent>
@@ -229,7 +232,7 @@ export default async function DashboardOverviewPage() {
             ) : (
               <div className="text-center py-8 text-muted-foreground">
                 <FolderSearch className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                <p className="text-sm">Aucun audit réalisé</p>
+                <p className="text-sm">{t("noAudit")}</p>
               </div>
             )}
           </CardContent>
@@ -237,13 +240,13 @@ export default async function DashboardOverviewPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Raccourcis</CardTitle>
+            <CardTitle className="text-base">{t("shortcuts")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {[
-              { href: "/dashboard/chat", title: "Consultant IA", desc: "Posez une question juridique" },
-              { href: "/dashboard/projects/new", title: "Nouvel audit", desc: "Verdict AI Act & RGPD" },
-              { href: "/dashboard/tools", title: "Outils juridiques", desc: "DPIA, RoPA, comparateur…" },
+              { href: "/dashboard/chat", title: t("scConsultantTitle"), desc: t("scConsultantDesc") },
+              { href: "/dashboard/projects/new", title: t("scNewAuditTitle"), desc: t("scNewAuditDesc") },
+              { href: "/dashboard/tools", title: t("scToolsTitle"), desc: t("scToolsDesc") },
             ].map((action) => (
               <Link
                 key={action.href}
@@ -264,7 +267,7 @@ export default async function DashboardOverviewPage() {
       {historyPoints.length >= 2 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Évolution du score</CardTitle>
+            <CardTitle className="text-base">{t("scoreEvolution")}</CardTitle>
           </CardHeader>
           <CardContent>
             <ScoreHistory audits={historyPoints} />

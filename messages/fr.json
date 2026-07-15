@@ -56,6 +56,31 @@
     "shortSummary": "Synthèse courte",
     "creditsPerQuestion": "crédits / question"
   },
+  "Overview": {
+    "metaTitle": "Vue d'ensemble — CompliAI",
+    "title": "Vue d'ensemble",
+    "subtitle": "Score, audits et indicateurs de conformité",
+    "newAudit": "Nouvel audit",
+    "statActiveProjects": "Projets actifs",
+    "statBlockingIssues": "Issues bloquantes",
+    "statUnreadAlerts": "Alertes non lues",
+    "statAuditsDone": "Audits réalisés",
+    "projectFallback": "Projet",
+    "globalScore": "Score de conformité global",
+    "avgOver": "{count, plural, one {Moyenne sur # audit récent} other {Moyenne sur # audits récents}}",
+    "runAuditForScore": "Lancez un audit pour obtenir votre score",
+    "recentAudits": "Audits récents",
+    "seeAll": "Voir tout",
+    "noAudit": "Aucun audit réalisé",
+    "shortcuts": "Raccourcis",
+    "scConsultantTitle": "Consultant IA",
+    "scConsultantDesc": "Posez une question juridique",
+    "scNewAuditTitle": "Nouvel audit",
+    "scNewAuditDesc": "Verdict AI Act & RGPD",
+    "scToolsTitle": "Outils juridiques",
+    "scToolsDesc": "DPIA, RoPA, comparateur…",
+    "scoreEvolution": "Évolution du score"
+  },
   "Dashboard": {
     "nav": {
       "chat": "Chat",
