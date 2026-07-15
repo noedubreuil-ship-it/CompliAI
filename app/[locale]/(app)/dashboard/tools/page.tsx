@@ -1,9 +1,15 @@
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
+import { getTranslations } from "next-intl/server";
 import { ArrowRight, Lock, Sparkles } from "lucide-react";
 import { LEGAL_TOOL_SECTIONS, type NavItem } from "@/lib/navigation/app-nav";
 import { ToolPageShell } from "@/components/tools/ToolPageShell";
+
+/** Slug de traduction dérivé du href (ex: /dashboard/tools/dpia → tools_dpia). */
+function navSlug(href: string): string {
+  return href.replace(/^\/dashboard\/?/, "").replace(/\//g, "_") || "root";
+}
 
 const ICON_COLORS = [
   "bg-cyan-50 text-cyan-700",
@@ -28,7 +34,7 @@ function badgeClass(badge?: string) {
   return BADGE_STYLES[badge] ?? "bg-blue-50 text-blue-700";
 }
 
-function ToolCard({ tool, isPro, colorClass }: { tool: NavItem; isPro: boolean; colorClass: string }) {
+function ToolCard({ tool, isPro, colorClass, label, desc, proRequiredLabel }: { tool: NavItem; isPro: boolean; colorClass: string; label: string; desc: string; proRequiredLabel: string }) {
   const locked = tool.requiresPro && !isPro;
   const href = locked ? "/dashboard/upgrade" : tool.href;
 
@@ -47,11 +53,11 @@ function ToolCard({ tool, isPro, colorClass }: { tool: NavItem; isPro: boolean; 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <h3 className={`font-semibold text-sm ${locked ? "text-neutral-400" : "text-neutral-900"}`}>
-                  {tool.label}
+                  {label}
                 </h3>
                 {locked ? (
                   <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-amber-50 text-amber-800 border border-amber-200">
-                    Pro requis
+                    {proRequiredLabel}
                   </span>
                 ) : tool.badge ? (
                   <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${badgeClass(tool.badge)}`}>
@@ -60,7 +66,7 @@ function ToolCard({ tool, isPro, colorClass }: { tool: NavItem; isPro: boolean; 
                 ) : null}
               </div>
               <p className={`text-xs leading-relaxed ${locked ? "text-neutral-400" : "text-muted-foreground"}`}>
-                {tool.description}
+                {desc}
               </p>
             </div>
             <ArrowRight
@@ -73,9 +79,15 @@ function ToolCard({ tool, isPro, colorClass }: { tool: NavItem; isPro: boolean; 
   );
 }
 
-export const metadata = { title: "Outils juridiques IA — CompliAI" };
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "Tools" });
+  return { title: t("metaTitle") };
+}
 
 export default async function ToolsPage() {
+  const t = await getTranslations("Tools");
+  const ts = await getTranslations("Dashboard.appNav");
   const supabase = await createClient();
   const {
     data: { user },
@@ -91,23 +103,31 @@ export default async function ToolsPage() {
 
   return (
     <ToolPageShell
-      title="Outils juridiques IA"
-      breadcrumb="Catalogue"
+      title={t("title")}
+      breadcrumb={t("breadcrumb")}
       maxWidth="max-w-5xl"
-      description={`${toolCount} outils pour la conformité, la jurisprudence, la formation et la pratique du droit européen de l'IA.`}
+      description={t("description", { count: toolCount })}
     >
       <div className="space-y-10">
         {LEGAL_TOOL_SECTIONS.map((section) => (
           <div key={section.id} className="space-y-4">
             <div>
-              <h2 className="text-lg font-bold text-neutral-900">{section.label}</h2>
+              <h2 className="text-lg font-bold text-neutral-900">{ts(`sec_${section.id}`)}</h2>
               {section.catalogSubtitle && (
-                <p className="text-sm text-muted-foreground">{section.catalogSubtitle}</p>
+                <p className="text-sm text-muted-foreground">{ts(`catalog_${section.id}`)}</p>
               )}
             </div>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {section.items.map((tool, i) => (
-                <ToolCard key={tool.href} tool={tool} isPro={isPro} colorClass={ICON_COLORS[i % ICON_COLORS.length]} />
+                <ToolCard
+                  key={tool.href}
+                  tool={tool}
+                  isPro={isPro}
+                  colorClass={ICON_COLORS[i % ICON_COLORS.length]}
+                  label={ts(`${navSlug(tool.href)}.l`)}
+                  desc={ts(`${navSlug(tool.href)}.d`)}
+                  proRequiredLabel={t("proRequired")}
+                />
               ))}
             </div>
           </div>
@@ -116,8 +136,7 @@ export default async function ToolsPage() {
         <div className="flex items-start gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
           <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-blue-500" />
           <div className="text-sm text-neutral-600">
-            <strong className="text-neutral-900">Textes officiels indexés</strong> — AI Act, RGPD, DSA, jurisprudence
-            CJUE/CEDH. Information juridique générale, non un conseil personnalisé.
+            <strong className="text-neutral-900">{t("footerBold")}</strong> {t("footerText")}
           </div>
         </div>
       </div>

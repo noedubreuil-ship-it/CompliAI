@@ -81,6 +81,15 @@
     "scToolsDesc": "DPIA, RoPA, comparateur…",
     "scoreEvolution": "Évolution du score"
   },
+  "Tools": {
+    "metaTitle": "Outils juridiques IA — CompliAI",
+    "title": "Outils juridiques IA",
+    "breadcrumb": "Catalogue",
+    "description": "{count} outils pour la conformité, la jurisprudence, la formation et la pratique du droit européen de l'IA.",
+    "proRequired": "Pro requis",
+    "footerBold": "Textes officiels indexés",
+    "footerText": "— AI Act, RGPD, DSA, jurisprudence CJUE/CEDH. Information juridique générale, non un conseil personnalisé."
+  },
   "Dashboard": {
     "nav": {
       "chat": "Chat",
@@ -116,6 +125,10 @@
       "sec_jurisprudence": "Jurisprudence",
       "sec_formation": "Formation",
       "sec_cabinet": "Cabinet Pro",
+      "catalog_conformite": "Documents obligatoires et analyses de conformité AI Act & RGPD",
+      "catalog_jurisprudence": "Analyse et recherche CJUE, CEDH, DPA et décisions d'autorités",
+      "catalog_formation": "Outils pédagogiques pour étudiants et formation continue",
+      "catalog_cabinet": "Avocats, juristes, DPO — pratique avancée",
       "tools_scanner": { "l": "Scanner page web", "d": "Indicateurs RGPD / transparence sur HTML statique (bêta) — ne remplace pas un audit RGPD." },
       "tools_dpia": { "l": "DPIA Art. 35", "d": "Analyse d'impact RGPD" },
       "tools_ropa": { "l": "RoPA Art. 30", "d": "Registre des traitements" },

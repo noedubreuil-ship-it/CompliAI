@@ -81,6 +81,15 @@
     "scToolsDesc": "DPIA, RoPA, comparator…",
     "scoreEvolution": "Score trend"
   },
+  "Tools": {
+    "metaTitle": "AI legal tools — CompliAI",
+    "title": "AI legal tools",
+    "breadcrumb": "Catalogue",
+    "description": "{count} tools for compliance, case law, learning and the practice of European AI law.",
+    "proRequired": "Pro required",
+    "footerBold": "Indexed official texts",
+    "footerText": "— AI Act, GDPR, DSA, CJEU/ECHR case law. General legal information, not personalised advice."
+  },
   "Dashboard": {
     "nav": {
       "chat": "Chat",
@@ -116,6 +125,10 @@
       "sec_jurisprudence": "Case law",
       "sec_formation": "Learning",
       "sec_cabinet": "Pro firm",
+      "catalog_conformite": "Mandatory documents and AI Act & GDPR compliance analyses",
+      "catalog_jurisprudence": "Analysis and search across CJEU, ECHR, DPA and authority decisions",
+      "catalog_formation": "Educational tools for students and continuing education",
+      "catalog_cabinet": "Lawyers, legal experts, DPOs — advanced practice",
       "tools_scanner": { "l": "Web page scanner", "d": "GDPR / transparency indicators on static HTML (beta) — not a substitute for a GDPR audit." },
       "tools_dpia": { "l": "DPIA Art. 35", "d": "GDPR impact assessment" },
       "tools_ropa": { "l": "RoPA Art. 30", "d": "Record of processing activities" },
