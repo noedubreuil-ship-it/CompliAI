@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useMemo, memo, type ReactNode } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -61,6 +62,7 @@ function serializableMessages(messages: Message[]): Message[] {
 }
 
 function SourcesPanel({ sources }: { sources: LegalCitation[] }) {
+  const t = useTranslations("Chat");
   // Affichage comme avant (ouvert par défaut), mais rendu progressif pour éviter le freeze.
   const [open, setOpen] = useState(true);
   const [renderCount, setRenderCount] = useState(12);
@@ -81,20 +83,20 @@ function SourcesPanel({ sources }: { sources: LegalCitation[] }) {
     <div className="mt-4 space-y-2">
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-          Sources juridiques ({sources.length})
+          {t("sourcesTitle", { count: sources.length })}
         </p>
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
           className="text-xs font-medium text-slate-600 hover:text-slate-900"
         >
-          {open ? "Masquer" : "Afficher"}
+          {open ? t("hide") : t("show")}
         </button>
       </div>
 
       {open && renderCount < sources.length && (
         <p className="text-xs text-slate-500">
-          Chargement des sources… {renderCount}/{sources.length}
+          {t("loadingSources", { n: renderCount, total: sources.length })}
         </p>
       )}
 
@@ -202,31 +204,31 @@ function SourcesPanel({ sources }: { sources: LegalCitation[] }) {
 
         const showEuHint = isEurLex;
         let linkTone = "text-blue-600 hover:text-blue-800";
-        let linkTitle = "Ouvrir la source";
+        let linkTitle = t("openSource");
         if (isEurLex) {
           linkTone = "text-indigo-600 hover:text-indigo-900";
-          linkTitle = "Voir sur EUR-Lex";
+          linkTitle = t("viewEurLex");
         } else if (isNational) {
           linkTone = "text-emerald-600 hover:text-emerald-900";
-          linkTitle = "Voir la référence nationale";
+          linkTitle = t("viewNational");
         } else if (isEuCaseLaw) {
           linkTone = "text-violet-700 hover:text-violet-950";
-          linkTitle = "Voir l’arrêt / la décision";
+          linkTitle = t("viewRuling");
         } else if (isNationalCaseLaw) {
           linkTone = "text-sky-700 hover:text-sky-950";
-          linkTitle = "Voir la décision nationale";
+          linkTitle = t("viewNationalDecision");
         } else if (isCalendar) {
           linkTone = "text-amber-700 hover:text-amber-950";
-          linkTitle = "Voir le lien calendrier";
+          linkTitle = t("viewCalendar");
         } else if (isIntlStandards) {
           linkTone = "text-teal-700 hover:text-teal-950";
-          linkTitle = "Voir le cadre international";
+          linkTitle = t("viewIntl");
         } else if (isUkRegulator) {
           linkTone = "text-rose-700 hover:text-rose-950";
-          linkTitle = "Voir la doctrine ICO";
+          linkTitle = t("viewIco");
         } else if (isOfficialPortal) {
           linkTone = "text-slate-700 hover:text-slate-950";
-          linkTitle = "Ouvrir le portail officiel du droit national";
+          linkTitle = t("openNationalPortal");
         }
 
         const showExcerpt = expanded[i] === true;
@@ -253,7 +255,7 @@ function SourcesPanel({ sources }: { sources: LegalCitation[] }) {
                       onClick={() => setExpanded((p) => ({ ...p, [i]: !p[i] }))}
                       className={`text-[11px] font-medium ${subColor} hover:opacity-90`}
                     >
-                      {showExcerpt ? "Masquer l’extrait" : "Afficher l’extrait"}
+                      {showExcerpt ? t("hideExcerpt") : t("showExcerpt")}
                     </button>
                     {showExcerpt && (
                       <p className={`mt-1 italic ${excerptColor}`}>&ldquo;{cite.excerpt}&rdquo;</p>
@@ -287,6 +289,7 @@ const MessageBubble = memo(function MessageBubble({
   msg: Message;
   citationFilterQuestion?: string;
 }) {
+  const t = useTranslations("Chat");
   const [copied, setCopied] = useState(false);
   const [pdfBusy, setPdfBusy] = useState(false);
   const aiToast = useAIToast();
@@ -317,7 +320,7 @@ const MessageBubble = memo(function MessageBubble({
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      aiToast.aiError("Export PDF impossible pour le moment.");
+      aiToast.aiError(t("pdfError"));
     } finally {
       setPdfBusy(false);
     }
@@ -359,7 +362,7 @@ const MessageBubble = memo(function MessageBubble({
                     <button
                       type="button"
                       onClick={copyText}
-                      title="Copier toute la réponse"
+                      title={t("copyAll")}
                       className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
                     >
                       {copied ? (
@@ -378,7 +381,7 @@ const MessageBubble = memo(function MessageBubble({
                       type="button"
                       onClick={exportPdf}
                       disabled={pdfBusy || !citationFilterQuestion?.trim()}
-                      title="Télécharger en PDF"
+                      title={t("downloadPdf")}
                       className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 transition-colors"
                     >
                       {pdfBusy ? (
@@ -443,17 +446,19 @@ function mergeServerAndLocal(
   );
 }
 
-function formatRelativeDate(iso: string) {
+function formatRelativeDate(iso: string, t: (k: string, v?: Record<string, unknown>) => string, locale: string) {
   const d = new Date(iso);
   const now = new Date();
   const diffDays = Math.floor((now.getTime() - d.getTime()) / 86400000);
-  if (diffDays === 0) return "Aujourd'hui";
-  if (diffDays === 1) return "Hier";
-  if (diffDays < 7) return `Il y a ${diffDays} jours`;
-  return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+  if (diffDays === 0) return t("today");
+  if (diffDays === 1) return t("yesterday");
+  if (diffDays < 7) return t("daysAgo", { days: diffDays });
+  return d.toLocaleDateString(locale === "en" ? "en-US" : "fr-FR", { day: "numeric", month: "short" });
 }
 
 export default function ChatInterface() {
+  const t = useTranslations("Chat");
+  const locale = useLocale();
   const aiToast = useAIToast();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -838,7 +843,7 @@ export default function ChatInterface() {
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantId
-            ? { ...m, content: "Une erreur est survenue. Veuillez réessayer.", loading: false }
+            ? { ...m, content: t("genericError"), loading: false }
             : m
         )
       );
@@ -863,14 +868,14 @@ export default function ChatInterface() {
             variant="ghost" size="sm"
             className="h-7 w-7 p-0 text-slate-400 hover:text-slate-700"
             onClick={startNewConversation}
-            title="Nouvelle conversation"
+            title={t("newConversation")}
           >
             <Plus className="h-4 w-4" />
           </Button>
         </div>
         <div className="flex-1 overflow-y-auto py-2 space-y-0.5 px-2">
           {conversations.length === 0 && (
-            <p className="text-xs text-slate-400 text-center mt-6 px-2">Aucune conversation</p>
+            <p className="text-xs text-slate-400 text-center mt-6 px-2">{t("noConversations")}</p>
           )}
           {conversations.map((conv) => (
             <div
@@ -890,14 +895,14 @@ export default function ChatInterface() {
                 <MessageSquare className="h-3.5 w-3.5 shrink-0 mt-0.5 text-slate-400" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium leading-snug">{conv.title}</p>
-                  <p className="text-slate-400 mt-0.5">{formatRelativeDate(conv.createdAt)}</p>
+                  <p className="text-slate-400 mt-0.5">{formatRelativeDate(conv.createdAt, t as (k: string, v?: Record<string, unknown>) => string, locale)}</p>
                 </div>
               </button>
               <button
                 type="button"
                 onClick={(e) => deleteConversation(conv.id, e)}
                 className="shrink-0 mt-0.5 text-slate-400 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:text-red-500 transition-all"
-                aria-label="Supprimer la conversation"
+                aria-label={t("deleteConversation")}
               >
                 <Trash2 className="h-3 w-3" />
               </button>
@@ -913,7 +918,7 @@ export default function ChatInterface() {
             type="button"
             onClick={() => setSidebarOpen((v) => !v)}
             className="rounded-lg p-2 text-neutral-500 hover:bg-neutral-200/60 hover:text-neutral-800 transition-colors"
-            title={sidebarOpen ? "Masquer l'historique" : "Afficher l'historique"}
+            title={sidebarOpen ? t("hideHistory") : t("showHistory")}
           >
             {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
           </button>
@@ -932,7 +937,7 @@ export default function ChatInterface() {
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 transition-colors"
-            title="Cet outil est une intelligence artificielle — voir la page de transparence"
+            title={t("aiTooltip")}
           >
             <Bot className="h-3 w-3" />
             IA générative
@@ -948,21 +953,18 @@ export default function ChatInterface() {
               <Shield className="h-6 w-6 text-white" />
             </div>
             <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl">
-              Comment puis-je vous aider ?
+              {t("emptyTitle")}
             </h1>
             <p className="mt-2 max-w-md text-sm text-neutral-500 leading-relaxed">
-              Consultant RGPD, AI Act et droit national UE-27 — réponses sourcées à partir du corpus indexé.
-              Information juridique, pas un conseil personnalisé.
+              {t("emptySubtitle")}
             </p>
             {/* Art. 50 AI Act — déclaration transparence IA obligatoire depuis août 2025 */}
             <div className="mt-5 flex max-w-md items-start gap-2 rounded-xl border border-blue-100 bg-blue-50/70 px-4 py-3 text-left text-xs text-blue-800">
               <Bot className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
               <p className="leading-relaxed">
-                Vous interagissez avec <strong>CompliAI</strong>, une intelligence artificielle basée sur Claude Sonnet&nbsp;4.6.
-                Les réponses sont générées par IA à partir de sources juridiques officielles européennes (EUR-Lex, EDPB, CJUE, autorités nationales de protection des données).
-                Elles constituent un support à la décision juridique et doivent être validées par un professionnel avant application définitive.{" "}
+                {t.rich("disclaimer", { b: (c) => <strong>{c}</strong> })}{" "}
                 <a href="/transparence-ia" target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-900">
-                  En savoir plus
+                  {t("learnMore")}
                 </a>
               </p>
             </div>
@@ -991,7 +993,7 @@ export default function ChatInterface() {
       <div className="shrink-0 px-4 pb-4 pt-2 sm:px-6">
         <div className="mx-auto w-full max-w-3xl space-y-2">
           <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-            <span className="text-xs text-neutral-500">Format</span>
+            <span className="text-xs text-neutral-500">{t("format")}</span>
             <div className="inline-flex gap-0.5 rounded-full border border-neutral-200 bg-white p-0.5 shadow-sm">
               <button
                 type="button"
@@ -1004,7 +1006,7 @@ export default function ChatInterface() {
                     : "text-neutral-500 hover:text-neutral-700"
                 )}
               >
-                Note développée
+                {t("detailedNote")}
               </button>
               <button
                 type="button"
@@ -1017,17 +1019,17 @@ export default function ChatInterface() {
                     : "text-neutral-500 hover:text-neutral-700"
                 )}
               >
-                Synthèse courte
+                {t("shortSummary")}
               </button>
             </div>
             <span className="text-xs text-neutral-400">
-              ~{creditRange.min}–{creditRange.typical} crédits / question
+              ~{creditRange.min}–{creditRange.typical} {" "}{t("creditsPerQuestion")}
             </span>
           </div>
           <div className="relative flex items-end gap-2 rounded-3xl border border-neutral-200 bg-white p-2 shadow-lg shadow-neutral-200/50 ring-1 ring-neutral-100">
             <div className="relative flex-1">
               <Textarea
-                placeholder={listening ? "Parlez maintenant…" : "Posez votre question juridique…"}
+                placeholder={listening ? t("speakNow") : t("placeholder")}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -1048,7 +1050,7 @@ export default function ChatInterface() {
                 <button
                   onClick={toggleVoice}
                   disabled={streaming}
-                  title={listening ? "Arrêter l'écoute" : "Parler à l'IA"}
+                  title={listening ? t("stopListening") : t("speakToAi")}
                   className={`absolute right-3 bottom-3 w-7 h-7 rounded-full flex items-center justify-center transition-all ${
                     listening
                       ? "bg-red-500 text-white animate-pulse shadow-lg shadow-red-200"
@@ -1070,8 +1072,8 @@ export default function ChatInterface() {
           </div>
           <p className="text-center text-[11px] text-neutral-400">
             {listening
-              ? "Écoute en cours — parlez en français puis recliquez sur le micro"
-              : "Les outils juridiques (DPIA, comparateur UE-27…) sont dans le menu en haut."}
+              ? t("listeningHint")
+              : t("toolsHint")}
           </p>
         </div>
       </div>
