@@ -6,6 +6,7 @@ import {
 import { authenticateForGenerate } from "@/lib/ai/generate-route";
 import { buildExplicationArticleUserPrompt, extractJson, generateDocument } from "@/lib/ai/generators";
 import { catchGenerateRouteError } from "@/lib/ai/http-errors";
+import { buildToolLanguageAddendum } from "@/lib/ai/query-translate";
 
 export const runtime = "nodejs";
 
@@ -29,7 +30,8 @@ export async function POST(request: Request) {
     let prompt = buildExplicationArticleUserPrompt(article, texte, niveau);
     prompt = appendNationalRagToUserPrompt(prompt, rag.context);
 
-    const raw = await generateDocument(prompt, auth.billing("explication-article", "explication-article"));
+    const langAddendum = buildToolLanguageAddendum([article, texte].filter(Boolean).join(" "), typeof body.locale === "string" ? body.locale : undefined);
+    const raw = await generateDocument(prompt, auth.billing("explication-article", "explication-article"), langAddendum);
     return NextResponse.json({ result: extractJson(raw) });
   } catch (err) {
     return catchGenerateRouteError(err);

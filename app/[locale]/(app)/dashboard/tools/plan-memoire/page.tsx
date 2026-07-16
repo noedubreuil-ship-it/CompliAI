@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +46,7 @@ function SectionCollapse({ title, children, accent = false }: { title: string; c
 }
 
 export default function PlanMemoirePage() {
+  const locale = useLocale();
   const [sujet, setSujet] = useState("");
   const [niveau, setNiveau] = useState("Master 2");
   const [loading, setLoading] = useState(false);
@@ -59,7 +61,7 @@ export default function PlanMemoirePage() {
       const res = await fetch("/api/generate/plan-memoire", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sujet, niveau }),
+        body: JSON.stringify({ sujet, niveau, locale }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);

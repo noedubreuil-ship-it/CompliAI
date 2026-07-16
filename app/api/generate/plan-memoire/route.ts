@@ -6,6 +6,7 @@ import {
 import { authenticateForGenerate } from "@/lib/ai/generate-route";
 import { buildPlanMemoireUserPrompt, extractJson, generateDocument } from "@/lib/ai/generators";
 import { catchGenerateRouteError } from "@/lib/ai/http-errors";
+import { buildToolLanguageAddendum } from "@/lib/ai/query-translate";
 
 export const runtime = "nodejs";
 
@@ -23,7 +24,8 @@ export async function POST(request: Request) {
     let prompt = buildPlanMemoireUserPrompt(sujet, niveau);
     prompt = appendNationalRagToUserPrompt(prompt, rag.context);
 
-    const raw = await generateDocument(prompt, auth.billing("plan-memoire", "plan-memoire"));
+    const langAddendum = buildToolLanguageAddendum(sujet, typeof body.locale === "string" ? body.locale : undefined);
+    const raw = await generateDocument(prompt, auth.billing("plan-memoire", "plan-memoire"), langAddendum);
     return NextResponse.json({ result: extractJson(raw) });
   } catch (err) {
     return catchGenerateRouteError(err);

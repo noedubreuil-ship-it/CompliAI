@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,7 @@ const IMPACT_COLOR: Record<string, string> = {
 };
 
 export default function MemoireConformitePage() {
+  const locale = useLocale();
   const [situation, setSituation] = useState("");
   const [contexte, setContexte] = useState("");
   const [loading, setLoading] = useState(false);
@@ -46,7 +48,7 @@ export default function MemoireConformitePage() {
       const res = await fetch("/api/generate/memoire-conformite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ situation, contexte }),
+        body: JSON.stringify({ situation, contexte, locale }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);

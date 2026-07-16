@@ -6,6 +6,7 @@ import {
 import { authenticateForGenerate } from "@/lib/ai/generate-route";
 import { buildAuditQrUserPrompt, extractJson, generateDocument } from "@/lib/ai/generators";
 import { catchGenerateRouteError } from "@/lib/ai/http-errors";
+import { buildToolLanguageAddendum } from "@/lib/ai/query-translate";
 
 export const runtime = "nodejs";
 
@@ -29,7 +30,8 @@ export async function POST(request: Request) {
     let prompt = buildAuditQrUserPrompt(systemDescription, secteur);
     prompt = appendNationalRagToUserPrompt(prompt, rag.context);
 
-    const raw = await generateDocument(prompt, auth.billing("audit", "audit"));
+    const langAddendum = buildToolLanguageAddendum(secteur, typeof body.locale === "string" ? body.locale : undefined);
+    const raw = await generateDocument(prompt, auth.billing("audit", "audit"), langAddendum);
     const parsed = extractJson(raw);
 
     return NextResponse.json({ result: parsed });

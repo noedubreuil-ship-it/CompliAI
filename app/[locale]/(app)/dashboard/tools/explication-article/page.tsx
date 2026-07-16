@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BookMarked, Loader2, RotateCcw, ChevronDown, ChevronRight, Link2 } from "lucide-react";
@@ -45,6 +46,7 @@ interface ExplicationData {
 }
 
 export default function ExplicationArticlePage() {
+  const locale = useLocale();
   const [selectedTexte, setSelectedTexte] = useState("AI Act (UE 2024/1689)");
   const [selectedArticle, setSelectedArticle] = useState(TEXTES["AI Act (UE 2024/1689)"][0]);
   const [niveau, setNiveau] = useState("Master 1");
@@ -59,7 +61,7 @@ export default function ExplicationArticlePage() {
       const res = await fetch("/api/generate/explication-article", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ article: selectedArticle, texte: selectedTexte, niveau }),
+        body: JSON.stringify({ article: selectedArticle, texte: selectedTexte, niveau, locale }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -68,6 +69,7 @@ function QuestionCard({ q, index }: { q: Question; index: number }) {
 }
 
 export default function AuditQRPage() {
+  const locale = useLocale();
   const [systemDescription, setSystemDescription] = useState("");
   const [secteur, setSecteur] = useState("Santé");
   const [loading, setLoading] = useState(false);
@@ -83,7 +85,7 @@ export default function AuditQRPage() {
       const res = await fetch("/api/generate/audit-qr", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ systemDescription, secteur }),
+        body: JSON.stringify({ systemDescription, secteur, locale }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
