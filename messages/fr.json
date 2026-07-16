@@ -85,6 +85,7 @@
     "metaTitle": "Outils juridiques IA — CompliAI",
     "title": "Outils juridiques IA",
     "breadcrumb": "Catalogue",
+    "rootBreadcrumb": "Outils",
     "description": "{count} outils pour la conformité, la jurisprudence, la formation et la pratique du droit européen de l'IA.",
     "proRequired": "Pro requis",
     "footerBold": "Textes officiels indexés",
@@ -129,45 +130,162 @@
       "catalog_jurisprudence": "Analyse et recherche CJUE, CEDH, DPA et décisions d'autorités",
       "catalog_formation": "Outils pédagogiques pour étudiants et formation continue",
       "catalog_cabinet": "Avocats, juristes, DPO — pratique avancée",
-      "tools_scanner": { "l": "Scanner page web", "d": "Indicateurs RGPD / transparence sur HTML statique (bêta) — ne remplace pas un audit RGPD." },
-      "tools_dpia": { "l": "DPIA Art. 35", "d": "Analyse d'impact RGPD" },
-      "tools_ropa": { "l": "RoPA Art. 30", "d": "Registre des traitements" },
-      "tools_classifier": { "l": "Classifieur AI Act", "d": "Sandbox réglementaire IA" },
-      "tools_checklist": { "l": "Checklist conformité", "d": "AI Act, RGPD, NIS2, DORA…" },
-      "tools_art11": { "l": "Doc. Art. 11", "d": "Documentation technique haut risque" },
-      "tools_fria": { "l": "FRIA Art. 27", "d": "Impact droits fondamentaux" },
-      "tools_policy": { "l": "Politique IA employés", "d": "Art. 4 littératie IA" },
-      "tools_contracts": { "l": "Contrats tiers", "d": "OpenAI, AWS, Google…" },
-      "tools_investor-report": { "l": "Rapport investisseurs", "d": "Due diligence IA" },
-      "tools_jurisprudence": { "l": "Analyseur EU", "d": "CJUE, CEDH, PDF, ECLI" },
-      "tools_recherche-jurisprudentielle": { "l": "Recherche IA", "d": "CJUE + DPA par thème" },
-      "tools_analyse-decision": { "l": "Décisions autorités", "d": "CNIL, DPC, EDPB…" },
-      "tools_resume-arret": { "l": "Résumé d'arrêts", "d": "Fiches + commentaires guidés" },
-      "tools_quiz": { "l": "Quiz interactif", "d": "AI Act, RGPD, DSA…" },
-      "tools_plan-memoire": { "l": "Plan de mémoire", "d": "Structure académique" },
-      "tools_explication-article": { "l": "Explication d'articles", "d": "3 niveaux pédagogiques" },
-      "tools_simulateur": { "l": "Cas pratique", "d": "Simulation examen / barreau" },
-      "tools_memoire-conformite": { "l": "Mémoire conformité", "d": "Note structurée cabinet" },
-      "tools_comparateur": { "l": "Comparateur UE-27", "d": "Lois nationales + DPA" },
-      "tools_clauses-contrat": { "l": "Clauses contractuelles", "d": "DPA, AI Act, PI…" },
-      "tools_audit-qr": { "l": "Q&R audit ANC", "d": "20 questions auditeur" },
-      "overview": { "l": "Vue d'ensemble", "d": "Score, audits, KPIs" },
-      "projects": { "l": "Projets", "d": "Audits et conformité par projet" },
-      "projects_new": { "l": "Nouvel audit", "d": "Lancer un audit AI Act / RGPD" },
-      "brain": { "l": "Cerveau", "d": "Mémoire long terme de l'organisation" },
-      "benchmark": { "l": "Benchmark sectoriel", "d": "Comparaison pairs" },
-      "analytics": { "l": "Analytics DPO", "d": "Rapport COMEX" },
-      "tools": { "l": "Tous les outils", "d": "Catalogue complet" },
-      "lawyers": { "l": "Annuaire avocats", "d": "Profils et mise en relation" },
-      "register": { "l": "Registre IA", "d": "Registre AI Act auto" },
-      "alerts": { "l": "Veille réglementaire", "d": "Alertes EUR-Lex" },
-      "journal": { "l": "Journal UE", "d": "Actualité droit numérique" },
-      "sources": { "l": "Sources juridiques", "d": "33+ sources officielles" },
-      "documents": { "l": "Mes documents", "d": "DPIA, RoPA, analyses" },
-      "calendar": { "l": "Calendrier", "d": "Deadlines AI Act & RGPD" },
-      "templates": { "l": "Modèles", "d": "Gabarits DPIA / RoPA" },
-      "team": { "l": "Équipe", "d": "Organisation & rôles" },
-      "integrations": { "l": "Intégrations", "d": "Webhooks, Slack, n8n" }
+      "tools_scanner": {
+        "l": "Scanner page web",
+        "d": "Indicateurs RGPD / transparence sur HTML statique (bêta) — ne remplace pas un audit RGPD."
+      },
+      "tools_dpia": {
+        "l": "DPIA Art. 35",
+        "d": "Analyse d'impact RGPD"
+      },
+      "tools_ropa": {
+        "l": "RoPA Art. 30",
+        "d": "Registre des traitements"
+      },
+      "tools_classifier": {
+        "l": "Classifieur AI Act",
+        "d": "Sandbox réglementaire IA"
+      },
+      "tools_checklist": {
+        "l": "Checklist conformité",
+        "d": "AI Act, RGPD, NIS2, DORA…"
+      },
+      "tools_art11": {
+        "l": "Doc. Art. 11",
+        "d": "Documentation technique haut risque"
+      },
+      "tools_fria": {
+        "l": "FRIA Art. 27",
+        "d": "Impact droits fondamentaux"
+      },
+      "tools_policy": {
+        "l": "Politique IA employés",
+        "d": "Art. 4 littératie IA"
+      },
+      "tools_contracts": {
+        "l": "Contrats tiers",
+        "d": "OpenAI, AWS, Google…"
+      },
+      "tools_investor-report": {
+        "l": "Rapport investisseurs",
+        "d": "Due diligence IA"
+      },
+      "tools_jurisprudence": {
+        "l": "Analyseur EU",
+        "d": "CJUE, CEDH, PDF, ECLI"
+      },
+      "tools_recherche-jurisprudentielle": {
+        "l": "Recherche IA",
+        "d": "CJUE + DPA par thème"
+      },
+      "tools_analyse-decision": {
+        "l": "Décisions autorités",
+        "d": "CNIL, DPC, EDPB…"
+      },
+      "tools_resume-arret": {
+        "l": "Résumé d'arrêts",
+        "d": "Fiches + commentaires guidés"
+      },
+      "tools_quiz": {
+        "l": "Quiz interactif",
+        "d": "AI Act, RGPD, DSA…"
+      },
+      "tools_plan-memoire": {
+        "l": "Plan de mémoire",
+        "d": "Structure académique"
+      },
+      "tools_explication-article": {
+        "l": "Explication d'articles",
+        "d": "3 niveaux pédagogiques"
+      },
+      "tools_simulateur": {
+        "l": "Cas pratique",
+        "d": "Simulation examen / barreau"
+      },
+      "tools_memoire-conformite": {
+        "l": "Mémoire conformité",
+        "d": "Note structurée cabinet"
+      },
+      "tools_comparateur": {
+        "l": "Comparateur UE-27",
+        "d": "Lois nationales + DPA"
+      },
+      "tools_clauses-contrat": {
+        "l": "Clauses contractuelles",
+        "d": "DPA, AI Act, PI…"
+      },
+      "tools_audit-qr": {
+        "l": "Q&R audit ANC",
+        "d": "20 questions auditeur"
+      },
+      "overview": {
+        "l": "Vue d'ensemble",
+        "d": "Score, audits, KPIs"
+      },
+      "projects": {
+        "l": "Projets",
+        "d": "Audits et conformité par projet"
+      },
+      "projects_new": {
+        "l": "Nouvel audit",
+        "d": "Lancer un audit AI Act / RGPD"
+      },
+      "brain": {
+        "l": "Cerveau",
+        "d": "Mémoire long terme de l'organisation"
+      },
+      "benchmark": {
+        "l": "Benchmark sectoriel",
+        "d": "Comparaison pairs"
+      },
+      "analytics": {
+        "l": "Analytics DPO",
+        "d": "Rapport COMEX"
+      },
+      "tools": {
+        "l": "Tous les outils",
+        "d": "Catalogue complet"
+      },
+      "lawyers": {
+        "l": "Annuaire avocats",
+        "d": "Profils et mise en relation"
+      },
+      "register": {
+        "l": "Registre IA",
+        "d": "Registre AI Act auto"
+      },
+      "alerts": {
+        "l": "Veille réglementaire",
+        "d": "Alertes EUR-Lex"
+      },
+      "journal": {
+        "l": "Journal UE",
+        "d": "Actualité droit numérique"
+      },
+      "sources": {
+        "l": "Sources juridiques",
+        "d": "33+ sources officielles"
+      },
+      "documents": {
+        "l": "Mes documents",
+        "d": "DPIA, RoPA, analyses"
+      },
+      "calendar": {
+        "l": "Calendrier",
+        "d": "Deadlines AI Act & RGPD"
+      },
+      "templates": {
+        "l": "Modèles",
+        "d": "Gabarits DPIA / RoPA"
+      },
+      "team": {
+        "l": "Équipe",
+        "d": "Organisation & rôles"
+      },
+      "integrations": {
+        "l": "Intégrations",
+        "d": "Webhooks, Slack, n8n"
+      }
     }
   },
   "Emails": {
@@ -363,28 +481,68 @@
       "period": "pour toujours",
       "desc": "Découvrez CompliAI sans engagement",
       "cta": "Commencer gratuitement",
-      "features": ["1 audit par mois", "Chat juridique (10 questions/jour)", "Verdict de conformité", "Roadmap basique", "Disclaimer & recommandations"],
-      "missing": ["Rapport PDF", "Registre IA", "Veille réglementaire", "Suivi des issues"]
+      "features": [
+        "1 audit par mois",
+        "Chat juridique (10 questions/jour)",
+        "Verdict de conformité",
+        "Roadmap basique",
+        "Disclaimer & recommandations"
+      ],
+      "missing": [
+        "Rapport PDF",
+        "Registre IA",
+        "Veille réglementaire",
+        "Suivi des issues"
+      ]
     },
     "starter": {
       "name": "Starter",
       "desc": "Pour les startups en phase de croissance",
       "cta": "Choisir Starter",
-      "features": ["3 audits par mois", "Chat juridique illimité", "Roadmap détaillée", "Estimation des coûts de conformité", "Registre des systèmes IA", "Suivi des issues bloquantes (Kanban)", "Export CSV du registre", "Support par email"],
-      "missing": ["Rapport PDF investor-ready", "Veille réglementaire automatisée"]
+      "features": [
+        "3 audits par mois",
+        "Chat juridique illimité",
+        "Roadmap détaillée",
+        "Estimation des coûts de conformité",
+        "Registre des systèmes IA",
+        "Suivi des issues bloquantes (Kanban)",
+        "Export CSV du registre",
+        "Support par email"
+      ],
+      "missing": [
+        "Rapport PDF investor-ready",
+        "Veille réglementaire automatisée"
+      ]
     },
     "pro": {
       "name": "Pro",
       "desc": "Pour les scale-ups et équipes Legal/Compliance",
       "cta": "Choisir Pro",
-      "features": ["Audits illimités", "Rapport PDF investor-ready", "Veille réglementaire quotidienne (EUR-Lex)", "Alertes email d'impact réglementaire", "Registre IA complet (CSV + PDF)", "Projets illimités", "API d'intégration (roadmap)", "Support prioritaire"],
+      "features": [
+        "Audits illimités",
+        "Rapport PDF investor-ready",
+        "Veille réglementaire quotidienne (EUR-Lex)",
+        "Alertes email d'impact réglementaire",
+        "Registre IA complet (CSV + PDF)",
+        "Projets illimités",
+        "API d'intégration (roadmap)",
+        "Support prioritaire"
+      ],
       "missing": []
     },
     "enterprise": {
       "name": "Enterprise",
       "desc": "Pour les grands groupes et cabinets conseil",
       "cta": "Nous contacter",
-      "features": ["Tout le plan Pro", "Déploiement cloud privé", "SSO & gestion des accès", "Intégration API custom", "SLA garanti", "Accompagnement onboarding", "Nombre d'utilisateurs illimité"],
+      "features": [
+        "Tout le plan Pro",
+        "Déploiement cloud privé",
+        "SSO & gestion des accès",
+        "Intégration API custom",
+        "SLA garanti",
+        "Accompagnement onboarding",
+        "Nombre d'utilisateurs illimité"
+      ],
       "missing": []
     },
     "compareTitle": "Starter vs Pro — comparatif",
@@ -393,15 +551,51 @@
     "colStarter": "Starter (49€/mois)",
     "colPro": "Pro (199€/mois)",
     "compareRows": [
-      ["Audits / mois", "3", "Illimités"],
-      ["Chat juridique IA", "Illimité", "Illimité"],
-      ["Rapport PDF investor-ready", "—", "✓"],
-      ["Veille réglementaire automatisée", "—", "✓"],
-      ["Registre IA & export CSV", "✓", "✓"],
-      ["Suivi issues bloquantes", "✓", "✓"],
-      ["Projets", "Illimité (selon quotas)", "Illimités"],
-      ["Webhooks / API (bêta)", "✓", "✓"],
-      ["Support", "Email", "Prioritaire"]
+      [
+        "Audits / mois",
+        "3",
+        "Illimités"
+      ],
+      [
+        "Chat juridique IA",
+        "Illimité",
+        "Illimité"
+      ],
+      [
+        "Rapport PDF investor-ready",
+        "—",
+        "✓"
+      ],
+      [
+        "Veille réglementaire automatisée",
+        "—",
+        "✓"
+      ],
+      [
+        "Registre IA & export CSV",
+        "✓",
+        "✓"
+      ],
+      [
+        "Suivi issues bloquantes",
+        "✓",
+        "✓"
+      ],
+      [
+        "Projets",
+        "Illimité (selon quotas)",
+        "Illimités"
+      ],
+      [
+        "Webhooks / API (bêta)",
+        "✓",
+        "✓"
+      ],
+      [
+        "Support",
+        "Email",
+        "Prioritaire"
+      ]
     ],
     "taxLine": "Tous les plans incluent la TVA. Facturation mensuelle. Résiliation à tout moment.",
     "disclaimerLabel": "Avertissement :",
@@ -534,5 +728,36 @@
       "subtitle": "Rejoignez des centaines de startups, avocats et juristes qui utilisent CompliAI pour naviguer le droit européen.",
       "activeUsers": "utilisateurs actifs"
     }
+  },
+  "ToolPolicy": {
+    "title": "Politique d'usage IA employés",
+    "subtitle": "Art. 4 AI Act (littératie IA) — PDF signable",
+    "formTitle": "Informations sur votre entreprise",
+    "companyName": "Nom de l'entreprise *",
+    "companyPlaceholder": "Acme Corp",
+    "sector": "Secteur",
+    "employeeCount": "Nombre d'employés",
+    "country": "Pays (déploiement principal)",
+    "cse": "Représentation du personnel / CSE",
+    "cseUnspecified": "Non précisé",
+    "cseYes": "Oui (CSE ou équivalent)",
+    "cseNo": "Non — pas de CSE / sous seuils",
+    "cseInProgress": "En cours de mise en place",
+    "aiTools": "Outils IA utilisés par les employés *",
+    "aiToolsPlaceholder": "ChatGPT, Claude, Copilot, Midjourney, Cursor, Gemini, outils IA internes...",
+    "details": "Précisions (optionnel)",
+    "detailsPlaceholder": "Sensibilité des données, usages autorisés/interdits, formation prévue, outils en liste noire…",
+    "generating": "Génération en cours (30-60s)…",
+    "generate": "Générer la politique IA",
+    "pdfError": "Erreur génération PDF",
+    "version": "Version",
+    "effectiveDate": "Effet prévu / indiqué :",
+    "toComplete": "environ {n} repères [À COMPLÉTER]",
+    "newPolicy": "Nouvelle politique",
+    "downloadPdf": "Télécharger PDF",
+    "headerScope": "En-tête et périmètre",
+    "keyRules": "Règles clés à retenir",
+    "legalMention": "Mention juridique (pied de document)",
+    "disclaimer": "Ce document constitue une information juridique générale. Faites valider par un DPO ou un avocat spécialisé avant diffusion aux employés."
   }
 }

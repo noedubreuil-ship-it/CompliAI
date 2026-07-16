@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ChevronRight, type LucideIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
@@ -26,11 +27,12 @@ export function ToolPageShell({
   children,
   className,
 }: ToolPageShellProps) {
+  const t = useTranslations("Tools");
   return (
     <div className={cn("mx-auto w-full space-y-6", maxWidth, className)}>
       <nav className="flex flex-wrap items-center gap-1 text-xs text-neutral-500">
         <Link href="/dashboard/tools" className="transition-colors hover:text-neutral-900">
-          Outils
+          {t("rootBreadcrumb")}
         </Link>
         <ChevronRight className="h-3 w-3 shrink-0" />
         <span className="font-medium text-neutral-900">{breadcrumb ?? title}</span>

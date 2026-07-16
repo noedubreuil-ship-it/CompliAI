@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +12,7 @@ const SECTORS = ["Tech / SaaS", "Finance", "Santé", "RH & Recrutement", "Retail
 const EMPLOYEE_COUNTS = ["1-10", "11-50", "51-200", "201-1000", "1000+"];
 
 export default function PolicyPage() {
+  const t = useTranslations("ToolPolicy");
   const [form, setForm] = useState({
     company_name: "",
     sector: "Tech / SaaS",
@@ -49,7 +51,7 @@ export default function PolicyPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: result, companyName: form.company_name }),
       });
-      if (!res.ok) throw new Error("Erreur génération PDF");
+      if (!res.ok) throw new Error(t("pdfError"));
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a"); a.href = url;
@@ -65,39 +67,39 @@ export default function PolicyPage() {
         <Link href="/dashboard/tools"><Button variant="ghost" size="sm"><ArrowLeft className="h-4 w-4" /></Button></Link>
         <div>
           <h1 className="text-xl font-bold flex items-center gap-2">
-            <Users className="h-5 w-5 text-green-600" /> Politique d&apos;Usage IA Employés
+            <Users className="h-5 w-5 text-green-600" /> {t("title")}
           </h1>
-          <p className="text-sm text-muted-foreground">Art. 4 AI Act (littératie IA) — PDF signable</p>
+          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
       </div>
 
       {!result ? (
         <Card>
-          <CardHeader><CardTitle className="text-base">Informations sur votre entreprise</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t("formTitle")}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-slate-700 block mb-1">Nom de l&apos;entreprise *</label>
+                <label className="text-sm font-medium text-slate-700 block mb-1">{t("companyName")}</label>
                 <input value={form.company_name} onChange={e => setForm(f => ({ ...f, company_name: e.target.value }))}
-                  placeholder="Acme Corp"
+                  placeholder={t("companyPlaceholder")}
                   className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-700 block mb-1">Secteur</label>
+                <label className="text-sm font-medium text-slate-700 block mb-1">{t("sector")}</label>
                 <select value={form.sector} onChange={e => setForm(f => ({ ...f, sector: e.target.value }))}
                   className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
                   {SECTORS.map(s => <option key={s}>{s}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-700 block mb-1">Nombre d&apos;employés</label>
+                <label className="text-sm font-medium text-slate-700 block mb-1">{t("employeeCount")}</label>
                 <select value={form.employee_count} onChange={e => setForm(f => ({ ...f, employee_count: e.target.value }))}
                   className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
                   {EMPLOYEE_COUNTS.map(c => <option key={c}>{c}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-700 block mb-1">Pays (déploiement principal)</label>
+                <label className="text-sm font-medium text-slate-700 block mb-1">{t("country")}</label>
                 <select value={form.country} onChange={e => setForm(f => ({ ...f, country: e.target.value }))}
                   className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
                   <option value="France">France</option>
@@ -107,32 +109,32 @@ export default function PolicyPage() {
                 </select>
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-700 block mb-1">Représentation du personnel / CSE</label>
+                <label className="text-sm font-medium text-slate-700 block mb-1">{t("cse")}</label>
                 <select value={form.cse_status} onChange={e => setForm(f => ({ ...f, cse_status: e.target.value }))}
                   className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
-                  <option value="non précisé">Non précisé</option>
-                  <option value="Oui (CSE ou équivalent)">Oui (CSE ou équivalent)</option>
-                  <option value="Non — pas de CSE / sous seuils">Non — pas de CSE / sous seuils</option>
-                  <option value="En cours de mise en place">En cours de mise en place</option>
+                  <option value="non précisé">{t("cseUnspecified")}</option>
+                  <option value="Oui (CSE ou équivalent)">{t("cseYes")}</option>
+                  <option value="Non — pas de CSE / sous seuils">{t("cseNo")}</option>
+                  <option value="En cours de mise en place">{t("cseInProgress")}</option>
                 </select>
               </div>
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700 block mb-1">Outils IA utilisés par les employés *</label>
+              <label className="text-sm font-medium text-slate-700 block mb-1">{t("aiTools")}</label>
               <textarea value={form.ai_tools_used} onChange={e => setForm(f => ({ ...f, ai_tools_used: e.target.value }))}
-                placeholder="ChatGPT, Claude, Copilot, Midjourney, Cursor, Gemini, outils IA internes..." rows={3}
+                placeholder={t("aiToolsPlaceholder")} rows={3}
                 className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none" />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700 block mb-1">Précisions (optionnel)</label>
+              <label className="text-sm font-medium text-slate-700 block mb-1">{t("details")}</label>
               <textarea value={form.additional_context} onChange={e => setForm(f => ({ ...f, additional_context: e.target.value }))}
-                placeholder="Sensibilité des données, usages autorisés/interdits, formation prévue, outils en liste noire…"
+                placeholder={t("detailsPlaceholder")}
                 rows={2}
                 className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none" />
             </div>
             {error && <p className="text-sm text-red-600">{error}</p>}
             <Button onClick={generate} disabled={loading || !form.company_name || !form.ai_tools_used} className="w-full bg-green-600 hover:bg-green-700">
-              {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Génération en cours (30-60s)…</> : "Générer la politique IA"}
+              {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> {t("generating")}</> : t("generate")}
             </Button>
           </CardContent>
         </Card>
@@ -142,32 +144,32 @@ export default function PolicyPage() {
             <div>
               <h2 className="text-lg font-bold">{result.title}</h2>
               <p className="text-sm text-muted-foreground">
-                Version {result.version}
-                {result.effective_date ? ` · Effet prévu / indiqué : ${result.effective_date}` : ""}
+                {t("version")} {result.version}
+                {result.effective_date ? ` · ${t("effectiveDate")} ${result.effective_date}` : ""}
                 {result.estimated_incomplete_count != null && result.estimated_incomplete_count > 0 ?
-                  ` · environ ${result.estimated_incomplete_count} repères [À COMPLÉTER]`
+                  ` · ${t("toComplete", { n: result.estimated_incomplete_count })}`
                 : ""}
                 {" "}· Art. 4 AI Act · RGPD
               </p>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setResult(null)}>Nouvelle politique</Button>
+              <Button variant="outline" size="sm" onClick={() => setResult(null)}>{t("newPolicy")}</Button>
               <Button size="sm" onClick={downloadPdf} disabled={downloading} className="bg-green-600 hover:bg-green-700">
-                {downloading ? <><Loader2 className="h-4 w-4 animate-spin" /> PDF…</> : <><Download className="h-4 w-4" /> Télécharger PDF</>}
+                {downloading ? <><Loader2 className="h-4 w-4 animate-spin" /> PDF…</> : <><Download className="h-4 w-4" /> {t("downloadPdf")}</>}
               </Button>
             </div>
           </div>
 
           {result.header_meta_note && (
             <Card className="border-slate-200 bg-slate-50">
-              <CardHeader className="py-3"><CardTitle className="text-sm">En-tête et périmètre</CardTitle></CardHeader>
+              <CardHeader className="py-3"><CardTitle className="text-sm">{t("headerScope")}</CardTitle></CardHeader>
               <CardContent className="pt-0 text-sm text-slate-700 whitespace-pre-wrap">{result.header_meta_note}</CardContent>
             </Card>
           )}
 
           {result.key_rules?.length > 0 && (
             <Card className="border-green-200 bg-green-50">
-              <CardHeader><CardTitle className="text-sm text-green-800">Règles clés à retenir</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-sm text-green-800">{t("keyRules")}</CardTitle></CardHeader>
               <CardContent>
                 <ol className="space-y-1">
                   {result.key_rules.map((rule: string, i: number) => (
@@ -197,7 +199,7 @@ export default function PolicyPage() {
 
           {result.professional_footer && (
             <Card>
-              <CardHeader className="py-3"><CardTitle className="text-xs text-muted-foreground">Mention juridique (pied de document)</CardTitle></CardHeader>
+              <CardHeader className="py-3"><CardTitle className="text-xs text-muted-foreground">{t("legalMention")}</CardTitle></CardHeader>
               <CardContent className="pt-0 prose prose-sm max-w-none text-slate-600">
                 <ReactMarkdown>{result.professional_footer}</ReactMarkdown>
               </CardContent>
@@ -205,7 +207,7 @@ export default function PolicyPage() {
           )}
 
           <div className="bg-slate-50 border rounded-lg p-4 text-xs text-slate-500">
-            Ce document constitue une information juridique générale. Faites valider par un DPO ou un avocat spécialisé avant diffusion aux employés.
+            {t("disclaimer")}
           </div>
         </div>
       )}
