@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,7 @@ const EMPLOYEE_COUNTS = ["1-10", "11-50", "51-200", "201-1000", "1000+"];
 
 export default function PolicyPage() {
   const t = useTranslations("ToolPolicy");
+  const locale = useLocale();
   const [form, setForm] = useState({
     company_name: "",
     sector: "Tech / SaaS",
@@ -31,7 +32,7 @@ export default function PolicyPage() {
     try {
       const res = await fetch("/api/generate/policy", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, locale }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);

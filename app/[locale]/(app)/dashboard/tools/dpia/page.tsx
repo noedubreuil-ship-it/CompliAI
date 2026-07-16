@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileSearch, Loader2, Download, AlertTriangle, CheckCircle, Info } from "lucide-react";
@@ -27,6 +28,7 @@ const SECTORS = ["Santé", "Finance / Assurance", "RH / Recrutement", "Éducatio
   "Administration publique", "Transport / Logistique", "Industrie / Manufacture", "Médias / Publicité", "Autre"];
 
 export default function DPIAPage() {
+  const locale = useLocale();
   const [form, setForm] = useState({
     treatment_name: "", controller: "", purposes: "", data_types: "",
     data_subjects: "", retention: "", recipients: "", sector: "Santé",
@@ -62,7 +64,7 @@ export default function DPIAPage() {
     try {
       const res = await fetch("/api/generate/dpia", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, locale }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);

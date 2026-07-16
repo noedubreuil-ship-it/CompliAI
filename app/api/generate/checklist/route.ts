@@ -26,7 +26,7 @@ export async function POST(request: Request) {
       includeEuCaseLaw: true,
     });
     const inputText = [body.context, body.company_name, body.regulation].filter(Boolean).join(" ");
-    const langAddendum = buildToolLanguageAddendum(String(inputText));
+    const langAddendum = buildToolLanguageAddendum(String(inputText), typeof body.locale === "string" ? body.locale : undefined);
     const raw = await generateComplianceChecklistDocument(prompt, auth.billing("checklist", "checklist"), langAddendum);
     const content = extractJson(raw) as Record<string, unknown>;
 

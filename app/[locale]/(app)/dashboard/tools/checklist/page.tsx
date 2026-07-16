@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -255,6 +256,7 @@ function formPayloadForApi(f: ChecklistForm): Record<string, string> {
 }
 
 export default function ChecklistPage() {
+  const locale = useLocale();
   const searchParams = useSearchParams();
   const projectId = searchParams.get("project_id");
   const [form, setForm] = useState<ChecklistForm>(defaultForm);
@@ -408,6 +410,7 @@ export default function ChecklistPage() {
         body: JSON.stringify({
           ...formPayloadForApi(form),
           project_id: projectId || undefined,
+          locale,
         }),
       });
       const data = (await res.json()) as { error?: string; content?: Record<string, unknown>; doc_id?: string };

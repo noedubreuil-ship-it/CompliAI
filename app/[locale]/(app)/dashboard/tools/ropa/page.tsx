@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -78,6 +79,7 @@ function loadPersisted():
 }
 
 export default function RoPAPage() {
+  const locale = useLocale();
   const searchParams = useSearchParams();
   const templateId = searchParams.get("template_id")?.trim() || undefined;
 
@@ -137,6 +139,7 @@ export default function RoPAPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          locale,
           mode,
           company_name: form.company_name,
           sector: form.sector,

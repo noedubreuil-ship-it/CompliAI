@@ -26,7 +26,7 @@ export async function POST(request: Request) {
       includeEuCaseLaw: true,
     });
     const inputText = [b.entity_name, b.system_description, b.deployment_context].filter(Boolean).join(" ");
-    const langAddendum = buildToolLanguageAddendum(String(inputText));
+    const langAddendum = buildToolLanguageAddendum(String(inputText), body.locale);
     const modelOut = await generateFRIA27Document(prompt, auth.billing("fria", "doc_fria"), langAddendum);
     stopReason = modelOut.stop_reason;
     const raw = modelOut.raw;

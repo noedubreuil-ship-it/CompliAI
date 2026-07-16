@@ -75,11 +75,27 @@ export async function translateQueryForRag(question: string): Promise<{
 }
 
 /**
- * Builds a language response instruction to append to a system prompt.
- * Returns an empty string if the detected language is French (default).
+ * Détecte la langue d'un texte, ou `null` si aucun marqueur ne correspond.
+ * Contrairement à `detectLanguage`, ne retombe PAS sur "en" — utile quand on
+ * dispose d'un meilleur repli (ex. la locale d'interface choisie par l'utilisateur).
  */
-export function buildToolLanguageAddendum(inputText: string): string {
-  const lang = detectLanguage(inputText);
+export function detectLanguageOrNull(text: string): string | null {
+  const detected = detectLanguage(text);
+  // La table de marqueurs ne contient aucune entrée pour l'anglais : "en" est
+  // toujours le repli, jamais une détection positive. On le traduit en `null`.
+  return detected === "en" ? null : detected;
+}
+
+/**
+ * Builds a language response instruction to append to a system prompt.
+ *
+ * Priorité : langue réellement détectée dans le texte saisi > locale d'interface
+ * > français. Évite qu'une saisie sans marqueur (ex. « Acme Corp, ChatGPT »)
+ * produise un document anglais pour un utilisateur francophone.
+ */
+export function buildToolLanguageAddendum(inputText: string, locale?: string | null): string {
+  const detected = detectLanguageOrNull(inputText);
+  const lang = detected ?? (locale === "en" ? "en" : "fr");
   if (!lang || lang === "fr") return "";
   const langNames: Record<string, string> = {
     de: "allemand", nl: "néerlandais", es: "espagnol", it: "italien",

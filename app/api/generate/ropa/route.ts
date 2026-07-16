@@ -38,7 +38,7 @@ export async function POST(request: Request) {
       includeEuCaseLaw: true,
     });
     const inputText = [merged.company_name, merged.activities, merged.treatment_name].filter(Boolean).join(" ");
-    const langAddendum = buildToolLanguageAddendum(String(inputText));
+    const langAddendum = buildToolLanguageAddendum(String(inputText), typeof body.locale === "string" ? body.locale : undefined);
     const raw = await generateRopaDocument(prompt, auth.billing("ropa", "ropa"), langAddendum);
     const parsed = extractJson(raw) as Record<string, unknown>;
     const content = normalizeRopaContentForClient(parsed);

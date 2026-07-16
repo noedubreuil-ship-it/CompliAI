@@ -23,7 +23,7 @@ export async function POST(request: Request) {
       includeEuCaseLaw: false,
     });
     const inputText = [body.company_name, body.sector, body.ai_tools_used].filter(Boolean).join(" ");
-    const langAddendum = buildToolLanguageAddendum(String(inputText));
+    const langAddendum = buildToolLanguageAddendum(String(inputText), body.locale);
     const raw = await generateEmployeePolicyDocument(prompt, auth.billing("policy", "doc_memoire"), langAddendum);
     const content = extractJson(raw);
 

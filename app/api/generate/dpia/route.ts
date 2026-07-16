@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     prompt = appendNationalRagToUserPrompt(prompt, rag.context);
 
     const inputText = [body.treatment_name, body.purposes, body.context].filter(Boolean).join(" ");
-    const langAddendum = buildToolLanguageAddendum(String(inputText));
+    const langAddendum = buildToolLanguageAddendum(String(inputText), body.locale);
     const raw = await generateDocument(prompt, auth.billing("dpia", "dpia"), langAddendum);
     const content = extractJson(raw);
 

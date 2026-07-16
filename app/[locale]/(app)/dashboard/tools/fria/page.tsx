@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Shield, Loader2, Download, BookOpen } from "lucide-react";
@@ -53,6 +54,7 @@ function renderStringRecord(title: string, obj: Record<string, unknown> | undefi
 }
 
 export default function FRIAPage() {
+  const locale = useLocale();
   const [form, setForm] = useState({
     system_name: "",
     purpose: "",
@@ -113,7 +115,7 @@ export default function FRIAPage() {
       const res = await fetch("/api/generate/fria", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, locale }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
