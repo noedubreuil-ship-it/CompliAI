@@ -19,7 +19,12 @@ on:
 
 jobs:
   monitoring:
-    if: github.event_name == 'schedule' || inputs.job == 'monitoring'
+    # `github.event_name` vaut 'schedule' quel que soit le cron déclencheur :
+    # seul `github.event.schedule` distingue les deux planifications. Avec
+    # event_name, les deux jobs partaient à chaque déclenchement — monitoring et
+    # ingestion tournaient 5×/jour chacun, d'où le martèlement des sources
+    # (HTTP 429 EDPB) et 5 runs Claude quotidiens non surveillés.
+    if: github.event.schedule == '0 6 * * *' || inputs.job == 'monitoring'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,7 +39,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
   ingestion:
-    if: github.event_name == 'schedule' || inputs.job == 'ingestion'
+    if: github.event.schedule == '15 */6 * * *' || inputs.job == 'ingestion'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
