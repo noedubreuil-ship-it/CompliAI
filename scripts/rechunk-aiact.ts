@@ -19,9 +19,9 @@
  *  10. Rapport final
  *
  * Usage :
- *   npx tsx --env-file=.env.staging scripts/rechunk-aiact.ts --dry-run   # staging, simulation
- *   npx tsx --env-file=.env.local --env-file=.env.staging scripts/rechunk-aiact.ts   # staging DB + clés API prod
- *   npx tsx --env-file=.env.local   scripts/rechunk-aiact.ts --dry-run   # local, simulation
+ *   npx tsx --env-file=.env.local   scripts/rechunk-aiact.ts --dry-run   # simulation — TOUJOURS commencer par la
+ *   (le projet compliai-staging est abandonné depuis le 17/07/2026 : plus de
+ *    répétition possible sur une base séparée, --dry-run est le seul filet)
  *   npx tsx --env-file=.env.local   scripts/rechunk-aiact.ts              # production
  *   npx tsx --env-file=.env.local   scripts/rechunk-aiact.ts --resume    # reprendre après interruption
  *   npx tsx --env-file=.env.local   scripts/rechunk-aiact.ts --articles=5,26,50,53 # articles ciblés
@@ -753,10 +753,12 @@ async function main() {
   }
 
   const report = [
-    "# Rapport re-chunking AI Act — staging",
+    "# Rapport re-chunking AI Act",
     "",
     `**Date** : ${new Date().toISOString()}`,
-    `**Environnement** : compliai-staging (via --env-file=.env.staging)`,
+    // Ne jamais coder l'environnement en dur : le rapport annoncait
+    // « compliai-staging » quel que soit le projet reellement vise.
+    `**Projet Supabase** : ${process.env.NEXT_PUBLIC_SUPABASE_URL ?? "(non defini)"}`,
     `**Modèle parsing** : ${CLAUDE_MODEL}`,
     `**Statut production** : NON promu — en attente validation explicite`,
     "",

@@ -140,11 +140,15 @@ Organisation UI :
 
 ## 6. Regles Non Negotiables
 
-- Aucune modification directe de la table `legal_chunks` en production sans passer par le pipeline staging -> validation admin -> indexer.
+- Aucune modification directe de la table `legal_chunks` en production sans passer par le pipeline `staging_chunks` -> validation admin -> indexer.
+- Attention au mot « staging », qui recouvre deux choses distinctes dans ce repo : la table `staging_chunks` (etape du pipeline RAG, toujours en vigueur et obligatoire) et l'ancien projet Supabase `compliai-staging` (abandonne le 17 juillet 2026). Abandonner le second ne supprime en rien le premier.
 - Aucune ingestion sans validation admin via `/dashboard/admin/rag-validation`.
 - Aucun bypass du systeme qualite golden set.
 - Appels aux sources officielles depuis le developpement : autorises en lecture seule et ponctuellement, dans le seul but de capturer une fixture ou de verifier un statut juridique (levee decidee par le proprietaire du projet le 17 juillet 2026). Les tests restent hermetiques : ils consomment exclusivement les fixtures de `tests/fixtures/**`. Aucun appel repete ni en boucle depuis le dev.
-- Aucune migration appliquee en production sans validation prealable sur le projet staging dedie `compliai-staging`.
+- Projet Supabase unique : `CompliAI` (ref `hhdmkuwgrtflcqzzteom`). Decision du proprietaire le 17 juillet 2026 : plus de projet staging, `compliai-staging` est abandonne. Toute migration part donc directement sur la base qui sert les clients, sans repetition prealable. En consequence, les trois garde-fous suivants ne sont plus negociables :
+  - Bloc `-- ==== ROLLBACK ====` obligatoire et testable dans chaque migration, sans exception.
+  - Toute migration touchant `legal_chunks`, supprimant une colonne/contrainte, ou reecrivant des donnees existantes doit etre presentee au proprietaire avec son plan de rollback avant execution. Les migrations additives et inertes (elargir un CHECK, inserer une source `active = false`) peuvent etre appliquees directement.
+  - Validation admin avant `legal_chunks` et nouvelles sources creees a `active = false` : inchange.
 - Modele de parsing du corpus juridique : Claude Sonnet 4.6 exclusivement, jamais GPT-4 ou autre modele OpenAI sans validation explicite.
 - Modele d'embeddings : OpenAI `text-embedding-3-small` dimension `1536` exclusivement.
 - Migration vers Voyage-3-large possible uniquement comme chantier dedie avec migration vectorielle explicite.
@@ -196,10 +200,13 @@ npx tsx --env-file=.env.local scripts/rechunk-rgpd.ts
 npx tsx --env-file=.env.local scripts/add-rgpd-parent-chunks.ts
 ```
 
-### Staging RAG
+### Repetition avant execution
+
+Il n'y a plus de projet staging (voir section 6). Le seul filet disponible est
+le mode simulation : lancer systematiquement un `dryRun` avant tout run reel.
 
 ```bash
-npx tsx --env-file=.env.staging scripts/cron-monitoring.ts
+npx tsx --env-file=.env.local scripts/cron-monitoring.ts --dry-run
 ```
 
 ### Migrations Supabase
@@ -221,24 +228,23 @@ Sinon, utiliser Supabase MCP pour `execute_sql`, `apply_migration`, `list_tables
 npm run build
 ```
 
-Le deploiement applicatif cible est Vercel. Les crons RAG cibles sont des GitHub Actions scheduled workflows, pas des crons actives par defaut.
+Le deploiement applicatif cible est Vercel, depuis la branche `claude-code/fix-ai-act-art50`.
 
-## 8. Etat Actuel Du Projet Au 26 Juin 2026
+Les crons RAG sont des GitHub Actions scheduled workflows (`.github/workflows/rag-automation-crons.yml`) et ils sont **actifs** : monitoring a 06:00 UTC, ingestion toutes les 6 h. Piege structurel a connaitre : un workflow planifie s'execute depuis la **branche par defaut** du depot, pas depuis la branche deployee sur Vercel. Les deux doivent rester alignees, sinon l'app et les crons executent du code different.
 
-- Chantier RAG automation, phases 0 a 6, termine et valide.
-- Projet Supabase staging cree : `compliai-staging`, ref `gndvxidkiplskbrqydmw`.
-- Migrations RAG `032` a `042` appliquees sur staging.
-- Migration `042_rag_pipeline_monitoring_log` appliquee en production apres validation staging.
-- Production : `monitoring_log` existe, colonne `retry_count` presente, cache REST verifie.
-- Sauvegardes production pre-042 creees : `backup_monitoring_sources_20260626_pre_042` et `backup_legal_chunks_20260626_pre_042`.
-- Trois sources sures enregistrees en staging : EUR-Lex RSS, CNIL, AEPD.
-- Run staging `dryRun=false` valide sur ces 3 sources : exit code 0, aucune erreur silencieuse, 8 documents AEPD en `pending_documents`.
-- Cron monitoring : pas encore active en planifie, ni staging ni production.
-- Cron ingestion : pas encore active en planifie, ni staging ni production.
-- Sources production : ne pas reactiver sans validation explicite.
-- Golden set : 12/16 OK, 4 CRITICAL.
-- Questions CRITICAL : Q02, Q04, Q05, Q15, liees au corpus AI Act non encore re-chunke en parent-child.
-- EDPB throttle configure a 5000 ms ; a tester dans une phase controlee dediee.
+## 8. Etat Actuel Du Projet Au 17 Juillet 2026
+
+- Projet Supabase unique : `CompliAI`, ref `hhdmkuwgrtflcqzzteom`. `compliai-staging` (`gndvxidkiplskbrqydmw`) est abandonne depuis le 17 juillet 2026.
+- Migrations appliquees en production jusqu'a `054_monitoring_ep_procedure_api` incluse.
+- Sauvegardes production pre-042 : `backup_monitoring_sources_20260626_pre_042` et `backup_legal_chunks_20260626_pre_042`.
+- 12 sources enregistrees. Les 5 sources EU (EUR-Lex JO RSS, EUR-Lex CELLAR SPARQL, Curia CJUE, EDPB, AI Office) sont **actives** depuis le 17 juillet 2026. Les 7 sources nationales sont a `active = false`, volontairement : elles produisent des decisions nationales multilingues qui saturent la file de validation.
+- `BfDI RSS (Allemagne)` est enregistree mais **inactivable** : aucun connecteur n'existe dans `lib/rag-monitoring/sources/`. L'activer ferait echouer chaque run du worker.
+- Source `Parlement europeen — procedures legislatives` (`ep_procedure_api`) enregistree a `active = false` : veille sur le droit en cours de negociation, jamais ingeree dans `legal_chunks`. En attente d'un run `dryRun` avant activation.
+- Aucune source n'a tourne entre le 29 juin et le 17 juillet 2026 : elles etaient toutes desactivees. Le premier run rattrapera environ trois semaines d'arriere, avec un volume Claude inhabituel a l'ingestion.
+- Cause probable de cette desactivation (non documentee a l'epoque, reconstituee le 17 juillet) : le workflow gardait ses deux jobs par `github.event_name == 'schedule'`, toujours vrai, donc monitoring et ingestion partaient ensemble a chaque declenchement — 5 runs quotidiens de chaque au lieu de 1 et 4. Martelement des sources, d'ou vraisemblablement le HTTP 429 EDPB. Corrige le 17 juillet (`github.event.schedule`).
+- Golden set : 16/16 OK apres le tuning retrieval (migrations 048-050).
+- EDPB throttle configure a 5000 ms.
+- Dette de securite : la `SUPABASE_SERVICE_ROLE_KEY` de `compliai-staging` a ete committee en clair dans l'historique git (`f9232b8`, 2026-07-09). Le fichier est retire du suivi depuis `7c8e25d`, mais l'historique n'est pas expurge. Rotation de la cle a faire cote proprietaire.
 
 ## 9. Chantiers Prioritaires A Venir
 
