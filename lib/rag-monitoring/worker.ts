@@ -74,7 +74,11 @@ async function fetchDocumentsForSource(
       }
       return fetchEurlexRss({ url: url || undefined });
 
+    // `curia_scraping` est accepté par la contrainte SQL (migration 042) et
+    // présent dans la table de throttle du cron : sans ce case, une source
+    // enregistrée avec ce type tombait dans `default` et jetait une erreur.
     case "curia_rss":
+    case "curia_scraping":
       return fetchCuriaRss({ url: url || undefined });
 
     case "edpb_scraping": {
