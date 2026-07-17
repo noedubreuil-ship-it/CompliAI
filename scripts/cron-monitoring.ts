@@ -130,6 +130,15 @@ async function fetchActiveSources(): Promise<MonitoringSourceRow[]> {
   return (data ?? []) as MonitoringSourceRow[];
 }
 
+/**
+ * Simulation : detecte et journalise sans rien ecrire en base.
+ *
+ * Le projet compliai-staging ayant ete abandonne le 17/07/2026, il n'existe
+ * plus de base de repetition : `--dry-run` est le seul filet avant un run reel.
+ * La valeur etait codee en dur a `false`, rendant la simulation impossible.
+ */
+const DRY_RUN = process.argv.includes("--dry-run");
+
 async function main(): Promise<void> {
   const startedAt = Date.now();
   const supabase = createServiceClient();
@@ -142,7 +151,7 @@ async function main(): Promise<void> {
   let totalDocumentsNew = 0;
 
   logJson("info", "cycle_started", {
-    dryRun: false,
+    dryRun: DRY_RUN,
     sourcesCount: sources.length,
     sourceNames: sources.map((source) => source.name),
   });
@@ -173,7 +182,7 @@ async function main(): Promise<void> {
 
     try {
       const results = await runMonitoringCycle({
-        dryRun: false,
+        dryRun: DRY_RUN,
         supabase: supabase as WorkerRunOptions["supabase"],
         sourceIds: [source.name],
         throttleMs: 0,
