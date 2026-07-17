@@ -8,11 +8,12 @@ node_modules/
 out/
 
 # Env files
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Tout .env est ignore par defaut : une liste nominative avait laisse passer
+# .env.staging, dont la SUPABASE_SERVICE_ROLE_KEY s'est retrouvee dans
+# l'historique (f9232b8, 2026-07-09). Seuls les gabarits sont suivis.
+.env*
+!.env.example
+!.env.local.example
 
 # Misc
 .DS_Store
