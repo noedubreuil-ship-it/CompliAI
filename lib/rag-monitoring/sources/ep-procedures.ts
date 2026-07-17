@@ -177,6 +177,17 @@ export interface EpProceduresOptions {
   throttleMs?: number;
 }
 
+/**
+ * Proportion d'échecs au-delà de laquelle le run est déclaré en erreur.
+ *
+ * Une procédure isolée peut légitimement échouer (indisponibilité ponctuelle) ;
+ * la moitié de la watchlist, non. Observé le 2026-07-17 : un run rate-limité
+ * remontait 3 procédures sur 13 en se déclarant « ok ». Une veille juridique
+ * qui se tait passe pour une veille qui ne trouve rien — c'est le pire mode de
+ * défaillance possible pour ce produit.
+ */
+export const EP_MAX_FAILURE_RATIO = 0.5;
+
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
@@ -205,30 +216,52 @@ export async function fetchEpProcedures(
   } = options;
 
   const documents: DetectedDocument[] = [];
+  let failures = 0;
 
   for (const [index, processId] of processIds.entries()) {
     if (index > 0 && throttleMs > 0) await sleep(throttleMs);
 
     // Une procédure illisible ne doit pas faire échouer tout le run : les
-    // autres restent exploitables.
+    // autres restent exploitables. Mais les échecs sont comptés, jamais avalés
+    // — voir le seuil plus bas.
     try {
       const response = await fetcher(`${url}/${processId}`, {
         headers: { Accept: "application/ld+json" },
       });
-      if (!response.ok) continue;
+      if (!response.ok) {
+        failures++;
+        continue;
+      }
 
       const body = await response.text();
-      if (!body.trim()) continue;
+      if (!body.trim()) {
+        failures++;
+        continue;
+      }
 
       const parsed = JSON.parse(body) as EpApiResponse<EpProcedureDetail>;
       const detail = parsed.data?.[0];
-      if (!detail) continue;
+      if (!detail) {
+        failures++;
+        continue;
+      }
 
       const document = buildProcedureDocument(detail);
       if (document) documents.push(document);
     } catch {
-      continue;
+      failures++;
     }
+  }
+
+  // Un run rate-limite renvoyait « ok, 3 procedures trouvees » au lieu de
+  // signaler l'echec : l'utilisateur en concluait qu'il ne se passait rien a
+  // Bruxelles. Au-dela du seuil, on jette — le worker enregistre alors la
+  // source en `error`, ce qui est la verite.
+  if (failures > 0 && failures >= processIds.length * EP_MAX_FAILURE_RATIO) {
+    throw new Error(
+      `API Parlement europeen : ${failures}/${processIds.length} procedures inaccessibles ` +
+        `(quota 500 req/5min probablement atteint). ${documents.length} detectee(s) seulement.`
+    );
   }
 
   return documents;

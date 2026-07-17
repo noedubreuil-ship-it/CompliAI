@@ -180,28 +180,64 @@ describe("fetchEpProcedures — watchlist", () => {
       return { ok: true, status: 200, text: async () => rawChatControl };
     };
     const docs = await fetchEpProcedures({
-      processIds: ["cassee", "2025-0429"],
+      processIds: ["cassee", "a", "b", "c"],
       fetcher: flaky,
       throttleMs: 0,
     });
-    expect(docs).toHaveLength(1);
+    expect(docs).toHaveLength(3);
   });
 
-  it("tolère un corps vide (HTTP 204 observé sur l'API)", async () => {
+  it("compte un corps vide (HTTP 204 observé) comme un échec, pas comme un silence", async () => {
+    // Sous le seuil : toléré, mais comptabilisé.
+    let n = 0;
+    const oneEmpty: FetchFn = async () => {
+      n++;
+      return n === 1
+        ? { ok: true, status: 204, text: async () => "" }
+        : { ok: true, status: 200, text: async () => rawChatControl };
+    };
     const docs = await fetchEpProcedures({
-      processIds: ["2025-0429"],
-      fetcher: fixtureFetcher("", true, 204),
+      processIds: ["a", "b", "c", "d"],
+      fetcher: oneEmpty,
       throttleMs: 0,
     });
-    expect(docs).toEqual([]);
+    expect(docs).toHaveLength(3);
   });
 
-  it("tolère un corps non JSON sans jeter", async () => {
+  it("jette si toute la watchlist renvoie un corps non JSON", async () => {
+    await expect(
+      fetchEpProcedures({
+        processIds: ["a", "b"],
+        fetcher: fixtureFetcher("<html>error</html>"),
+        throttleMs: 0,
+      })
+    ).rejects.toThrow(/inaccessibles/);
+  });
+});
+
+describe("erreurs silencieuses — régression du 2026-07-17", () => {
+  it("jette quand la majorité de la watchlist est inaccessible", async () => {
+    // Un run rate-limité renvoyait « ok, 3/13 trouvées » : la veille se taisait
+    // au lieu de signaler qu'elle était aveugle.
+    const down: FetchFn = async () => ({ ok: false, status: 429, text: async () => "" });
+    await expect(
+      fetchEpProcedures({ processIds: ["a", "b", "c", "d"], fetcher: down, throttleMs: 0 })
+    ).rejects.toThrow(/inaccessibles/);
+  });
+
+  it("tolère un échec isolé sous le seuil", async () => {
+    let n = 0;
+    const flaky: FetchFn = async () => {
+      n++;
+      return n === 1
+        ? { ok: false, status: 500, text: async () => "" }
+        : { ok: true, status: 200, text: async () => rawChatControl };
+    };
     const docs = await fetchEpProcedures({
-      processIds: ["2025-0429"],
-      fetcher: fixtureFetcher("<html>error</html>"),
+      processIds: ["a", "b", "c", "d"],
+      fetcher: flaky,
       throttleMs: 0,
     });
-    expect(docs).toEqual([]);
+    expect(docs).toHaveLength(3);
   });
 });
