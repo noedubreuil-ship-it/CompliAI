@@ -3,7 +3,26 @@ import { DetectedDocument, DocumentType, FetchFn } from "../types";
 export const CELLAR_SPARQL_URL =
   "https://publications.europa.eu/webapi/rdf/sparql";
 
-/** Requête SPARQL : récupère les règlements et directives FR publiés depuis une date */
+/**
+ * Requête SPARQL : règlements et directives publiés depuis une date.
+ *
+ * DEUX CONTRAINTES ONT ÉTÉ RETIRÉES LE 2026-07-17 — elles ramenaient le
+ * résultat à zéro, et la source paraissait donc silencieuse alors que CELLAR
+ * répondait normalement. Mesuré sur la fenêtre du 2026-06-27, même filtre
+ * CELEX et même date :
+ *
+ *   requête sans ces contraintes .......... 20 résultats
+ *   + resource_legal_published_in_ojl ..... 0
+ *   + titre FR en jointure obligatoire .... 0
+ *
+ * 1. `cdm:resource_legal_published_in_ojl "true"^^xsd:boolean` : le prédicat
+ *    ne matche plus rien. Le filtre CELEX `3202*` suffit à cibler les actes
+ *    législatifs.
+ * 2. `dc:title` en jointure stricte + `FILTER(LANG(?title) = "fr")` : le titre
+ *    n'est pas porté par la ressource `?doc`, une jointure obligatoire élimine
+ *    donc tout. Il devient OPTIONAL, avec repli sur le CELEX à la lecture —
+ *    mieux vaut un acte détecté sans titre qu'un acte manqué.
+ */
 function buildSparqlQuery(fromDate: string): string {
   return `
 PREFIX cdm: <http://publications.europa.eu/ontology/cdm#>
@@ -12,15 +31,13 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 SELECT DISTINCT ?celex ?title ?date ?docUrl ?resourceType WHERE {
   ?doc cdm:resource_legal_id_celex ?celex .
-  ?doc dc:title ?title .
   ?doc cdm:work_date_document ?date .
-  ?doc cdm:resource_legal_published_in_ojl "true"^^xsd:boolean .
+  OPTIONAL { ?doc dc:title ?title . }
   OPTIONAL { ?doc cdm:resource_legal_type ?resourceType . }
   OPTIONAL {
     ?doc cdm:expression_uses_language <http://publications.europa.eu/resource/authority/language/FRA> .
     ?doc cdm:manifestation_manifests_expression_type ?docUrl .
   }
-  FILTER(LANG(?title) = "fr")
   FILTER(?date >= xsd:date("${fromDate}"))
   FILTER(STRSTARTS(STR(?celex), "3202"))
 }
@@ -97,7 +114,10 @@ export async function fetchEurlexCellar(
     const date = binding.date?.value;
     const docUrl = binding.docUrl?.value;
 
-    if (!celex || !title) continue;
+    // Le titre est OPTIONAL depuis le 2026-07-17 : l'exiger ici reviendrait à
+    // réintroduire par la porte de derrière le filtre qui rendait la source
+    // muette. Le CELEX sert de libellé de repli.
+    if (!celex) continue;
 
     const sourceUrl =
       docUrl ??
@@ -107,7 +127,7 @@ export async function fetchEurlexCellar(
       externalId: celex,
       celex,
       sourceUrl,
-      title: title.trim(),
+      title: title?.trim() || celex,
       documentType: celexToDocumentType(celex),
       language: "fr",
       country: "EU",
