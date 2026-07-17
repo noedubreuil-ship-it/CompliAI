@@ -2,7 +2,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { DetectedDocument, MonitoringRunResult } from "./types";
 import { fetchEurlexRss } from "./sources/eurlex-rss";
 import { fetchEurlexCellar } from "./sources/eurlex-cellar";
-import { fetchCuriaRss } from "./sources/curia-rss";
+import { fetchCuriaCellar } from "./sources/curia-cellar";
 import { fetchEdpbDocuments } from "./sources/edpb-scraping";
 import { fetchAiOfficeDocuments } from "./sources/ai-office-rss";
 import { fetchEpProcedures } from "./sources/ep-procedures";
@@ -80,7 +80,11 @@ async function fetchDocumentsForSource(
     // enregistrée avec ce type tombait dans `default` et jetait une erreur.
     case "curia_rss":
     case "curia_scraping":
-      return fetchCuriaRss({ url: url || undefined });
+      // `url` est volontairement ignoré : la colonne contient encore le flux
+      // RSS historique (curia.europa.eu/v/rss.jsp), supprimé par la CJUE et
+      // qui renvoie 404. La jurisprudence passe désormais par CELLAR, qui la
+      // publie sous les CELEX du secteur 6. Voir curia-cellar.ts.
+      return fetchCuriaCellar();
 
     case "edpb_scraping": {
       const result = await fetchEdpbDocuments({ url: url || undefined });
