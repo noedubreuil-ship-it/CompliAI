@@ -244,7 +244,8 @@ Les crons RAG sont des GitHub Actions scheduled workflows (`.github/workflows/ra
 - Cause probable de cette desactivation (non documentee a l'epoque, reconstituee le 17 juillet) : le workflow gardait ses deux jobs par `github.event_name == 'schedule'`, toujours vrai, donc monitoring et ingestion partaient ensemble a chaque declenchement — 5 runs quotidiens de chaque au lieu de 1 et 4. Martelement des sources, d'ou vraisemblablement le HTTP 429 EDPB. Corrige le 17 juillet (`github.event.schedule`).
 - Golden set : 16/16 OK apres le tuning retrieval (migrations 048-050).
 - EDPB throttle configure a 5000 ms.
-- Dette de securite : la `SUPABASE_SERVICE_ROLE_KEY` de `compliai-staging` a ete committee en clair dans l'historique git (`f9232b8`, 2026-07-09). Le fichier est retire du suivi depuis `7c8e25d`, mais l'historique n'est pas expurge. Rotation de la cle a faire cote proprietaire.
+- Incident de securite clos le 17 juillet 2026 : la `SUPABASE_SERVICE_ROLE_KEY` de `compliai-staging` avait ete committee en clair (`f9232b8`, 2026-07-09). L'historique git n'est pas expurge et la cle y reste lisible, mais le projet `compliai-staging` a ete supprime : la cle est revoquee de fait et pointe sur un projet inexistant. Aucune action residuelle.
+- Lecon retenue, appliquee dans `.gitignore` (`7c8e25d`) : ne jamais lister les fichiers d'environnement nominativement. Le motif est `.env*` avec exception explicite pour les seuls gabarits ; une liste nominative avait laisse passer `.env.staging`.
 
 ## 9. Chantiers Prioritaires A Venir
 
