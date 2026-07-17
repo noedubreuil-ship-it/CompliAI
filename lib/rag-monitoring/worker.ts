@@ -65,7 +65,7 @@ export async function assertMonitoringDatabaseReady(
 async function fetchDocumentsForSource(
   source: MonitoringSourceRow
 ): Promise<DetectedDocument[]> {
-  const { source_type, name, url } = source;
+  const { source_type, name, url, config } = source;
   const nameLower = name.toLowerCase();
 
   switch (source_type) {
@@ -90,8 +90,16 @@ async function fetchDocumentsForSource(
     case "ai_office_scraping":
       return fetchAiOfficeDocuments({ url: url || undefined });
 
-    case "ep_procedure_api":
-      return fetchEpProcedures({ url: url || undefined });
+    case "ep_procedure_api": {
+      // La watchlist peut être surchargée sans redéploiement via le config
+      // jsonb : { "procedures": ["2025-0429", …] }. Sinon EP_DEFAULT_WATCHLIST.
+      const configured = config?.procedures;
+      const processIds =
+        Array.isArray(configured) && configured.every((v) => typeof v === "string")
+          ? (configured as string[])
+          : undefined;
+      return fetchEpProcedures({ url: url || undefined, processIds });
+    }
 
     case "national_authority_rss":
     case "national_authority_scraping": {

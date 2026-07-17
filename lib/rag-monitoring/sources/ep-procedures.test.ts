@@ -2,28 +2,36 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
 import {
+  EP_DEFAULT_WATCHLIST,
   buildProcedureDocument,
   extractActivityType,
-  extractProcessType,
   extractStage,
-  isEpProcedureRelevant,
+  fetchEpProcedures,
   latestActivity,
+  pickLabel,
   pickProcedureTitle,
 } from "./ep-procedures";
+import type { FetchFn } from "../types";
 
 const FIXTURES = join(process.cwd(), "tests/fixtures/rag_monitoring");
-
-function loadFixture(name: string) {
-  return JSON.parse(readFileSync(join(FIXTURES, name), "utf-8"));
-}
+const rawChatControl = readFileSync(
+  join(FIXTURES, "ep-procedure-2025-0429.json"),
+  "utf-8"
+);
 
 /** Procédure 2025/0429(COD) — prolongation de la dérogation ePrivacy (« Chat Control 1.0 »). */
-const chatControl = loadFixture("ep-procedure-2025-0429.json").data[0];
+const chatControl = JSON.parse(rawChatControl).data[0];
+
+/** fetch simulé depuis la fixture : les tests ne touchent jamais le réseau. */
+function fixtureFetcher(
+  body: string = rawChatControl,
+  ok = true,
+  status = 200
+): FetchFn {
+  return async () => ({ ok, status, text: async () => body });
+}
 
 describe("extraction des vocabulaires contrôlés", () => {
-  it("extrait le type de procédure", () => {
-    expect(extractProcessType("def/ep-procedure-types/COD")).toBe("COD");
-  });
   it("extrait le type d'activité", () => {
     expect(extractActivityType("def/ep-activities/PLENARY_VOTE")).toBe("PLENARY_VOTE");
   });
@@ -34,6 +42,19 @@ describe("extraction des vocabulaires contrôlés", () => {
   });
   it("ne jette pas sur une valeur absente", () => {
     expect(extractStage(undefined)).toBe("");
+  });
+});
+
+describe("pickLabel — double base juridique", () => {
+  it("prend le premier libellé quand l'API renvoie un tableau", () => {
+    // Cas réel : 2025/0803 expose label ET process_type sous forme de tableaux.
+    expect(pickLabel(["2025/0803(CNS)", "2025/0803(NLE)"], "x")).toBe("2025/0803(CNS)");
+  });
+  it("accepte un libellé simple", () => {
+    expect(pickLabel("2025/0429(COD)", "x")).toBe("2025/0429(COD)");
+  });
+  it("se replie sur la valeur par défaut", () => {
+    expect(pickLabel(undefined, "2025-0429")).toBe("2025-0429");
   });
 });
 
@@ -49,37 +70,6 @@ describe("pickProcedureTitle", () => {
       text: "Extension",
       language: "en",
     });
-  });
-  it("se replie sur la première langue disponible", () => {
-    expect(pickProcedureTitle({ sk: "Zmena" })).toEqual({ text: "Zmena", language: "sk" });
-  });
-});
-
-describe("isEpProcedureRelevant", () => {
-  it("retient la procédure Chat Control (fixture réelle)", () => {
-    // Son titre ne contient aucun mot-clé thématique : elle n'est retenue que
-    // parce qu'elle cite le règlement 2021/1232. Régression à ne pas perdre.
-    expect(isEpProcedureRelevant(chatControl.process_title)).toBe(true);
-  });
-
-  it("retient un acte modificatif citant un règlement suivi", () => {
-    expect(
-      isEpProcedureRelevant({ fr: "Modification du règlement (UE) 2024/1689 en ce qui concerne les délais" })
-    ).toBe(true);
-  });
-
-  it("retient une procédure thématique sans numéro d'acte", () => {
-    expect(
-      isEpProcedureRelevant({ fr: "Règles harmonisées sur l'intelligence artificielle" })
-    ).toBe(true);
-  });
-  it("écarte une procédure hors périmètre", () => {
-    expect(
-      isEpProcedureRelevant({ fr: "Accord de pêche avec les Seychelles", en: "Fisheries agreement" })
-    ).toBe(false);
-  });
-  it("écarte un titre absent", () => {
-    expect(isEpProcedureRelevant(undefined)).toBe(false);
   });
 });
 
@@ -98,6 +88,20 @@ describe("latestActivity", () => {
   });
 });
 
+describe("EP_DEFAULT_WATCHLIST", () => {
+  it("suit les textes du périmètre CompliAI", () => {
+    expect(EP_DEFAULT_WATCHLIST).toContain("2025-0429"); // Chat Control 1.0
+    expect(EP_DEFAULT_WATCHLIST).toContain("2022-0155"); // CSAR
+    expect(EP_DEFAULT_WATCHLIST).toContain("2021-0106"); // AI Act
+  });
+  it("n'a pas de doublon", () => {
+    expect(new Set(EP_DEFAULT_WATCHLIST).size).toBe(EP_DEFAULT_WATCHLIST.length);
+  });
+  it("utilise le format d'identifiant de l'API (2025-0429, pas 2025/0429)", () => {
+    EP_DEFAULT_WATCHLIST.forEach((id) => expect(id).toMatch(/^\d{4}-\d{4}$/));
+  });
+});
+
 describe("buildProcedureDocument — cas Chat Control du 2026-07-09", () => {
   const doc = buildProcedureDocument(chatControl);
 
@@ -110,8 +114,8 @@ describe("buildProcedureDocument — cas Chat Control du 2026-07-09", () => {
   });
 
   it("ancre l'externalId sur le dernier événement, pas sur la seule procédure", () => {
-    // Régression : un externalId figé sur le process_id aurait fait passer le
-    // vote du 9 juillet pour un doublon de la procédure déjà connue.
+    // Régression : un externalId figé sur le process_id ferait passer chaque
+    // nouveau vote pour un doublon de la procédure déjà suivie.
     expect(doc?.externalId).toBe("2025-0429:2025-0429-DEC-DCPL-2026-07-09");
   });
 
@@ -125,29 +129,79 @@ describe("buildProcedureDocument — cas Chat Control du 2026-07-09", () => {
     expect(doc?.title).toContain("PLENARY_AMEND_COUNCIL_POSITION");
   });
 
-  it("pointe vers la fiche de procédure OEIL", () => {
-    expect(doc?.sourceUrl).toContain("2025%2F0429(COD)");
-  });
-
-  it("est rattaché à l'UE", () => {
-    expect(doc?.country).toBe("EU");
-  });
-
-  it("écarte une procédure hors périmètre", () => {
-    expect(
-      buildProcedureDocument({ ...chatControl, process_title: { fr: "Accord de pêche" } })
-    ).toBeUndefined();
-  });
-
   it("écarte une procédure sans événement daté", () => {
     expect(buildProcedureDocument({ ...chatControl, consists_of: [] })).toBeUndefined();
   });
+
+  it("ne filtre plus sur la pertinence : une procédure suivie l'est par choix", () => {
+    // Le titre réel ne contient aucun mot-clé thématique — il cite seulement
+    // le règlement modifié. C'est précisément pourquoi le filtrage a été
+    // supprimé au profit de la watchlist.
+    expect(
+      buildProcedureDocument({ ...chatControl, process_title: { fr: "Accord de pêche" } })
+    ).toBeDefined();
+  });
 });
 
-describe("fixture liste", () => {
-  it("expose des procédures typées exploitables", () => {
-    const list = loadFixture("ep-procedures-list-2026.json").data;
-    expect(list.length).toBeGreaterThan(0);
-    expect(extractProcessType(list[0].process_type)).toMatch(/^[A-Z]+$/);
+describe("fetchEpProcedures — watchlist", () => {
+  it("interroge chaque procédure suivie et renvoie ses détections", async () => {
+    const docs = await fetchEpProcedures({
+      processIds: ["2025-0429"],
+      fetcher: fixtureFetcher(),
+      throttleMs: 0,
+    });
+    expect(docs).toHaveLength(1);
+    expect(docs[0].externalId).toBe("2025-0429:2025-0429-DEC-DCPL-2026-07-09");
+  });
+
+  it("n'appelle l'API qu'une fois par procédure suivie", async () => {
+    const calls: string[] = [];
+    const spy: FetchFn = async (url) => {
+      calls.push(url);
+      return { ok: true, status: 200, text: async () => rawChatControl };
+    };
+    await fetchEpProcedures({
+      processIds: ["2025-0429", "2021-0106"],
+      fetcher: spy,
+      throttleMs: 0,
+    });
+    expect(calls).toHaveLength(2);
+    expect(calls[0]).toContain("/procedures/2025-0429");
+    expect(calls[1]).toContain("/procedures/2021-0106");
+  });
+
+  it("une procédure en erreur ne fait pas échouer le run entier", async () => {
+    let first = true;
+    const flaky: FetchFn = async () => {
+      if (first) {
+        first = false;
+        return { ok: false, status: 500, text: async () => "" };
+      }
+      return { ok: true, status: 200, text: async () => rawChatControl };
+    };
+    const docs = await fetchEpProcedures({
+      processIds: ["cassee", "2025-0429"],
+      fetcher: flaky,
+      throttleMs: 0,
+    });
+    expect(docs).toHaveLength(1);
+  });
+
+  it("tolère un corps vide (HTTP 204 observé sur l'API)", async () => {
+    const docs = await fetchEpProcedures({
+      processIds: ["2025-0429"],
+      fetcher: fixtureFetcher("", true, 204),
+      throttleMs: 0,
+    });
+    expect(docs).toEqual([]);
+  });
+
+  it("tolère un corps non JSON sans jeter", async () => {
+    const docs = await fetchEpProcedures({
+      processIds: ["2025-0429"],
+      fetcher: fixtureFetcher("<html>error</html>"),
+      throttleMs: 0,
+    });
+    expect(docs).toEqual([]);
   });
 });

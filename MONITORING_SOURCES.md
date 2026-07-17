@@ -55,6 +55,72 @@ Sources plus hétérogènes (scraping HTML, langues multiples, absence de RSS). 
 | EDPB | 1 page (scraping, toutes publications) | Quotidien | HTML + PDF | **1A** |
 | AI Office | 1 page (scraping) | Hebdomadaire | HTML | **1B** |
 | Autorités nationales | 7 DPAs | Hebdomadaire | RSS (si dispo) ou HTML | **1B** |
+| Parlement européen | 1 API REST (watchlist de 13 procédures) | Hebdomadaire | JSON-LD | **1C** |
+
+---
+
+## Phase 1C — Veille législative (Parlement européen)
+
+Ajoutée le 17 juillet 2026. Comble un angle mort structurel : **toutes les
+sources ci-dessus n'observent que du droit adopté** — EUR-Lex diffuse le
+Journal officiel, CELLAR interroge les actes publiés, les DPAs publient des
+décisions. Aucune ne voyait un texte en cours de négociation.
+
+Cas déclencheur : le vote du Parlement du 2026-07-09 sur la procédure
+2025/0429(COD) — prolongation de la dérogation ePrivacy, « Chat Control 1.0 » —
+n'était détectable par aucun connecteur.
+
+| Source | ID | source_type | Fréquence | Langue |
+|---|---|---|---|---|
+| Parlement européen — procédures législatives | `ep-procedures` | `ep_procedure_api` | Hebdomadaire | FR (repli EN) |
+
+**Veille uniquement, jamais ingérée.** Les documents portent le
+`document_type` `legislative_procedure`, absent de `SUPPORTED_DOCUMENT_TYPES`
+(`lib/rag-ingestion/pipeline.ts`) : le pipeline d'ingestion les écarte et rien
+n'atteint `legal_chunks`. Une proposition en négociation n'est pas du droit
+applicable et ne doit jamais être citée au client comme une obligation en
+vigueur. Ne pas ajouter ce type à cet ensemble sans porter d'abord un marquage
+« proposition — non applicable » jusque dans les prompts de génération.
+
+### Pourquoi une watchlist et non une découverte automatique
+
+Les endpoints de découverte de l'API sont inexploitables (vérifié le
+2026-07-17 sur données réelles) :
+
+- `GET /procedures` n'accepte aucun filtre par année — la spec OpenAPI ne
+  documente que `process-type`, `offset`, `limit`. Un `?year=` est
+  silencieusement ignoré.
+- Son index est incomplet : 2025/0429(COD) n'apparaît sur aucune page (717
+  procédures lues jusqu'au HTTP 204), alors que `GET /procedures/{id}` la sert
+  parfaitement.
+- `GET /procedures/feed`, prévu pour la veille, renvoie 0 procédure mise à jour
+  sur un mois, tous types confondus.
+
+D'où le choix d'interroger des procédures connues. Coût : ~13 requêtes
+hebdomadaires, ~10 s par run. Quota API : 500 requêtes / 5 min.
+
+### Maintenance
+
+La liste par défaut (`EP_DEFAULT_WATCHLIST`, 13 identifiants vérifiés un à un
+contre l'API) est surchargeable **sans redéploiement** via le `config` jsonb de
+la source :
+
+```json
+{ "procedures": ["2025-0429", "2021-0106"] }
+```
+
+Format d'identifiant : `AAAA-NNNN` (`2025-0429`), et non `2025/0429(COD)`.
+Ajouter une entrée quand une nouvelle proposition du périmètre entre en
+négociation ; la découverte se fait via EUR-Lex une fois le texte publié, ou à
+la lecture de la presse spécialisée.
+
+### Piège de déduplication
+
+L'`externalId` est `${process_id}:${activity_id}`, jamais le seul
+`process_id` : une procédure suivie est réinterrogée chaque semaine pendant des
+années. Avec un identifiant figé sur la procédure, chaque nouveau vote passerait
+pour un doublon d'une procédure déjà connue — c'est-à-dire précisément le
+scénario du 9 juillet.
 
 ---
 
