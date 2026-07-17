@@ -44,6 +44,8 @@ export const DOCUMENT_TYPE_PRIORITY: Record<DocumentType, number> = {
   ai_office_guidance: 1,
   national_decision: 2,
   national_guideline: 2,
+  // Veille seule, jamais ingérée : priorité la plus basse.
+  legislative_procedure: 3,
   other: 3,
 };
 

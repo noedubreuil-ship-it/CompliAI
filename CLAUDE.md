@@ -143,7 +143,7 @@ Organisation UI :
 - Aucune modification directe de la table `legal_chunks` en production sans passer par le pipeline staging -> validation admin -> indexer.
 - Aucune ingestion sans validation admin via `/dashboard/admin/rag-validation`.
 - Aucun bypass du systeme qualite golden set.
-- Aucun appel API externe vers les sources officielles depuis l'environnement de developpement ; utiliser les fixtures locales.
+- Appels aux sources officielles depuis le developpement : autorises en lecture seule et ponctuellement, dans le seul but de capturer une fixture ou de verifier un statut juridique (levee decidee par le proprietaire du projet le 17 juillet 2026). Les tests restent hermetiques : ils consomment exclusivement les fixtures de `tests/fixtures/**`. Aucun appel repete ni en boucle depuis le dev.
 - Aucune migration appliquee en production sans validation prealable sur le projet staging dedie `compliai-staging`.
 - Modele de parsing du corpus juridique : Claude Sonnet 4.6 exclusivement, jamais GPT-4 ou autre modele OpenAI sans validation explicite.
 - Modele d'embeddings : OpenAI `text-embedding-3-small` dimension `1536` exclusivement.

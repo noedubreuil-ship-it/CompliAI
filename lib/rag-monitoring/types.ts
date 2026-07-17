@@ -11,13 +11,23 @@ export type DocumentType =
   | "ai_office_guidance"
   | "national_decision"
   | "national_guideline"
+  /**
+   * Procédure législative en cours (Parlement européen).
+   * VEILLE UNIQUEMENT : absent de SUPPORTED_DOCUMENT_TYPES (lib/rag-ingestion/pipeline.ts),
+   * donc jamais ingéré dans `legal_chunks`. Ne pas ajouter à cet ensemble sans
+   * porter d'abord un marquage « proposition — non applicable » jusque dans les
+   * prompts de génération.
+   */
+  | "legislative_procedure"
   | "other";
 
 export type SourceType =
   | "eurlex_rss"
+  | "curia_rss"
   | "curia_scraping"
   | "edpb_scraping"
   | "ai_office_scraping"
+  | "ep_procedure_api"
   | "national_authority_scraping"
   | "national_authority_rss";
 

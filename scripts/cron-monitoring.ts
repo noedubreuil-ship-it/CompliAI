@@ -39,9 +39,13 @@ interface MonitoringSourceRow {
 
 const DEFAULT_THROTTLE_MS_BY_SOURCE_TYPE: Record<string, number> = {
   eurlex_rss: 1200,
+  curia_rss: 2000,
   curia_scraping: 2000,
   edpb_scraping: 5000,
   ai_office_scraping: 1200,
+  // Le connecteur EP se throttle déjà en interne (700 ms entre appels détail) ;
+  // cette valeur ne joue qu'entre deux sources du run.
+  ep_procedure_api: 2000,
   national_authority_rss: 1200,
   national_authority_scraping: 2000,
 };

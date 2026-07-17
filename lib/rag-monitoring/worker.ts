@@ -5,6 +5,7 @@ import { fetchEurlexCellar } from "./sources/eurlex-cellar";
 import { fetchCuriaRss } from "./sources/curia-rss";
 import { fetchEdpbDocuments } from "./sources/edpb-scraping";
 import { fetchAiOfficeDocuments } from "./sources/ai-office-rss";
+import { fetchEpProcedures } from "./sources/ep-procedures";
 import { fetchApDocuments } from "./sources/ap-scraping";
 import { fetchDpcDecisions } from "./sources/dpc-scraping";
 import { fetchGaranteDocuments } from "./sources/garante-scraping";
@@ -88,6 +89,9 @@ async function fetchDocumentsForSource(
 
     case "ai_office_scraping":
       return fetchAiOfficeDocuments({ url: url || undefined });
+
+    case "ep_procedure_api":
+      return fetchEpProcedures({ url: url || undefined });
 
     case "national_authority_rss":
     case "national_authority_scraping": {
