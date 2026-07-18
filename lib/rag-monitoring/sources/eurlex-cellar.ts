@@ -1,4 +1,5 @@
 import { DetectedDocument, DocumentType, FetchFn } from "../types";
+import { EURLEX_RELEVANCE_KEYWORDS, matchesKeyword } from "./eurlex-rss";
 
 export const CELLAR_SPARQL_URL =
   "https://publications.europa.eu/webapi/rdf/sparql";
@@ -18,10 +19,12 @@ export const CELLAR_SPARQL_URL =
  * 1. `cdm:resource_legal_published_in_ojl "true"^^xsd:boolean` : le prédicat
  *    ne matche plus rien. Le filtre CELEX `3202*` suffit à cibler les actes
  *    législatifs.
- * 2. `dc:title` en jointure stricte + `FILTER(LANG(?title) = "fr")` : le titre
- *    n'est pas porté par la ressource `?doc`, une jointure obligatoire élimine
- *    donc tout. Il devient OPTIONAL, avec repli sur le CELEX à la lecture —
- *    mieux vaut un acte détecté sans titre qu'un acte manqué.
+ * 2. `dc:title` : mauvais prédicat. Le titre est porté par l'EXPRESSION
+ *    (version linguistique), pas par l'œuvre — d'où la jointure
+ *    `expression_belongs_to_work` + `expression_uses_language` +
+ *    `expression_title`, corrigée le 2026-07-18. Elle reste OPTIONAL : un acte
+ *    sans titre FR doit être détecté quand même, mieux vaut un titre manquant
+ *    qu'un acte manqué.
  */
 function buildSparqlQuery(fromDate: string): string {
   return `
@@ -32,7 +35,11 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 SELECT DISTINCT ?celex ?title ?date ?docUrl ?resourceType WHERE {
   ?doc cdm:resource_legal_id_celex ?celex .
   ?doc cdm:work_date_document ?date .
-  OPTIONAL { ?doc dc:title ?title . }
+  OPTIONAL {
+    ?expr cdm:expression_belongs_to_work ?doc .
+    ?expr cdm:expression_uses_language <http://publications.europa.eu/resource/authority/language/FRA> .
+    ?expr cdm:expression_title ?title .
+  }
   OPTIONAL { ?doc cdm:resource_legal_type ?resourceType . }
   OPTIONAL {
     ?doc cdm:expression_uses_language <http://publications.europa.eu/resource/authority/language/FRA> .
@@ -44,6 +51,23 @@ SELECT DISTINCT ?celex ?title ?date ?docUrl ?resourceType WHERE {
 ORDER BY DESC(?date)
 LIMIT 50
 `.trim();
+}
+
+/**
+ * Un acte est retenu s'il touche au périmètre CompliAI.
+ *
+ * CELLAR ne filtre que sur `STRSTARTS(celex, "3202")` : SANS ce tri, la source
+ * remonte les 50 derniers actes européens quel que soit leur sujet. Constaté le
+ * 2026-07-18 : un rectificatif au règlement 794/2004 (aides d'État) a ete
+ * ingéré et parsé par Claude — hors périmètre, tokens dépensés pour rien.
+ *
+ * Un acte sans titre FR est conservé : on ne peut pas juger de sa pertinence,
+ * et manquer du droit applicable coûte plus cher qu'un faux positif à trier.
+ */
+export function isCellarRelevant(title: string | undefined): boolean {
+  if (!title?.trim()) return true;
+  const normalized = title.toLowerCase();
+  return EURLEX_RELEVANCE_KEYWORDS.some((kw) => matchesKeyword(normalized, kw));
 }
 
 /** Détermine le DocumentType à partir du type CELEX */
@@ -118,6 +142,7 @@ export async function fetchEurlexCellar(
     // réintroduire par la porte de derrière le filtre qui rendait la source
     // muette. Le CELEX sert de libellé de repli.
     if (!celex) continue;
+    if (!isCellarRelevant(title)) continue;
 
     const sourceUrl =
       docUrl ??

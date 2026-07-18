@@ -17,8 +17,8 @@ import { DetectedDocument, DocumentType, FetchFn } from "../types";
 export const EURLEX_RSS_URL =
   "https://eur-lex.europa.eu/FR/display-feed.rss?rssId=222";
 
-/** Mots-clés déclenchant la détection d'un acte EUR-Lex */
-const EURLEX_RELEVANCE_KEYWORDS = [
+/** Mots-clés déclenchant la détection d'un acte EUR-Lex. Partagé avec le connecteur CELLAR. */
+export const EURLEX_RELEVANCE_KEYWORDS = [
   "intelligence artificielle",
   "données à caractère personnel",
   "données personnelles",
@@ -62,11 +62,26 @@ export function extractCelex(
   return match?.[1];
 }
 
+/**
+ * Un mot-cle court doit matcher un MOT, pas une sous-chaine.
+ *
+ * « IA » en sous-chaine matche « commercial », « special », « judiciaire »,
+ * « media »… soit une grande partie du vocabulaire juridique francais. Mesure
+ * le 2026-07-18 sur CELLAR : le filtre ne retirait presque rien, et un
+ * rectificatif sur les aides d'Etat passait pour un texte sur l'IA.
+ * Meme motif que le connecteur DPC (dpc-scraping.ts).
+ */
+export function matchesKeyword(text: string, keyword: string): boolean {
+  const k = keyword.toLowerCase();
+  if (k.length <= 3) {
+    return new RegExp(`\\b${k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(text);
+  }
+  return text.includes(k);
+}
+
 function isRelevant(title: string, description: string): boolean {
   const text = `${title} ${description}`.toLowerCase();
-  return EURLEX_RELEVANCE_KEYWORDS.some((kw) =>
-    text.includes(kw.toLowerCase())
-  );
+  return EURLEX_RELEVANCE_KEYWORDS.some((kw) => matchesKeyword(text, kw));
 }
 
 function inferDocumentType(celex: string | undefined, title: string): DocumentType {

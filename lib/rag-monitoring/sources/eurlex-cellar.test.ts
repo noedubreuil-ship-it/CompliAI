@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { readFileSync } from "fs";
 import { resolve } from "path";
-import { fetchEurlexCellar } from "./eurlex-cellar";
+import { fetchEurlexCellar , isCellarRelevant } from "./eurlex-cellar";
 
 const FIXTURE_PATH = resolve(
   __dirname,
@@ -48,7 +48,7 @@ describe("fetchEurlexCellar", () => {
         bindings: [
           {
             celex: { value: "32026R9999" },
-            title: { value: "Test Regulation" },
+            title: { value: "Règlement sur les services numériques et les données" },
             date: { value: "2026-01-01" },
           },
         ],
@@ -95,5 +95,30 @@ describe("fetchEurlexCellar", () => {
 
     const calledUrl = mockFetcher.mock.calls[0][0] as string;
     expect(calledUrl).toContain("2025-01-01");
+  });
+});
+
+describe("isCellarRelevant — filtre thématique (2026-07-18)", () => {
+  it("retient un acte du périmètre", () => {
+    expect(isCellarRelevant("Règlement sur l'intelligence artificielle")).toBe(true);
+  });
+
+  it("écarte un acte hors périmètre", () => {
+    // Cas réel : un rectificatif au règlement 794/2004 (aides d'État) était
+    // détecté, ingéré et parsé par Claude — tokens dépensés hors sujet.
+    expect(
+      isCellarRelevant("Rectificatif au règlement d'exécution (UE) 2025/905 de la Commission")
+    ).toBe(false);
+  });
+
+  it("ne confond plus « IA » avec les mots qui le contiennent", () => {
+    // « IA » en sous-chaîne matchait « commercial », « spécial », « judiciaire ».
+    expect(isCellarRelevant("Coopération judiciaire en matière commerciale")).toBe(false);
+    expect(isCellarRelevant("Systèmes d'IA à haut risque")).toBe(true);
+  });
+
+  it("conserve un acte sans titre FR : on ne peut pas juger, ne pas manquer du droit", () => {
+    expect(isCellarRelevant(undefined)).toBe(true);
+    expect(isCellarRelevant("")).toBe(true);
   });
 });
