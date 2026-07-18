@@ -121,29 +121,6 @@ export function buildChunkRef(chunk: StagingChunkRow): string {
   return parts.length > 0 ? parts.join(" ") : (chunk.chapter ?? "—");
 }
 
-/** Familles d'échec d'ingestion — miroir de app/api/admin/rag-validation/blocked/route.ts */
-export type BlockedReason =
-  | "acces_bloque"
-  | "document_non_juridique"
-  | "telechargement_impossible"
-  | "trop_long"
-  | "parsing_invalide"
-  | "quota_api"
-  | "autre";
-
-/**
- * Document détecté par le monitoring que le pipeline n'a pas pu ingérer.
- * Conservé en base plutôt qu'écarté : l'admin doit pouvoir arbitrer.
- */
-export interface BlockedDocument {
-  id: string;
-  title: string | null;
-  document_type: string;
-  source_url: string;
-  detected_at: string;
-  language: string;
-  country: string;
-  error_message: string | null;
-  reason: BlockedReason;
-  hint: string;
-}
+// Types des documents non ingérés : source unique dans lib/, re-exportée ici
+// pour que le client et la route API ne puissent pas diverger.
+export type { BlockedReason, BlockedDocument } from "@/lib/rag-validation/classify-error";
