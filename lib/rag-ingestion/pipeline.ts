@@ -173,6 +173,69 @@ async function updatePendingDocumentOrThrow(
 
 // ─── Fetch du texte brut d'un document ───────────────────────────────────────
 
+/**
+ * Signatures des pages qui répondent HTTP 200 sans contenir le document :
+ * vérification anti-bot, captcha, mur de connexion, page d'erreur applicative.
+ *
+ * Sans ce filtre, ces pages partaient telles quelles chez Claude. Constaté le
+ * 2026-07-18 : une publication « AI Office » redirigeait vers f6s.com, dont la
+ * page de vérification anti-bot a été parsée — environ 30 000 tokens dépensés
+ * pour s'entendre répondre « ceci est une page anti-bot ». L'URL d'origine était
+ * pourtant légitime (digital-strategy.ec.europa.eu) : c'est la redirection qui
+ * mène ailleurs, donc filtrer sur le domaine demandé ne suffit pas.
+ */
+const BLOCKED_PAGE_MARKERS = [
+  "checking your browser",
+  "verify you are human",
+  "verifying you are human",
+  "attention required",
+  "cf-browser-verification",
+  "cf_chl_opt",
+  "just a moment",
+  "enable javascript and cookies",
+  "ddos protection by",
+  "captcha",
+  "recaptcha",
+  "hcaptcha",
+  "access denied",
+  "403 forbidden",
+  "sign in to continue",
+  "log in to continue",
+];
+
+/** Longueur minimale de texte utile une fois le balisage retiré. */
+const MIN_USEFUL_TEXT_LENGTH = 400;
+
+/** Retire balises, scripts et styles pour estimer la quantité de texte réel. */
+function stripMarkup(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&[a-z#0-9]+;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * `null` si la page est exploitable, sinon la raison du rejet.
+ * Exposé pour les tests.
+ */
+export function detectBlockedPage(html: string): string | null {
+  const head = html.slice(0, 4000).toLowerCase();
+  const marker = BLOCKED_PAGE_MARKERS.find((m) => head.includes(m));
+  if (marker) {
+    return `page de blocage détectée (« ${marker} ») — anti-bot, captcha ou mur de connexion`;
+  }
+
+  const useful = stripMarkup(html);
+  if (useful.length < MIN_USEFUL_TEXT_LENGTH) {
+    return `contenu utile insuffisant (${useful.length} caractères après retrait du balisage, minimum ${MIN_USEFUL_TEXT_LENGTH})`;
+  }
+
+  return null;
+}
+
 async function fetchUrlText(url: string): Promise<string | null> {
   try {
     const resp = await fetch(url, {
@@ -181,7 +244,17 @@ async function fetchUrlText(url: string): Promise<string | null> {
     });
     if (!resp.ok) return null;
     const text = await resp.text();
-    return text.length > 100 ? text : null;
+    if (text.length <= 100) return null;
+
+    // Rejeter AVANT l'appel Claude : une page de blocage coûte autant à parser
+    // qu'un vrai document, pour un résultat inutilisable.
+    const blocked = detectBlockedPage(text);
+    if (blocked) {
+      console.error(`[RAG Pipeline] Page rejetée (${url}) : ${blocked}`);
+      return null;
+    }
+
+    return text;
   } catch {
     return null;
   }
