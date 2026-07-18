@@ -2,8 +2,12 @@ name: RAG Automation Crons
 
 on:
   schedule:
-    # Monitoring quotidien à 06:00 UTC
-    - cron: "0 6 * * *"
+    # Monitoring quotidien à 06:37 UTC.
+    # Surtout PAS à l'heure ronde : GitHub abandonne (et pas seulement retarde)
+    # des declenchements planifies aux creneaux satures, et :00 est le pire.
+    # Constate le 2026-07-18 — le declenchement de 06:00 n'a jamais eu lieu
+    # trois jours de suite, alors que les crons d'ingestion (:15) partaient bien.
+    - cron: "37 6 * * *"
     # Ingestion toutes les 6 heures
     - cron: "15 */6 * * *"
   workflow_dispatch:
@@ -24,7 +28,9 @@ jobs:
     # event_name, les deux jobs partaient à chaque déclenchement — monitoring et
     # ingestion tournaient 5×/jour chacun, d'où le martèlement des sources
     # (HTTP 429 EDPB) et 5 runs Claude quotidiens non surveillés.
-    if: github.event.schedule == '0 6 * * *' || inputs.job == 'monitoring'
+    # ATTENTION : cette chaine doit correspondre EXACTEMENT au `cron:` ci-dessus.
+    # Changer l'un sans l'autre fait sauter ce job silencieusement, a jamais.
+    if: github.event.schedule == '37 6 * * *' || inputs.job == 'monitoring'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
