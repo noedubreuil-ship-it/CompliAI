@@ -46,12 +46,12 @@ export function CoverageBar({ stats, loading, onRefresh }: CoverageBarProps) {
   const typeEntries = Object.entries(stats.by_type).sort((a, b) => b[1].documents - a[1].documents);
 
   return (
-    <div className="rounded-xl border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/10 px-5 py-4">
+    <div className="rounded-xl border border-amber-300 bg-amber-50 px-5 py-4">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           {hasData ? (
             <>
-              <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+              <p className="text-sm font-semibold text-neutral-900">
                 {lastValidation ? (
                   <>Depuis votre dernière validation le {lastValidation}, </>
                 ) : (
@@ -72,7 +72,7 @@ export function CoverageBar({ stats, loading, onRefresh }: CoverageBarProps) {
                     return (
                       <span
                         key={type}
-                        className="inline-flex items-center gap-1.5 text-xs text-amber-800 dark:text-amber-300"
+                        className="inline-flex items-center gap-1.5 text-xs text-neutral-800"
                       >
                         <Icon className="h-3.5 w-3.5" />
                         <strong>{counts.documents}</strong>{" "}
@@ -85,7 +85,7 @@ export function CoverageBar({ stats, loading, onRefresh }: CoverageBarProps) {
               )}
             </>
           ) : (
-            <p className="text-sm font-semibold text-green-800 dark:text-green-300">
+            <p className="text-sm font-semibold text-neutral-900">
               ✓ Aucun document en attente de validation — la base est à jour.
             </p>
           )}
@@ -93,14 +93,14 @@ export function CoverageBar({ stats, loading, onRefresh }: CoverageBarProps) {
 
         <div className="flex items-center gap-2 shrink-0">
           {lastValidation && (
-            <span className="flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400">
+            <span className="flex items-center gap-1 text-xs text-neutral-700">
               <Clock className="h-3 w-3" />
               Dernière : {lastValidation}
             </span>
           )}
           <button
             onClick={onRefresh}
-            className="p-1.5 rounded-lg text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+            className="p-1.5 rounded-lg text-neutral-700 hover:bg-amber-100 transition-colors"
             title="Rafraîchir les statistiques"
           >
             <RefreshCw className="h-4 w-4" />
