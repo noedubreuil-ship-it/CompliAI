@@ -110,7 +110,18 @@ export async function parseDocumentWithClaude(input: ParserInput): Promise<Parse
   let outputTokens = 0;
 
   try {
-    const response = await client.messages.create({
+    // Appel en STREAMING, et non `messages.create`.
+    //
+    // Un appel non streame doit tenir dans le timeout HTTP du SDK, ce qui
+    // plafonnait le parsing a ~16 000 tokens de sortie. Or un arret CJUE reel
+    // mesure a 16 013 tokens (2026-07-18) — a 2 % du plafond. La majorite des
+    // arrets de la Cour tronquaient donc, et la troncature faisait perdre tout
+    // le document. Le streaming supprime la contrainte de timeout et permet de
+    // monter le plafond a la hauteur reelle du modele.
+    //
+    // `finalMessage()` rassemble le flux : le reste du code voit le meme objet
+    // `Message` qu'avant, avec `usage` et `stop_reason`.
+    const stream = client.messages.stream({
       model: RAG_INGESTION_MODEL,
       max_tokens: RAG_INGESTION_MAX_TOKENS,
       temperature: RAG_INGESTION_TEMPERATURE,
@@ -121,6 +132,7 @@ export async function parseDocumentWithClaude(input: ParserInput): Promise<Parse
         },
       ],
     });
+    const response = await stream.finalMessage();
 
     inputTokens = response.usage.input_tokens;
     outputTokens = response.usage.output_tokens;

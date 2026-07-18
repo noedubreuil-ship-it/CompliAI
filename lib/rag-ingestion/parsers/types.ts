@@ -29,12 +29,15 @@ export const RAG_INGESTION_TEMPERATURE = 0 as const;
  * « Reponse Claude non parseable en JSON » — un message trompeur. 5 documents
  * sur 10 ont echoue ainsi le 2026-07-18.
  *
- * Porte a 16384 et non au maximum du modele : l'appel n'est pas en streaming,
- * et au-dela d'environ 16 000 tokens une reponse non streamee risque le
- * timeout HTTP du SDK. Passer au streaming permettrait de monter plus haut —
- * chantier a part.
+ * Porte a 64000 le 2026-07-18, en meme temps que le passage de l'appel en
+ * streaming (base-parser.ts). Le palier intermediaire a 16384 restait trop bas :
+ * un arret CJUE reel a ete mesure a 16 013 tokens de sortie, soit 2 % sous le
+ * plafond — la majorite des arrets de la Cour tronquaient encore.
+ *
+ * 64000 et non les 128000 du modele : la marge couvre largement le plus long
+ * arret observe, et un plafond plus bas borne le cout d'un document aberrant.
  */
-export const RAG_INGESTION_MAX_TOKENS = 16384 as const;
+export const RAG_INGESTION_MAX_TOKENS = 64000 as const;
 
 // ─── Types de document supportés ─────────────────────────────────────────────
 export type SupportedDocumentType =
