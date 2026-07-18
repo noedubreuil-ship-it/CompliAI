@@ -13,12 +13,14 @@ import {
 import { cn } from "@/lib/utils";
 import { CoverageBar } from "./components/CoverageBar";
 import { DocumentCard } from "./components/DocumentCard";
+import { BlockedDocumentCard } from "./components/BlockedDocumentCard";
 import { ChunkPanel } from "./components/ChunkPanel";
 import { SourceViewer } from "./components/SourceViewer";
 import { RejectModal } from "./components/RejectModal";
 import { CorrectModal } from "./components/CorrectModal";
 import {
   DocumentWithStats,
+  BlockedDocument,
   StagingChunkRow,
   ValidationStats,
   DOC_TYPE_LABELS,
@@ -68,6 +70,16 @@ export function RagValidationClient() {
   const [stats, setStats] = useState<ValidationStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
 
+  // ── Onglet actif ──────────────────────────────────────────────────────────
+  // "staging"  : documents parses, en attente de validation
+  // "blocked"  : documents detectes que le pipeline n'a PAS pu ingerer.
+  //              Ils sont conserves plutot qu'ecartes : l'admin doit pouvoir
+  //              arbitrer (recuperer le texte a la main, ou ecarter sciemment).
+  const [activeTab, setActiveTab] = useState<"staging" | "blocked">("staging");
+  const [blockedDocs, setBlockedDocs] = useState<BlockedDocument[]>([]);
+  const [blockedTotal, setBlockedTotal] = useState(0);
+  const [loadingBlocked, setLoadingBlocked] = useState(false);
+
   // ── Liste des documents ───────────────────────────────────────────────────
   const [documents, setDocuments] = useState<DocumentWithStats[]>([]);
   const [loadingDocs, setLoadingDocs] = useState(true);
@@ -111,6 +123,28 @@ export function RagValidationClient() {
       setLoadingStats(false);
     }
   }, []);
+
+  const fetchBlocked = useCallback(async () => {
+    setLoadingBlocked(true);
+    try {
+      const params = new URLSearchParams({ limit: "50" });
+      if (filterType !== "all") params.set("type", filterType);
+      const res = await fetch(`/api/admin/rag-validation/blocked?${params}`);
+      if (!res.ok) throw new Error("Chargement impossible");
+      const json = await res.json();
+      setBlockedDocs(json.documents ?? []);
+      setBlockedTotal(json.total ?? 0);
+    } catch {
+      setBlockedDocs([]);
+      setBlockedTotal(0);
+    } finally {
+      setLoadingBlocked(false);
+    }
+  }, [filterType]);
+
+  useEffect(() => {
+    if (activeTab === "blocked") void fetchBlocked();
+  }, [activeTab, fetchBlocked]);
 
   const fetchDocuments = useCallback(async () => {
     setLoadingDocs(true);
@@ -408,11 +442,33 @@ export function RagValidationClient() {
           {/* En-tête liste */}
           <div className="shrink-0 px-3 py-3 border-b border-neutral-200 dark:border-white/10">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-                Documents en staging
-              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setActiveTab("staging")}
+                  className={cn(
+                    "rounded-md px-2 py-1 text-xs font-semibold transition-colors",
+                    activeTab === "staging"
+                      ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
+                      : "text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
+                  )}
+                >
+                  À valider
+                </button>
+                <button
+                  onClick={() => setActiveTab("blocked")}
+                  className={cn(
+                    "rounded-md px-2 py-1 text-xs font-semibold transition-colors",
+                    activeTab === "blocked"
+                      ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
+                      : "text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
+                  )}
+                  title="Documents détectés que le pipeline n'a pas pu ingérer automatiquement"
+                >
+                  Non ingérés{blockedTotal > 0 ? ` (${blockedTotal})` : ""}
+                </button>
+              </div>
               <button
-                onClick={() => { fetchDocuments(); fetchStats(); }}
+                onClick={() => { activeTab === "blocked" ? fetchBlocked() : (fetchDocuments(), fetchStats()); }}
                 className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors"
                 title="Rafraîchir"
               >
@@ -451,7 +507,25 @@ export function RagValidationClient() {
 
           {/* Liste */}
           <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
-            {loadingDocs ? (
+            {activeTab === "blocked" ? (
+              loadingBlocked ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-24 rounded-lg bg-neutral-100 dark:bg-white/5 animate-pulse" />
+                ))
+              ) : blockedDocs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center py-12 text-neutral-400 dark:text-neutral-500 gap-2">
+                  <Layers className="h-8 w-8" />
+                  <p className="text-sm font-medium">Aucun document bloqué</p>
+                  <p className="text-xs">Tout ce qui a été détecté a pu être ingéré.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {blockedDocs.map((doc) => (
+                    <BlockedDocumentCard key={doc.id} doc={doc} />
+                  ))}
+                </div>
+              )
+            ) : loadingDocs ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="h-24 rounded-lg bg-neutral-100 dark:bg-white/5 animate-pulse" />
               ))
