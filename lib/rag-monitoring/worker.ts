@@ -57,6 +57,22 @@ export async function assertMonitoringDatabaseReady(
       );
     }
   }
+
+  // Ne PAS se contenter de l'absence d'erreur : sous RLS, une clé insuffisante
+  // (anon au lieu de service_role) renvoie zéro ligne sans la moindre erreur.
+  // Constaté le 2026-07-18 : le cron GitHub tournait en vert depuis l'activation
+  // des RLS, voyait 0 source active alors que la base en contient 6, et se
+  // terminait en `no_active_sources`. Trois semaines de veille perdues en
+  // silence. En production, `monitoring_sources` n'est jamais vide : une table
+  // qui paraît vide signale un problème de droits, pas une base sans sources.
+  if ((results[0].data ?? []).length === 0) {
+    throw new Error(
+      "monitoring_sources est illisible ou vide : aucune ligne visible alors " +
+        "que la table doit en contenir. Cause la plus probable : la clé utilisée " +
+        "n'est pas une clé `service_role` et les RLS filtrent tout " +
+        "silencieusement. Vérifier SUPABASE_SERVICE_ROLE_KEY."
+    );
+  }
 }
 
 /**
