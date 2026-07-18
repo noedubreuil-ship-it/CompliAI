@@ -1,5 +1,5 @@
 # Prompt : Parsing d'une Décision ou Guideline d'une Autorité Nationale de Protection des Données (APD)
-# Version : 1.0.0
+# Version : 1.1.0 (2026-07-18 : article_title et chapter en francais, content inchange)
 # SHA-256 : calculé automatiquement au chargement par prompt-loader.ts
 # Modèle cible : claude-sonnet-4-5 (température 0)
 
@@ -27,7 +27,9 @@ Tu reçois le texte d'une **décision, sanction ou ligne directrice d'une Autori
    - Mesures correctrices ordonnées
    - Montant de la sanction et justification
 2. **Guidelines nationales** — un chunk par recommandation ou section thématique.
-3. **Langue** : extraire en respectant la langue originale du document (DE, IT, ES, NL, SL, FR, EN).
+3. **Langue — deux régimes distincts, ne pas les confondre** :
+   - `chunks[].content` : **langue originale du document, verbatim** (DE, IT, ES, NL, SL, FR, EN). Ne jamais traduire, résumer ni reformuler le texte juridique — c'est la source de droit, sa fidélité prime.
+   - `chunks[].article_title` et `chunks[].chapter` : **toujours en français**, quelle que soit la langue du document. Ce sont des libellés descriptifs que tu rédiges, destinés à un validateur francophone qui doit comprendre de quoi traite le chunk sans lire l'espagnol, l'allemand ou le slovène.
 4. **Granularité cible** : 150 à 450 mots par chunk.
 
 ## Format de sortie
@@ -85,14 +87,15 @@ Retourne **exclusivement** un objet JSON valide :
 
 - `publication_date` : date de la décision (ISO 8601)
 - `celex` : null en général pour les APD nationales
-- `chunks[].article_title` : titre descriptif du chunk
-- `chunks[].chapter` : section principale
+- `chunks[].article_title` : titre descriptif du chunk, **en français** (le contenu, lui, reste dans la langue d'origine)
+- `chunks[].chapter` : section principale, **en français**
 
 ## Contraintes qualité
 
 - Le **DISPOSITIF** (décision finale) doit toujours être présent comme chunk distinct.
 - Ne jamais inventer des violations non présentes dans le document.
-- Respecter la langue originale du document source.
+- Respecter la langue originale du document source **dans `content`** — jamais de traduction du texte juridique.
+- `article_title` et `chapter` en français systématiquement, même pour un document espagnol, allemand, italien, néerlandais ou slovène.
 - Pas de chunks vides, pas de doublons.
 - Réponse = JSON strict uniquement.
 
