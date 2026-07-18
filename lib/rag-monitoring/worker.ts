@@ -165,7 +165,8 @@ async function filterNewDocuments(
 ): Promise<DetectedDocument[]> {
   if (documents.length === 0) return [];
 
-  // Récupère les external_id et source_url existants pour cette source
+  // `external_id` ne porte pas de contrainte globale : on le compare au sein
+  // de la source uniquement.
   const { data: existing } = await supabase
     .from("pending_documents")
     .select("external_id, source_url")
@@ -178,9 +179,64 @@ async function filterNewDocuments(
     (existing ?? []).map((r: { source_url: string | null }) => r.source_url).filter(Boolean)
   );
 
+  // `celex`, `ecli` et `source_url` portent des contraintes UNIQUE GLOBALES
+  // (migration 033), donc valables toutes sources confondues. Les comparer
+  // seulement au sein de la source laissait passer les recouvrements
+  // legitimes entre sources : EUR-Lex CELLAR et EUR-Lex JO RSS publient les
+  // memes CELEX. L'INSERT partait alors en violation de contrainte et Supabase
+  // rejetait le LOT ENTIER — 42 documents perdus d'un coup le 2026-07-18 a
+  // cause d'un seul doublon.
+  const collect = (key: "celex" | "ecli" | "sourceUrl"): string[] =>
+    documents
+      .map((d) => d[key])
+      .filter((v): v is string => typeof v === "string" && v !== "");
+
+  const globallyTaken: Record<"celex" | "ecli" | "source_url", Set<string>> = {
+    celex: new Set(),
+    ecli: new Set(),
+    source_url: new Set(),
+  };
+
+  for (const [column, values] of [
+    ["celex", collect("celex")],
+    ["ecli", collect("ecli")],
+    ["source_url", collect("sourceUrl")],
+  ] as const) {
+    if (values.length === 0) continue;
+    const { data } = await supabase
+      .from("pending_documents")
+      .select(column)
+      .in(column, values);
+    for (const row of (data ?? []) as Record<string, string | null>[]) {
+      const value = row[column];
+      if (value) globallyTaken[column].add(value);
+    }
+  }
+
+  // Un lot peut aussi se contredire lui-meme (deux entrees, meme CELEX) :
+  // la contrainte se declencherait sur l'insert, sans qu'aucune ligne
+  // n'existe encore en base.
+  const seenInBatch: Record<"celex" | "ecli" | "source_url", Set<string>> = {
+    celex: new Set(),
+    ecli: new Set(),
+    source_url: new Set(),
+  };
+
   return documents.filter((doc) => {
     if (doc.externalId && existingExternalIds.has(doc.externalId)) return false;
     if (existingUrls.has(doc.sourceUrl)) return false;
+
+    if (globallyTaken.source_url.has(doc.sourceUrl)) return false;
+    if (doc.celex && globallyTaken.celex.has(doc.celex)) return false;
+    if (doc.ecli && globallyTaken.ecli.has(doc.ecli)) return false;
+
+    if (seenInBatch.source_url.has(doc.sourceUrl)) return false;
+    if (doc.celex && seenInBatch.celex.has(doc.celex)) return false;
+    if (doc.ecli && seenInBatch.ecli.has(doc.ecli)) return false;
+
+    seenInBatch.source_url.add(doc.sourceUrl);
+    if (doc.celex) seenInBatch.celex.add(doc.celex);
+    if (doc.ecli) seenInBatch.ecli.add(doc.ecli);
     return true;
   });
 }
@@ -212,8 +268,30 @@ async function insertNewDocuments(
   }));
 
   const { error } = await supabase.from("pending_documents").insert(rows);
-  if (error) {
-    throw new Error(`Erreur insertion pending_documents : ${error.message}`);
+  if (!error) return;
+
+  // Un INSERT groupe est atomique : une seule ligne en conflit fait perdre tout
+  // le lot (42 documents le 2026-07-18). La deduplication en amont couvre les
+  // cas connus, mais une course entre deux sources ou une contrainte non
+  // anticipee reste possible. On rejoue alors ligne par ligne pour ne perdre
+  // que le document reellement fautif.
+  const failures: string[] = [];
+  for (const row of rows) {
+    const { error: rowError } = await supabase.from("pending_documents").insert(row);
+    if (rowError) failures.push(`${row.external_id ?? row.source_url} (${rowError.message})`);
+  }
+
+  if (failures.length === rows.length) {
+    throw new Error(
+      `Erreur insertion pending_documents : ${error.message} — aucune ligne inseree`
+    );
+  }
+  if (failures.length > 0) {
+    console.error(
+      `[worker] ${failures.length}/${rows.length} document(s) rejete(s) : ${failures
+        .slice(0, 3)
+        .join(", ")}`
+    );
   }
 }
 
