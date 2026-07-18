@@ -107,6 +107,14 @@ function restoreConsole(): void {
   console.error = ORIGINAL_CONSOLE.error;
 }
 
+/**
+ * Simulation : parse et journalise sans ecrire staging_chunks ni changer le
+ * statut des documents. Seul filet depuis l'abandon du projet staging
+ * (17/07/2026). La valeur etait codee en dur a `false`, comme dans
+ * cron-monitoring.ts avant le 18/07 — la simulation etait donc impossible.
+ */
+const DRY_RUN = process.argv.includes("--dry-run");
+
 async function main(): Promise<void> {
   assertRequiredEnv();
 
@@ -115,7 +123,7 @@ async function main(): Promise<void> {
   const throttleMs = getThrottleMs();
 
   logJson("info", "cycle_started", {
-    dryRun: false,
+    dryRun: DRY_RUN,
     model: RAG_INGESTION_MODEL,
     batchSize,
     maxBatchSize: MAX_BATCH_SIZE,
@@ -126,7 +134,7 @@ async function main(): Promise<void> {
 
   try {
     const result = await runIngestionPipeline({
-      dryRun: false,
+      dryRun: DRY_RUN,
       batchSize,
       throttleMs,
     });
