@@ -125,6 +125,20 @@ export async function parseDocumentWithClaude(input: ParserInput): Promise<Parse
     inputTokens = response.usage.input_tokens;
     outputTokens = response.usage.output_tokens;
 
+    // `stop_reason` n'était pas vérifié : une réponse tronquée au plafond de
+    // tokens arrivait jusqu'à JSON.parse, qui échouait sur « Réponse Claude non
+    // parseable en JSON » — un message trompeur qui a masqué la vraie cause.
+    // Constaté le 2026-07-18 sur les avis EDPB, longs par nature.
+    if (response.stop_reason === "max_tokens") {
+      return makeError(
+        `Réponse tronquée : le plafond de ${RAG_INGESTION_MAX_TOKENS} tokens de sortie a été atteint ` +
+          `(document trop long pour un seul appel). Augmenter RAG_INGESTION_MAX_TOKENS ou découper le document.`,
+        inputTokens,
+        outputTokens,
+        Date.now() - startMs
+      );
+    }
+
     const block = response.content[0];
     if (!block || block.type !== "text") {
       return makeError("Claude n'a pas retourné de bloc texte.", inputTokens, outputTokens, Date.now() - startMs);

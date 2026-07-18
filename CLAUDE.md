@@ -26,7 +26,7 @@ Contexte projet pour Claude Code sur le repo CompliAI. Ce fichier sert de point 
 - Email : Resend `^4.0.1`.
 - IA Anthropic : `@anthropic-ai/sdk` `^0.90.0`.
 - IA OpenAI : `openai` `^4.68.0`.
-- Parsing RAG juridique : Claude Sonnet 4.6 (`claude-sonnet-4-6`), temperature `0`, max tokens `8192`.
+- Parsing RAG juridique : Claude Sonnet 4.6 (`claude-sonnet-4-6`), temperature `0`, max tokens `16384` (releve depuis `8192` le 18 juillet 2026 : les avis EDPB depassaient le plafond et la reponse tronquee etait signalee a tort comme « JSON non parseable »). Le modele accepte jusqu'a 128 000 tokens de sortie, mais l'appel n'est pas en streaming — au-dela d'environ 16 000 le timeout HTTP du SDK devient le facteur limitant.
 - Chat juridique : pipeline Claude cote serveur ; verifier `lib/ai/config.ts` avant tout changement de modele.
 - Embeddings : OpenAI `text-embedding-3-small`, dimension `1536`, modele impose.
 - Vector store : Supabase `pgvector`.

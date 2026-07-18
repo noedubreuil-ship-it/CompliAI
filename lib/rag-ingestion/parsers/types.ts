@@ -20,7 +20,21 @@
 //   (ex. AI Act Art.5 avec 4 niveaux hiérarchiques)
 export const RAG_INGESTION_MODEL = "claude-sonnet-4-6" as const;
 export const RAG_INGESTION_TEMPERATURE = 0 as const;
-export const RAG_INGESTION_MAX_TOKENS = 8192 as const;
+/**
+ * Plafond de tokens de sortie par appel de parsing.
+ *
+ * Etait a 8192, seize fois sous la capacite reelle de Claude Sonnet 4.6
+ * (128 000 tokens de sortie). Les avis EDPB, longs par nature, depassaient ce
+ * plafond : la reponse etait tronquee en plein JSON et le pipeline signalait
+ * « Reponse Claude non parseable en JSON » — un message trompeur. 5 documents
+ * sur 10 ont echoue ainsi le 2026-07-18.
+ *
+ * Porte a 16384 et non au maximum du modele : l'appel n'est pas en streaming,
+ * et au-dela d'environ 16 000 tokens une reponse non streamee risque le
+ * timeout HTTP du SDK. Passer au streaming permettrait de monter plus haut —
+ * chantier a part.
+ */
+export const RAG_INGESTION_MAX_TOKENS = 16384 as const;
 
 // ─── Types de document supportés ─────────────────────────────────────────────
 export type SupportedDocumentType =
