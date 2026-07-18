@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { readFileSync } from "fs";
 import { resolve } from "path";
-import { fetchEurlexRss } from "./eurlex-rss";
+import { fetchEurlexRss , extractCelex } from "./eurlex-rss";
 
 const FIXTURE_PATH = resolve(
   __dirname,
@@ -88,5 +88,32 @@ describe("fetchEurlexRss", () => {
     expect(mockFetcher).toHaveBeenCalledWith(
       expect.stringContaining("eur-lex.europa.eu")
     );
+  });
+});
+
+describe("extractCelex — flux display-feed.rss (2026-07-18)", () => {
+  it("lit le CELEX depuis le titre quand le lien ne le porte pas", () => {
+    // Nouveau flux : « CELEX:32026R1778: Règlement d'exécution… »
+    expect(
+      extractCelex(
+        "https://eur-lex.europa.eu/legal-content/FR/TXT/",
+        "",
+        "CELEX:32026R1778: Règlement d'exécution (UE) 2026/1778"
+      )
+    ).toBe("32026R1778");
+  });
+
+  it("privilégie toujours le lien quand il porte le CELEX", () => {
+    expect(
+      extractCelex(
+        "https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX:32024R1689",
+        "",
+        "CELEX:99999R9999: autre"
+      )
+    ).toBe("32024R1689");
+  });
+
+  it("renvoie undefined quand aucun CELEX n'est présent", () => {
+    expect(extractCelex("https://example.org/doc", "", "Un titre")).toBeUndefined();
   });
 });
