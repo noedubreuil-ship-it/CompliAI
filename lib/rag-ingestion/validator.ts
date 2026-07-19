@@ -20,6 +20,10 @@ const MAX_CONTENT_LENGTH = 10_000;
 const VALID_TEXT_TYPES = new Set([
   "reglement_ue",
   "directive_ue",
+  // Ajoute le 2026-07-19 avec le support du type eu_decision. Le mapping
+  // DOCUMENT_TYPE_TO_TEXT_TYPE avait ete etendu sans cette liste : les 33
+  // decisions de l'Union en file echouaient toutes sur « text_type invalide ».
+  "decision_ue",
   "jurisprudence_cjue",
   "lignes_directrices",
   "recommandation_edpb",
