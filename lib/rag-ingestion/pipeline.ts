@@ -100,8 +100,10 @@ const DEFAULT_THROTTLE_MS = 1000;
 const SUPPORTED_DOCUMENT_TYPES = new Set<string>([
   "eu_regulation",
   "eu_directive",
+  "eu_decision",
   "cjeu_judgment",
   "cjeu_order",
+  "cjeu_referral",
   "edpb_guideline",
   "edpb_recommendation",
   "edpb_binding_decision",

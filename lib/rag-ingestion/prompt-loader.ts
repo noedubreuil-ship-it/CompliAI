@@ -20,8 +20,12 @@ const PROMPTS_DIR = join(__dirname, "prompts");
 const PROMPT_FILES: Record<SupportedDocumentType, string> = {
   eu_regulation: "parse_eu_regulation.md",
   eu_directive: "parse_eu_directive.md",
+  eu_decision: "parse_eu_decision.md",
   cjeu_judgment: "parse_cjeu_judgment.md",
   cjeu_order: "parse_cjeu_judgment.md", // même structure qu'un arrêt
+  // Conclusions d'avocat général : prompt dédié, car NON CONTRAIGNANTES —
+  // les confondre avec un arrêt ferait citer une opinion comme du droit établi.
+  cjeu_referral: "parse_cjeu_referral.md",
   edpb_guideline: "parse_edpb_guideline.md",
   edpb_recommendation: "parse_edpb_guideline.md",
   edpb_binding_decision: "parse_edpb_guideline.md",

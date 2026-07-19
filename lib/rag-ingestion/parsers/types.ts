@@ -43,8 +43,10 @@ export const RAG_INGESTION_MAX_TOKENS = 64000 as const;
 export type SupportedDocumentType =
   | "eu_regulation"
   | "eu_directive"
+  | "eu_decision"
   | "cjeu_judgment"
   | "cjeu_order"
+  | "cjeu_referral"
   | "edpb_guideline"
   | "edpb_recommendation"
   | "edpb_binding_decision"
@@ -56,8 +58,10 @@ export type SupportedDocumentType =
 export const DOCUMENT_TYPE_TO_TEXT_TYPE: Record<SupportedDocumentType, string> = {
   eu_regulation: "reglement_ue",
   eu_directive: "directive_ue",
+  eu_decision: "decision_ue",
   cjeu_judgment: "jurisprudence_cjue",
   cjeu_order: "jurisprudence_cjue",
+  cjeu_referral: "jurisprudence_cjue",
   edpb_guideline: "lignes_directrices",
   edpb_recommendation: "recommandation_edpb",
   edpb_binding_decision: "decision_edpb_art65",

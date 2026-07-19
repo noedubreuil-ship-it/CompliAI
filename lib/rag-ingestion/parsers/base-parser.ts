@@ -53,6 +53,61 @@ export function _resetAnthropicClient(): void {
   _anthropicClient = null;
 }
 
+
+/**
+ * Schema JSON impose a la reponse de Claude (sorties structurees).
+ *
+ * Sans lui, le modele produisait par intermittence du JSON invalide : un
+ * caractere non echappe au milieu d'une chaine suffisait a perdre tout le
+ * document. Mesure le 2026-07-19 sur des conclusions d'avocat general —
+ * 34 394 caracteres, reponse complete et non tronquee, echec a la position
+ * 6398. Neuf avis EDPB avaient echoue de la meme facon.
+ *
+ * `output_config.format` contraint la generation elle-meme : le JSON ne peut
+ * plus etre malforme. Verifie supporte sur claude-sonnet-4-6.
+ *
+ * Contraintes des sorties structurees : `additionalProperties: false` partout,
+ * pas de schema recursif, pas de contrainte numerique ou de longueur.
+ */
+const PARSER_OUTPUT_SCHEMA = {
+  type: "object",
+  properties: {
+    regulation: { type: "string" },
+    celex: { type: ["string", "null"] },
+    ecli: { type: ["string", "null"] },
+    publication_date: { type: ["string", "null"] },
+    authority: { type: ["string", "null"] },
+    country: { type: ["string", "null"] },
+    language: { type: ["string", "null"] },
+    parties: { type: ["string", "null"] },
+    chunks: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          article_number: { type: ["string", "null"] },
+          paragraph_number: { type: ["string", "null"] },
+          point_letter: { type: ["string", "null"] },
+          article_title: { type: ["string", "null"] },
+          chapter: { type: ["string", "null"] },
+          content: { type: "string" },
+        },
+        required: [
+          "article_number",
+          "paragraph_number",
+          "point_letter",
+          "article_title",
+          "chapter",
+          "content",
+        ],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ["regulation", "celex", "publication_date", "chunks"],
+  additionalProperties: false,
+} as const;
+
 /** Calcule le SHA-256 du contenu d'un chunk pour la déduplication */
 function computeChunkHash(content: string): string {
   return createHash("sha256").update(content.trim()).digest("hex");
@@ -69,8 +124,20 @@ function parseClaudeJsonResponse(text: string): RawParserOutput {
   let parsed: unknown;
   try {
     parsed = JSON.parse(stripped);
-  } catch {
-    throw new Error(`Réponse Claude non parseable en JSON : ${stripped.slice(0, 200)}`);
+  } catch (e) {
+    // Ne montrer que le DEBUT de la reponse rendait le diagnostic impossible :
+    // le JSON commence presque toujours correctement, et la cause est a la fin
+    // (troncature, texte hors JSON, guillemet non echappe). On expose donc les
+    // deux extremites, la position signalee par JSON.parse et la longueur.
+    const reason = e instanceof Error ? e.message : String(e);
+    const head = stripped.slice(0, 160);
+    const tail = stripped.length > 320 ? stripped.slice(-160) : "";
+    throw new Error(
+      `Réponse Claude non parseable en JSON (${reason}). ` +
+        `Longueur ${stripped.length} caractères. ` +
+        `DÉBUT: ${head}` +
+        (tail ? ` […] FIN: ${tail}` : "")
+    );
   }
 
   if (typeof parsed !== "object" || parsed === null) {
@@ -125,6 +192,7 @@ export async function parseDocumentWithClaude(input: ParserInput): Promise<Parse
       model: RAG_INGESTION_MODEL,
       max_tokens: RAG_INGESTION_MAX_TOKENS,
       temperature: RAG_INGESTION_TEMPERATURE,
+      output_config: { format: { type: "json_schema", schema: PARSER_OUTPUT_SCHEMA } },
       messages: [
         {
           role: "user",
