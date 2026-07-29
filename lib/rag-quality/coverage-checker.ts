@@ -7,13 +7,17 @@
  * Exécution mensuelle. Module en lecture seule.
  */
 
-import { searchLegalChunks } from "@/lib/ai/rag";
+import { searchLegalChunksHybrid } from "@/lib/ai/rag";
 import { COVERAGE_ARTICLES, getActiveCritical } from "./coverage-articles";
 import type { CoverageEntry, CoverageResult, ChunkResult } from "./types";
 
 const TOP_N = 3;
 const MATCH_COUNT = 5; // On cherche 5 pour être sûr que le top-3 est couvert
-const SIMILARITY_THRESHOLD = 0.55; // Plus permissif pour les requêtes de couverture
+// Aligné sur le retrieval réel du chat (2026-07-19). Le checker utilisait
+// `searchLegalChunks` (vectoriel seul, seuil 0,55) alors que le chat est passé
+// à la recherche hybride vectoriel+BM25 le 2026-07-09 (seuil 0,20). Il mesurait
+// donc un chemin abandonné et sous-estimait la couverture réelle de ~5 points.
+const SIMILARITY_THRESHOLD = 0.2;
 
 // ─── Vérification d'une entrée ───────────────────────────────────────────────
 
@@ -68,7 +72,7 @@ export async function checkCoverageEntry(entry: CoverageEntry): Promise<Coverage
 
   let chunks: ChunkResult[] = [];
   try {
-    const raw = await searchLegalChunks(entry.query, MATCH_COUNT, SIMILARITY_THRESHOLD);
+    const raw = await searchLegalChunksHybrid(entry.query, MATCH_COUNT, SIMILARITY_THRESHOLD);
     chunks = raw.map((c) => ({
       regulation: c.regulation ?? "",
       article_number: c.article_number ?? null,
