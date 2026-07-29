@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { embedText } from "./embeddings";
 import type { LegalChunk } from "@/lib/types/legal";
 import { sanitizeRagTextForModel } from "./sanitize-rag-context";
+import { rerankChunks } from "./rag-rerank";
 
 // Uses service role to bypass RLS for vector search
 function getSupabaseAdmin() {
@@ -9,59 +10,6 @@ function getSupabaseAdmin() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
-}
-
-/**
- * Score a chunk against the query by counting keyword matches.
- * Combined with vector similarity, this gives a better overall ranking.
- *
- * Scoring breakdown :
- *  - 60 % body overlap  : mots de la requête présents dans regulation + article_title + content
- *  - 40 % article boost : numéros d'articles explicitement cités dans la requête (ex: "art. 44", "article 26")
- *    → évite que des articles contextuels ("important" severity) soient enterrés sous des chunks
- *    sémantiquement proches mais traitant d'un autre article.
- */
-function keywordScore(query: string, chunk: LegalChunk): number {
-  const words = query
-    .toLowerCase()
-    .replace(/[^a-zéèêëàâùûüôîïç\s]/gi, " ")
-    .split(/\s+/)
-    .filter((w) => w.length > 3);
-
-  const bodyScore = (() => {
-    if (words.length === 0) return 0;
-    const target = `${chunk.regulation ?? ""} ${chunk.article_title ?? ""} ${chunk.content}`.toLowerCase();
-    const matches = words.filter((w) => target.includes(w)).length;
-    return matches / words.length;
-  })();
-
-  // Boost si la requête mentionne explicitement le numéro d'article du chunk
-  const articleBoost = (() => {
-    const artNum = chunk.article_number?.trim();
-    if (!artNum) return 0;
-    // Cherche "art. 44", "article 44", "Art.44", "44 RGPD", etc.
-    const artPattern = new RegExp(`\\bart\\.?\\s*${artNum}\\b|\\barticle\\s+${artNum}\\b`, "i");
-    return artPattern.test(query) ? 0.4 : 0;
-  })();
-
-  return bodyScore * 0.6 + articleBoost;
-}
-
-/**
- * Re-rank chunks by combining vector similarity score with keyword overlap.
- * Chunks with matching keywords are pushed to the top.
- *
- * Poids : cosine 70 % + keyword 30 %.
- * Le keyword score intègre lui-même un boost article (voir keywordScore).
- */
-function rerankChunks(query: string, chunks: LegalChunk[]): LegalChunk[] {
-  return chunks
-    .map((chunk) => ({
-      chunk,
-      score: (chunk.similarity ?? 0) * 0.7 + keywordScore(query, chunk) * 0.3,
-    }))
-    .sort((a, b) => b.score - a.score)
-    .map(({ chunk }) => chunk);
 }
 
 /**

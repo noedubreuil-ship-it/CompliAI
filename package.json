@@ -18,7 +18,8 @@
     "backfill:national-corpus-eu27": "tsx --env-file=.env.local scripts/backfill-national-corpus-eu27.ts",
     "reingest:national-fallbacks": "tsx --env-file=.env.local scripts/reingest-national-fallbacks.ts",
     "corpus:refresh-all": "tsx --env-file=.env.local scripts/corpus-refresh-all.ts",
-    "video:upscale-hero": "bash scripts/upscale-hero-video.sh"
+    "video:upscale-hero": "bash scripts/upscale-hero-video.sh",
+    "promote": "tsx --env-file=.env.local scripts/promote-approved.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.90.0",
