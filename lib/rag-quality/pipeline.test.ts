@@ -22,7 +22,12 @@ const { mockSearchLegalChunks, mockCreateClient } = vi.hoisted(() => {
 });
 
 vi.mock("@/lib/ai/rag", () => ({
+  // Le checker de couverture est passé au chemin hybride (2026-07-19), aligné
+  // sur le retrieval réel du chat. On mocke les deux : `searchLegalChunks`
+  // reste utilisé par le runner du golden set, `searchLegalChunksHybrid` par le
+  // coverage-checker.
   searchLegalChunks: (...args: unknown[]) => mockSearchLegalChunks(...args),
+  searchLegalChunksHybrid: (...args: unknown[]) => mockSearchLegalChunks(...args),
 }));
 
 vi.mock("@supabase/supabase-js", () => ({
