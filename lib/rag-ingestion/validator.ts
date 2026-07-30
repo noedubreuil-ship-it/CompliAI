@@ -14,7 +14,7 @@ import type { StagingChunkInsert } from "./parsers/types";
 
 // ─── Constantes de validation ─────────────────────────────────────────────────
 
-const MIN_CONTENT_LENGTH = 50;
+export const MIN_CONTENT_LENGTH = 50;
 const MAX_CONTENT_LENGTH = 10_000;
 
 const VALID_TEXT_TYPES = new Set([

@@ -15,7 +15,7 @@ import { createClient } from "@supabase/supabase-js";
 
 import { parseDocumentWithClaude } from "./parsers/base-parser";
 import { type ParserInput, type StagingChunkInsert, type SupportedDocumentType } from "./parsers/types";
-import { validateChunks } from "./validator";
+import { validateChunks, MIN_CONTENT_LENGTH } from "./validator";
 
 const REQUIRED_INGESTION_TABLES = [
   "pending_documents",
@@ -478,7 +478,24 @@ export async function runIngestionPipeline(
     docResult.outputTokens = parserResponse.usage.outputTokens;
     docResult.promptHash = parserResponse.promptHash;
 
-    // 5. Valider les chunks
+    // 5. Écarter les chunks trop courts AVANT validation.
+    //
+    // Le parseur produit parfois un chunk résiduel sous le minimum (un intitulé
+    // isolé, une ligne de dispositif de quelques mots). Le validateur rejetait
+    // alors le document ENTIER pour ce seul fragment — noyb/Meta (62022CJ0496),
+    // arrêt clé sur les transferts, perdu pour un chunk de 41 caractères le
+    // 2026-07-30. On droppe le fragment et on garde le reste ; le document n'est
+    // rejeté que s'il ne reste plus rien de valable.
+    const beforeCount = parserResponse.chunks.length;
+    parserResponse.chunks = parserResponse.chunks.filter(
+      (c) => (c.content ?? "").trim().length >= MIN_CONTENT_LENGTH
+    );
+    const dropped = beforeCount - parserResponse.chunks.length;
+    if (dropped > 0) {
+      console.warn(`[RAG Pipeline] ${doc.id} : ${dropped} chunk(s) trop court(s) écarté(s), ${parserResponse.chunks.length} conservé(s).`);
+    }
+
+    // 6. Valider les chunks restants
     const validation = validateChunks(parserResponse.chunks);
     if (!validation.valid) {
       const errMsg = `Validation échouée : ${validation.errors.map((e) => e.message).join("; ")}`;
