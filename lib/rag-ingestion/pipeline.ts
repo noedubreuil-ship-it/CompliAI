@@ -238,10 +238,13 @@ export function detectBlockedPage(html: string): string | null {
   return null;
 }
 
-async function fetchUrlText(url: string): Promise<string | null> {
+async function fetchUrlText(
+  url: string,
+  extraHeaders: Record<string, string> = {}
+): Promise<string | null> {
   try {
     const resp = await fetch(url, {
-      headers: { "User-Agent": "CompliAI-RAG/2.0 (+https://compliai.fr)" },
+      headers: { "User-Agent": "CompliAI-RAG/2.0 (+https://compliai.fr)", ...extraHeaders },
       signal: AbortSignal.timeout(30_000),
     });
     if (!resp.ok) return null;
@@ -267,12 +270,29 @@ async function fetchDocumentText(doc: PendingDocument): Promise<string | null> {
   if (doc.raw_content_text && doc.raw_content_text.trim().length > 100) {
     return doc.raw_content_text;
   }
-  // Priorité 2 : télécharger depuis raw_content_url
+  // Priorité 2 : CELLAR par CELEX (négociation de contenu).
+  //
+  // L'endpoint HTML d'EUR-Lex (`/legal-content/FR/TXT/HTML/?uri=CELEX:…`) ne
+  // sert PAS le texte : il renvoie une page générée en asynchrone (HTTP 202) ou
+  // exigeant du JS — vide côté serveur, quelle que soit l'IP (constaté depuis
+  // le dev ET depuis GitHub). CELLAR, lui, sert le texte intégral par
+  // négociation de contenu : `resource/celex/{CELEX}` + Accept-Language.
+  // Vérifié le 2026-07-30 : arrêt CJUE 62022CJ0496 → 37 000 caractères FR.
+  if (doc.celex) {
+    const lang = (doc.language || "fr").toLowerCase();
+    const cellarUrl = `http://publications.europa.eu/resource/celex/${doc.celex}`;
+    const text = await fetchUrlText(cellarUrl, {
+      Accept: "text/html, application/xhtml+xml",
+      "Accept-Language": lang,
+    });
+    if (text) return text;
+  }
+  // Priorité 3 : télécharger depuis raw_content_url
   if (doc.raw_content_url) {
     const text = await fetchUrlText(doc.raw_content_url);
     if (text) return text;
   }
-  // Priorité 3 : page source officielle (monitoring ne remplit pas toujours raw_content_url)
+  // Priorité 4 : page source officielle (monitoring ne remplit pas toujours raw_content_url)
   if (doc.source_url) {
     return fetchUrlText(doc.source_url);
   }
