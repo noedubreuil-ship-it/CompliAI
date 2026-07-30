@@ -137,6 +137,28 @@ async function fetchActiveSources(): Promise<MonitoringSourceRow[]> {
  * plus de base de repetition : `--dry-run` est le seul filet avant un run reel.
  * La valeur etait codee en dur a `false`, rendant la simulation impossible.
  */
+/**
+ * Erreur réseau transitoire : la source se rétablira au cycle suivant, donc ne
+ * doit pas faire échouer le run. HTTP 429 (rate-limit), 5xx (indisponibilité
+ * serveur), timeouts, coupures réseau.
+ */
+function isTransientSourceError(error: string | undefined): boolean {
+  const m = (error ?? "").toLowerCase();
+  return (
+    m.includes("429") ||
+    m.includes("rate limit") ||
+    m.includes("500") ||
+    m.includes("502") ||
+    m.includes("503") ||
+    m.includes("504") ||
+    m.includes("timed out") ||
+    m.includes("timeout") ||
+    m.includes("econnreset") ||
+    m.includes("etimedout") ||
+    m.includes("fetch failed")
+  );
+}
+
 const DRY_RUN = process.argv.includes("--dry-run");
 
 async function main(): Promise<void> {
@@ -147,6 +169,7 @@ async function main(): Promise<void> {
   );
   const sources = await fetchActiveSources();
   let criticalErrors = 0;
+  let transientErrors = 0;
   let totalDocumentsFound = 0;
   let totalDocumentsNew = 0;
 
@@ -201,8 +224,17 @@ async function main(): Promise<void> {
       totalDocumentsFound += result.documentsFound;
       totalDocumentsNew += result.documentsNew;
 
+      // Un échec réseau TRANSITOIRE (rate-limit, indisponibilité passagère,
+      // timeout) ne doit pas faire échouer tout le run : la source se rétablit
+      // au cycle suivant. Constaté à répétition sur l'EDPB (HTTP 429/503).
+      // Sans ce tri, un 429 sur une source rendait rouges 5 sources vertes —
+      // du bruit d'alerte qui masque les vrais problèmes.
       if (result.status === "error") {
-        criticalErrors++;
+        if (isTransientSourceError(result.error)) {
+          transientErrors++;
+        } else {
+          criticalErrors++;
+        }
       }
 
       logJson(result.status === "error" ? "error" : "info", "source_completed", {
@@ -217,17 +249,20 @@ async function main(): Promise<void> {
         error: result.error,
       });
     } catch (error) {
-      criticalErrors++;
-      logJson("error", "source_failed", {
+      const msg = errorMessage(error);
+      if (isTransientSourceError(msg)) transientErrors++;
+      else criticalErrors++;
+      logJson(isTransientSourceError(msg) ? "warn" : "error", "source_failed", {
         sourceName: source.name,
         sourceType: source.source_type,
         durationMs: Date.now() - sourceStartedAt,
-        error: errorMessage(error),
+        error: msg,
       });
     }
   }
 
-  logJson(criticalErrors > 0 ? "error" : "info", "cycle_completed", {
+  logJson(criticalErrors > 0 ? "error" : transientErrors > 0 ? "warn" : "info", "cycle_completed", {
+    transientErrors,
     status: criticalErrors > 0 ? "error" : "ok",
     durationMs: Date.now() - startedAt,
     sourcesCount: sources.length,
