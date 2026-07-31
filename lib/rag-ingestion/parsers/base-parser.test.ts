@@ -33,8 +33,20 @@ const mockCreate = vi.fn();
 beforeEach(() => {
   vi.clearAllMocks();
   mockCreate.mockReset();
-  // Injecter un faux client Anthropic dont la méthode `create` est un mock contrôlable
-  const fakeClient = { messages: { create: mockCreate } } as unknown as Anthropic;
+  // Injecter un faux client Anthropic. Le parser est passé au STREAMING
+  // (client.messages.stream(...).finalMessage()) le 2026-07-18. On câble donc
+  // `stream` pour réutiliser le même mock `create` : il renvoie un objet dont
+  // `finalMessage()` résout la valeur simulée. Les mockResolvedValueOnce des
+  // tests continuent de piloter la réponse sans changement.
+  const fakeClient = {
+    messages: {
+      create: mockCreate,
+      stream: (...args: unknown[]) => {
+        const result = mockCreate(...args);
+        return { finalMessage: () => result };
+      },
+    },
+  } as unknown as Anthropic;
   _setAnthropicClientForTesting(fakeClient);
 });
 
