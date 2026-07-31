@@ -39,6 +39,8 @@ import {
   preflightToResponse,
 } from "@/lib/ai/http-errors";
 import { streamClaude, callClaude, type ConsultantResponseDepthMode } from "@/lib/ai/client";
+import { classifyProviderError } from "@/lib/ai/provider-error";
+import * as Sentry from "@sentry/nextjs";
 import {
   validateUserInput,
   validateAIOutput,
@@ -672,8 +674,26 @@ export async function POST(request: Request) {
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "text", text })}\n\n`));
           },
           onError: (err) => {
-            console.error("[chat] stream error:", err.message);
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "error", message: err.message })}\n\n`));
+            // NE JAMAIS renvoyer err.message brut au client : une erreur
+            // Anthropic (crédit épuisé, 429) exposait sa stack JSON dans le chat.
+            const classified = classifyProviderError(err.message);
+            console.error(
+              `[chat] stream error [${classified.kind}${classified.operational ? " · OPERATIONNEL" : ""}]:`,
+              err.message
+            );
+            if (classified.operational) {
+              // Cause côté exploitant (crédit/quota) : remontée Sentry en `fatal`
+              // pour alerter AVANT que le solde nul ne casse le service pour
+              // d'autres clients (déjà arrivé deux fois, cf. provider-error.ts).
+              console.error(`[chat] ALERTE EXPLOITANT (${classified.kind}) — intervention requise, non imputable au client.`);
+              Sentry.captureMessage(
+                `[chat] Alerte exploitant : ${classified.kind} (fournisseur IA). Solde/quota à vérifier immédiatement.`,
+                "fatal"
+              );
+            }
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ type: "error", message: classified.userMessage })}\n\n`)
+            );
           },
           onDone: async (meta) => {
             const tGenDone = Date.now() - t0;

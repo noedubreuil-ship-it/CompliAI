@@ -13,6 +13,10 @@ const mockGenerateComparateur = vi.fn();
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => ({
     auth: { getUser: mockGetUser },
+    // Le comparateur persiste le document généré via
+    // supabase.from("generated_documents").insert(...) : sans ce stub, la route
+    // renvoyait 503 (« supabase.from is not a function »).
+    from: () => ({ insert: () => Promise.resolve({ data: null, error: null }) }),
   })),
 }));
 

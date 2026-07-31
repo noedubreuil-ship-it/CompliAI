@@ -18,11 +18,11 @@ import {
   getDocumentId,
   DOC_TYPE_LABELS,
   DOC_TYPE_COLORS,
-} from "../../../(app)/dashboard/admin/rag-validation/components/rag-types";
+} from "../../../[locale]/(app)/dashboard/admin/rag-validation/components/rag-types";
 import type {
   StagingChunkRow,
   DocumentWithStats,
-} from "../../../(app)/dashboard/admin/rag-validation/components/rag-types";
+} from "../../../[locale]/(app)/dashboard/admin/rag-validation/components/rag-types";
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 

@@ -148,10 +148,18 @@ function setupSupabaseMock(pendingDocs: ReturnType<typeof makeDoc>[]) {
 
   const mockFrom = vi.fn().mockImplementation((table: string) => {
     if (table === "pending_documents") {
-      return { select: queryBuilder.select, update: mockUpdate, ...queryBuilder };
+      return { ...queryBuilder, update: mockUpdate };
     }
     if (table === "staging_chunks") {
-      return { insert: mockInsert };
+      // `assertIngestionDatabaseReady` fait un .select("id").limit(1) de préflight
+      // sur chaque table requise, staging_chunks incluse : il faut donc exposer
+      // select() ici, pas seulement insert().
+      return {
+        insert: mockInsert,
+        select: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+        }),
+      };
     }
     return {};
   });

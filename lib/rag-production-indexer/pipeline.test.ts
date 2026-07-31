@@ -41,6 +41,8 @@ function makeStaging(overrides: Partial<StagingChunkApproved> = {}): StagingChun
     point_letter: "a",
     article_title: "Obligations des fournisseurs",
     chapter: "Chapitre V",
+    granularity: null,
+    parent_chunk_id: null,
     content: "Les fournisseurs de systèmes d'IA à haut risque doivent prendre toutes les mesures nécessaires.",
     language: "fr",
     country: "EU",
@@ -64,6 +66,8 @@ function makeLegal(overrides: Partial<LegalChunkRow> = {}): LegalChunkRow {
     point_letter: "a",
     article_title: "Obligations des fournisseurs",
     chapter: "Chapitre V",
+    granularity: null,
+    parent_chunk_id: null,
     content: "Ancien contenu de l'article 53 §1 (a).",
     embedding: SAMPLE_EMBEDDING_A,
     eurlex_url: null,
@@ -539,12 +543,19 @@ describe("Phase 4 — Échec partiel (un chunk échoue, les autres continuent)",
       return chain;
     };
 
+    // upsertChunk fait .insert({...}).select("id").single() : le mock doit donc
+    // exposer ce chaînage, pas résoudre directement une Promise.
     const mockInsertFn = vi.fn().mockImplementation(() => {
       const idx = callCount++;
-      if (idx === FAILING_IDX) {
-        return Promise.resolve({ data: null, error: { message: "DB timeout", code: "PGRST500" } });
-      }
-      return Promise.resolve({ data: { id: `lc-${idx}` }, error: null });
+      const result =
+        idx === FAILING_IDX
+          ? { data: null, error: { message: "DB timeout", code: "PGRST500" } }
+          : { data: { id: `lc-${idx}` }, error: null };
+      return {
+        select: () => ({
+          single: () => Promise.resolve(result),
+        }),
+      };
     });
 
     const mockSupabase = {
