@@ -10,6 +10,8 @@
     "test": "vitest run",
     "extract:prompts": "python3 scripts/extract-tool-prompts-from-transcript.py",
     "qa:consultant": "vitest run lib/ai/consultant-product-qasamples.test.ts",
+    "qa:consultant:live": "tsx --env-file=.env.local scripts/qa-consultant-live.ts",
+    "diag:retrieval-reliability": "tsx --env-file=.env.local scripts/diag-retrieval-reliability.ts",
     "ingest": "tsx --env-file=.env.local scripts/ingest-legal-docs.ts",
     "fetch:eurlex": "tsx scripts/fetch-eurlex-fr.ts",
     "ingest:case-law": "tsx --env-file=.env.local scripts/ingest-case-law-seeds.ts",
