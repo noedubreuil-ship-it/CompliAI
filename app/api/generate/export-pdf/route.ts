@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { rateLimitUser, RATE_LIMITS } from "@/lib/rate-limit";
 import { aiUnauthorized } from "@/lib/ai/http-errors";
 import { generateToolExportPdf, type ToolExportSection } from "@/lib/pdf/tool-export";
+import { buildProvenanceSection } from "@/lib/ai/document-provenance";
 
 export const runtime = "nodejs";
 
@@ -42,8 +43,16 @@ export async function POST(request: Request) {
 
   const safeName = filenameRaw.replace(/[^\w.-]+/g, "_").slice(0, 80) || "compliai-export";
 
+  // Auditabilité (Axe 2) : annexe de provenance (date, droit arrêté à cette date,
+  // sources mobilisées si fournies) ajoutée automatiquement, sans toucher au corps.
+  const sourceContext = typeof body.sourceContext === "string" ? body.sourceContext : undefined;
+  const auditedSections: ToolExportSection[] = [
+    ...sections,
+    buildProvenanceSection({ sourceContext, toolLabel: title }),
+  ];
+
   try {
-    const buffer = await generateToolExportPdf({ title, subtitle, sections });
+    const buffer = await generateToolExportPdf({ title, subtitle, sections: auditedSections });
     return new NextResponse(new Uint8Array(buffer), {
       status: 200,
       headers: {
