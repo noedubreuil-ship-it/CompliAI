@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { BillingContext } from "./billing-context";
+import { verifyGeneratedDocument } from "./generated-document-verification";
 import { billFromBillingContext } from "./bill-ai-call";
 import { resolveModelApiId } from "./model-routing";
 import { AI_CONFIG, TOOL_CONFIGS } from "./config";
@@ -1469,7 +1470,24 @@ export async function generateDocument(prompt: string, ctx?: BillingContext, sys
       "Tu agis comme un juriste senior parisien spécialisé en droit européen du numérique (AI Act, RGPD, NIS2, DSA, DMA, CRA, Data Act, PLD révisée, STCE 225). Tu produis ici un document structuré au format JSON strict, sans aucune prose hors JSON. Tu ne fabriques ni numéro d'article, ni sanction, ni jurisprudence. Tu commences ta réponse par { et tu la termines par }." + systemAddendum,
     messages: [{ role: "user", content: prompt }],
   }, ctx);
-  return message.content[0].type === "text" ? message.content[0].text : "";
+  const text = message.content[0].type === "text" ? message.content[0].text : "";
+
+  // Vérification post-génération (Axe 1) : non bloquante, remonte en log les
+  // citations inventées / articles hors plage. Le prompt fait office de
+  // référentiel de sources (un ECLI y figurant est légitime).
+  const verification = verifyGeneratedDocument(text, prompt);
+  if (!verification.ok) {
+    console.warn(
+      JSON.stringify({
+        level: "warn",
+        event: "generated_document_verification_failed",
+        issues: verification.issues,
+        warnings: verification.warnings,
+      })
+    );
+  }
+
+  return text;
 }
 
 /**
